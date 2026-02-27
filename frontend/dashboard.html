@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyGen - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.8rem;
+            backdrop-filter: blur(12px);
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .stat-card .big-num {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .stat-card .sub-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .sub-stat {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .sub-stat span {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .real-color {
+            color: #10b981 !important;
+        }
+
+        .fake-color {
+            color: #ef4444 !important;
+        }
+
+        /* Activity Log */
+        .activity-log {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.8rem;
+            backdrop-filter: blur(12px);
+            margin-bottom: 2rem;
+        }
+
+        .activity-log h3 {
+            margin-bottom: 1.2rem;
+            font-size: 1.2rem;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .log-table th {
+            text-align: left;
+            padding: 0.6rem 1rem;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--glass-border);
+            font-weight: 500;
+        }
+
+        .log-table td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-dim);
+        }
+
+        .log-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .log-table .badge {
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .badge-fake {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .badge-real {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .badge-gen {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+
+        .refresh-note {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            margin-bottom: 2rem;
+        }
+
+        .pulse-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 1.5s infinite;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            color: var(--text-light);
+        }
+
+        .section-title span {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .empty-log {
+            text-align: center;
+            color: var(--text-dim);
+            padding: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav>
+        <div class="logo">PolyGen</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="detection.html">Deepfake Detection</a>
+            <a href="generation.html">Media Generation</a>
+            <a href="dashboard.html" class="active">Dashboard</a>
+            <a href="database.html">Database</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero" style="padding: 2.5rem 0 1.5rem;">
+            <h1>Live Dashboard</h1>
+            <p>Real-time stats for detection and generation operations.</p>
+        </div>
+
+        <p class="refresh-note"><span class="pulse-dot"></span> Auto-refreshes every 5 seconds</p>
+
+        <!-- ── Detection Section ──────────────────────────────────── -->
+        <div class="section-title">🔍 <span>Detection Stats</span></div>
+        <div class="stat-grid" id="detection-stats-grid">
+            <!-- Image Detection Card -->
+            <div class="stat-card">
+                <div class="icon">🖼️</div>
+                <div class="label">Image Detections</div>
+                <div class="big-num" id="det-img-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Real: <span class="real-color" id="det-img-real">–</span></div>
+                    <div class="sub-stat">Fake: <span class="fake-color" id="det-img-fake">–</span></div>
+                </div>
+            </div>
+            <!-- Video Detection Card -->
+            <div class="stat-card">
+                <div class="icon">🎥</div>
+                <div class="label">Video Detections</div>
+                <div class="big-num" id="det-vid-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Real: <span class="real-color" id="det-vid-real">–</span></div>
+                    <div class="sub-stat">Fake: <span class="fake-color" id="det-vid-fake">–</span></div>
+                </div>
+            </div>
+            <!-- Total Fakes Card -->
+            <div class="stat-card">
+                <div class="icon">⚠️</div>
+                <div class="label">Total Fakes Detected</div>
+                <div class="big-num" id="det-total-fake">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Across images + videos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Generation Section ─────────────────────────────────── -->
+        <div class="section-title">✨ <span>Generation Stats</span></div>
+        <div class="stat-grid">
+            <!-- Image Generation Card -->
+            <div class="stat-card">
+                <div class="icon">🎨</div>
+                <div class="label">Images Generated</div>
+                <div class="big-num" id="gen-img-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">AI text-to-image</div>
+                </div>
+            </div>
+            <!-- Video Generation Card -->
+            <div class="stat-card">
+                <div class="icon">🎬</div>
+                <div class="label">Videos Processed</div>
+                <div class="big-num" id="gen-vid-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Filters applied</div>
+                </div>
+            </div>
+            <!-- Total Generation Card -->
+            <div class="stat-card">
+                <div class="icon">📦</div>
+                <div class="label">Total Media Created</div>
+                <div class="big-num" id="gen-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Images + videos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Database Summary ───────────────────────────────────── -->
+        <div class="section-title">🗄️ <span>Database Summary</span></div>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="icon">🛑</div>
+                <div class="label">Saved Fake Detections</div>
+                <div class="big-num" id="db-det-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Images: <span id="db-det-images">–</span></div>
+                    <div class="sub-stat">Videos: <span id="db-det-videos">–</span></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">💾</div>
+                <div class="label">Saved Generated Media</div>
+                <div class="big-num" id="db-gen-total">–</div>
+                <div class="sub-stats">
+                    <div class="sub-stat">Images: <span id="db-gen-images">–</span></div>
+                    <div class="sub-stat">Videos: <span id="db-gen-videos">–</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Activity Log ───────────────────────────────────────── -->
+        <div class="activity-log">
+            <h3>📋 Recent Activity (Detection Saves)</h3>
+            <div id="log-container">
+                <table class="log-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Media</th>
+                            <th>Fake Prob</th>
+                            <th>Confidence</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body">
+                        <tr>
+                            <td colspan="6" class="empty-log">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>

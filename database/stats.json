@@ -1,0 +1,22 @@
+{
+  "detection": {
+    "images": {
+      "total": 5,
+      "real": 2,
+      "fake": 3
+    },
+    "videos": {
+      "total": 0,
+      "real": 0,
+      "fake": 0
+    }
+  },
+  "generation": {
+    "images": {
+      "total": 1
+    },
+    "videos": {
+      "total": 0
+    }
+  }
+}

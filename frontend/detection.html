@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyGen - Detection</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav>
+        <div class="logo">PolyGen</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="detection.html" class="active">Deepfake Detection</a>
+            <a href="generation.html">Media Generation</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="database.html">Database</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Deepfake Detection</h1>
+            <p>Upload media to detect manipulation.</p>
+        </div>
+
+        <div class="card">
+            <h3>Image Analysis</h3>
+            <div class="upload-area" id="image-drop-zone">
+                <p>Click to upload or drag & drop Image</p>
+                <input type="file" id="image-input" accept="image/*" hidden>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeImage()">Analyze Image</button>
+            <div class="loader" id="img-loader"></div>
+
+            <div class="preview-container" id="img-result" style="display:none;">
+                <div class="preview-box">
+                    <h4>Original</h4>
+                    <img id="preview-img" src="">
+                </div>
+                <div class="preview-box" id="gradcam-box">
+                    <h4>Explainability (Grad-CAM)</h4>
+                    <img id="gradcam-img" src="" style="min-height:100px;">
+                </div>
+                <div class="result-box">
+                    <p>Prediction: <span id="img-with-pred"></span></p>
+                    <p>Confidence: <span id="img-confidence"></span></p>
+                    <p id="img-fake-prob"></p>
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+
+        <div class="card">
+            <h3>Video Analysis</h3>
+            <div class="upload-area" id="video-drop-zone">
+                <p>Click to upload or drag & drop Video</p>
+                <input type="file" id="video-input" accept="video/*" hidden>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeVideo()">Analyze Video</button>
+            <div class="loader" id="vid-loader"></div>
+
+            <div class="preview-container" id="vid-result" style="display:none;">
+                <div class="result-box">
+                    <p>Prediction: <span id="vid-pred"></span></p>
+                    <p>Probability: <span id="vid-prob"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>

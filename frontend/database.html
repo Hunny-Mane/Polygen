@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyGen - Database</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .tab-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px 8px 0 0;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active,
+        .tab-btn:hover {
+            color: var(--text-light);
+            background: var(--glass);
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Summary bar */
+        .summary-bar {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.2rem 1.8rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-item .s-num {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .summary-item .s-label {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        /* Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .gallery-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .gallery-card .card-info {
+            padding: 0.9rem;
+        }
+
+        .badge-small {
+            font-size: 0.72rem;
+            padding: 0.18rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-detect {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .badge-gen {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+
+        .badge-video {
+            background: rgba(249, 115, 22, 0.15);
+            color: #fb923c;
+        }
+
+        .badge-image {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .card-info .meta {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+        }
+
+        .card-info .prob {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        .card-info .prompt-text {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .empty-gallery {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--text-dim);
+            padding: 3rem;
+            font-size: 1rem;
+        }
+
+        .empty-gallery span {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav>
+        <div class="logo">PolyGen</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="detection.html">Deepfake Detection</a>
+            <a href="generation.html">Media Generation</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="database.html" class="active">Database</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero" style="padding: 2.5rem 0 1.5rem;">
+            <h1>Database</h1>
+            <p>Browse all saved detected fakes and generated media.</p>
+        </div>
+
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchTab('detection')">🛑 Detection Storage</button>
+            <button class="tab-btn" onclick="switchTab('generation')">✨ Generation Storage</button>
+        </div>
+
+        <!-- ── Detection Storage Tab ──────────────────────────────── -->
+        <div class="tab-panel active" id="tab-detection">
+            <div class="summary-bar">
+                <div class="summary-item">
+                    <div class="s-num" id="db-det-total">–</div>
+                    <div class="s-label">Total Saved</div>
+                </div>
+                <div class="summary-item">
+                    <div class="s-num" id="db-det-images">–</div>
+                    <div class="s-label">From Images</div>
+                </div>
+                <div class="summary-item">
+                    <div class="s-num" id="db-det-videos">–</div>
+                    <div class="s-label">From Videos</div>
+                </div>
+                <div style="margin-left:auto;">
+                    <small style="color:var(--text-dim);">📁 Stored in <code>database/detection_storage/</code></small>
+                </div>
+            </div>
+            <div class="gallery" id="detection-gallery">
+                <div class="empty-gallery"><span>⏳</span>Loading...</div>
+            </div>
+        </div>
+
+        <!-- ── Generation Storage Tab ─────────────────────────────── -->
+        <div class="tab-panel" id="tab-generation">
+            <div class="summary-bar">
+                <div class="summary-item">
+                    <div class="s-num" id="db-gen-total">–</div>
+                    <div class="s-label">Total Saved</div>
+                </div>
+                <div class="summary-item">
+                    <div class="s-num" id="db-gen-images">–</div>
+                    <div class="s-label">Images</div>
+                </div>
+                <div class="summary-item">
+                    <div class="s-num" id="db-gen-videos">–</div>
+                    <div class="s-label">Videos</div>
+                </div>
+                <div style="margin-left:auto;">
+                    <small style="color:var(--text-dim);">📁 Stored in <code>database/generation_storage/</code></small>
+                </div>
+            </div>
+            <div class="gallery" id="generation-gallery">
+                <div class="empty-gallery"><span>⏳</span>Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+    <script>
+        let activeTab = 'detection';
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                b.classList.toggle('active', (i === 0 && tab === 'detection') || (i === 1 && tab === 'generation'));
+            });
+            document.getElementById('tab-detection').classList.toggle('active', tab === 'detection');
+            document.getElementById('tab-generation').classList.toggle('active', tab === 'generation');
+        }
+    </script>
+</body>
+
+</html>

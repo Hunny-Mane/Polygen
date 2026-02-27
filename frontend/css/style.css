@@ -1,0 +1,216 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+:root {
+  --primary: #6366f1;
+  --secondary: #ec4899;
+  --accent: #8b5cf6;
+  --bg-dark: #0f172a;
+  --glass: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-light: #f8fafc;
+  --text-dim: #94a3b8;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at top left, #1e293b, #0f172a);
+  color: var(--text-light);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Background Blobs */
+.blob {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.4;
+  z-index: -1;
+  animation: float 10s infinite alternate;
+}
+.blob-1 { top: 0; left: 0; width: 400px; height: 400px; background: var(--primary); }
+.blob-2 { bottom: 0; right: 0; width: 500px; height: 500px; background: var(--secondary); }
+
+@keyframes float {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(30px, 30px); }
+}
+
+/* Navbar */
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 5%;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  margin-left: 2rem;
+  transition: 0.3s;
+  font-weight: 500;
+}
+
+.nav-links a:hover, .nav-links a.active {
+  color: var(--text-light);
+  text-shadow: 0 0 10px var(--primary);
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 4rem auto;
+  padding: 0 2rem;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 4rem 0;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.hero p {
+  font-size: 1.25rem;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+}
+
+.btn {
+  padding: 0.8rem 2rem;
+  border-radius: 50px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  color: white;
+  box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px -5px rgba(99, 102, 241, 0.6);
+}
+
+/* Cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  padding: 2rem;
+  border-radius: 20px;
+  transition: 0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--primary);
+}
+
+.card h3 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.card p {
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+
+/* Upload Area */
+.upload-area {
+  border: 2px dashed var(--glass-border);
+  padding: 3rem;
+  text-align: center;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.upload-area:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.preview-container {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.preview-box {
+  background: var(--glass);
+  padding: 1rem;
+  border-radius: 10px;
+  max-width: 400px;
+}
+
+.preview-box img, .preview-box video {
+  max-width: 100%;
+  border-radius: 5px;
+}
+
+.result-box {
+  margin-top: 1rem;
+  text-align: left;
+}
+
+.label-real { color: #10b981; font-weight: bold; }
+.label-fake { color: #ef4444; font-weight: bold; }
+
+/* Loaders */
+.loader {
+  border: 4px solid var(--glass-border);
+  border-top: 4px solid var(--primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+  display: none; /* hidden by default */
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

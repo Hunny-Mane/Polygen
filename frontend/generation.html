@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PolyGen - Generation</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <nav>
+        <div class="logo">PolyGen</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="detection.html">Deepfake Detection</a>
+            <a href="generation.html" class="active">Media Generation</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="database.html">Database</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h1>Media Generation</h1>
+            <p>Create and transform media with AI.</p>
+        </div>
+
+        <div class="card">
+            <h3>Text-to-Image Generation</h3>
+            <input type="text" id="prompt-input" placeholder="A futuristic city with flying cars, cyberpunk style..."
+                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: white; margin-bottom: 1rem;">
+
+            <button class="btn btn-primary" onclick="generateImage()">Generate</button>
+            <div class="loader" id="gen-loader"></div>
+
+            <div class="preview-container" id="gen-result" style="display:none;">
+                <div class="preview-box">
+                    <img id="generated-img" src="">
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+
+        <div class="card">
+            <h3>Video Filters</h3>
+            <div class="upload-area" id="filter-drop-zone">
+                <p>Click to upload Video</p>
+                <input type="file" id="filter-video-input" accept="video/*" hidden>
+            </div>
+
+            <select id="filter-type"
+                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: #1e293b; color: white; margin-bottom: 1rem;">
+                <option value="cartoon">Cartoon Effect</option>
+                <option value="sketch">Pencil Sketch</option>
+            </select>
+
+            <button class="btn btn-primary" onclick="applyFilter()">Apply Filter</button>
+            <div class="loader" id="filter-loader"></div>
+
+            <div class="preview-container" id="filter-result" style="display:none;">
+                <div class="preview-box" style="width: 100%;">
+                    <p>Processed Video:</p>
+                    <video id="filter-video-preview" controls
+                        style="width: 100%; border-radius: 10px; margin-bottom: 1rem; display: none;"></video>
+                    <a id="filter-download" href="#" class="btn btn-primary" target="_blank" download>Download Video</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
