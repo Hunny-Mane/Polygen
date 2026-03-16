@@ -322,6 +322,7 @@
     --neumo-shadow-dark: #d1d9e6;
 }
 
+
 .detection-blueprint-container {
     position: relative;
     width: 100%;
@@ -343,11 +344,26 @@
 .blueprint-grid-bg {
     position: absolute;
     inset: 0;
-    background-image: linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(0, 242, 255, 0.06) 1.5px, transparent 1.5px),
+        linear-gradient(90deg, rgba(0, 242, 255, 0.06) 1.5px, transparent 1.5px);
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 1;
+}
+
+.blueprint-parallax-grid {
+    position: absolute;
+    inset: -10% -10%;
+    width: 120%;
+    height: 120%;
+    background-image:
+        linear-gradient(rgba(200, 210, 220, 0.4) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(200, 210, 220, 0.4) 2px, transparent 2px);
+    background-size: 100px 100px;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.8;
+    will-change: transform;
 }
 
 .blueprint-layout-grid {
@@ -455,6 +471,7 @@
     /* Ensure button itself is clickable */
     position: relative;
     z-index: 100;
+    will-change: transform, box-shadow;
 }
 
 .try-detection-btn:hover {
@@ -522,7 +539,7 @@
     left: 50%;
     top: 0;
     bottom: 0;
-    width: 2px;
+    width: 3.5px;
     background: #e2e8f0;
     transform: translateX(-50%);
 }
@@ -614,6 +631,21 @@
     stroke-dashoffset: 500;
     filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.6));
     transition: opacity 0.3s ease;
+    will-change: stroke-dashoffset;
+}
+
+.pulse-path {
+    fill: none;
+    stroke: #00FFFF;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 50, 450;
+    /* Short 10% pulse segment */
+    stroke-dashoffset: 500;
+    filter: blur(4px);
+    opacity: 0.8;
+    pointer-events: none;
+    will-change: stroke-dashoffset;
 }
 
 .model-label.left-label {
@@ -659,6 +691,13 @@
     color: #0e60d3;
     opacity: 0;
     transform: translateX(20px);
+    will-change: transform, opacity;
+}
+
+.accuracy-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: black;
 }
 
 .model-label.active {

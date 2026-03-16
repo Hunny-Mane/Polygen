@@ -86,6 +86,9 @@
                 <!-- Background Grid Pattern -->
                 <div class="blueprint-grid-bg"></div>
 
+                <!-- Layer 3: Parallax Grid Background -->
+                <div class="blueprint-parallax-grid"></div>
+
                 <div class="blueprint-layout-grid">
 
                     <!-- Left Flank: Timeline & System Cards -->
@@ -139,7 +142,8 @@
                 <!-- Absolute Positioned Labels (Aligned to SVG Y-Coordinates) -->
                 <div class="label-with-terminal right-side" id="wrapper-strand-1"
                     style="top: 16.7%; right: 9.3%; display: flex; flex-direction: column;">
-                    <div style="color: black; font-style: italic; margin-top: -41px;">Accuracy: 94.7%</div>
+                    <div style="color: black; font-style: italic; margin-top: -41px;">Accuracy: <span
+                            class="accuracy-value" data-target="94.7">00.00</span>%</div>
                     <div style="display: flex; flex-direction: row;">
                         <div class="strand-terminal" id="terminal-1"
                             style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
@@ -164,7 +168,8 @@
                             style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
                         <div class="strand-terminal" id="terminal-2" style="margin-left: 5px;"></div>
                     </div>
-                    <div style="color: black; font-style: italic;">Accuracy : 93.45%</div>
+                    <div style="color: black; font-style: italic;">Accuracy : <span class="accuracy-value"
+                            data-target="93.45">00.00</span>%</div>
 
                 </div>
                 <div class="label-with-terminal left-side" id="wrapper-strand-3"
@@ -179,7 +184,8 @@
                         <div class="strand-terminal" id="terminal-1"
                             style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
                     </div>
-                    <div style="color: black; font-style: italic;">Accuracy: 93.57%</div>
+                    <div style="color: black; font-style: italic;">Accuracy: <span class="accuracy-value"
+                            data-target="93.57">00.00</span>%</div>
 
                 </div>
 
@@ -202,6 +208,11 @@
                         filter="url(#soft-glow)" />
                     <path class="circuit-trace" id="strand-3" d="M 620,770 L 580,900 L 300,900"
                         filter="url(#soft-glow)" />
+
+                    <!-- Layer 1: Scanner Ghost Pulses -->
+                    <path class="pulse-path" id="pulse-1" d="M 600,230 L 650,165 L 900,165" />
+                    <path class="pulse-path" id="pulse-2" d="M 734,550 L 770,650 L 950,650" />
+                    <path class="pulse-path" id="pulse-3" d="M 620,770 L 580,900 L 300,900" />
                 </svg>
             </div>
         </section>

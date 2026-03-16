@@ -21,7 +21,19 @@ document.addEventListener('DOMContentLoaded', () => {
             start: "top top",
             end: "+=300%",
             pin: true,
-            scrub: true
+            scrub: 1.5
+        }
+    });
+
+    // Layer 3: Parallax Grid
+    gsap.to('.blueprint-parallax-grid', {
+        y: '-10%',
+        ease: 'none',
+        scrollTrigger: {
+            trigger: container,
+            start: 'top top',
+            end: '+=300%',
+            scrub: 1.5
         }
     });
 
@@ -53,9 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ease: "back.out(1.5)"
     }, 0.8);
 
-    // Phase 3: Neural Strands Drawing (Timed with labels)
+    // Phase 3: Neural Strands & Scanner Pulses
     const strands = gsap.utils.toArray('.circuit-trace');
+    const pulses = gsap.utils.toArray('.pulse-path');
 
+    // Draw main strands
     mainTl.to(strands, {
         strokeDashoffset: 0,
         opacity: 1,
@@ -64,7 +78,46 @@ document.addEventListener('DOMContentLoaded', () => {
         ease: "power2.inOut"
     }, 1.2);
 
+    // Animate Scanner Pulses (Ghost segments traveling)
+    // Then hide them once they've reached the end to fulfill Requirement 1
+    mainTl.to(pulses, {
+        strokeDashoffset: 0,
+        duration: 2,
+        stagger: 0.1,
+        ease: "power1.inOut"
+    }, 1.2)
+        .to(pulses, {
+            opacity: 0,
+            duration: 0.3
+        }, 3.2);
+
     const labelWrappers = gsap.utils.toArray('.label-with-terminal');
+    const accuracySpans = gsap.utils.toArray('.accuracy-value');
+
+    // Function to trigger independent odometer (Requirement 2)
+    const startOdometers = () => {
+        // Only trigger if scrolling down to prevent restart loops on scroll up
+        if (mainTl.scrollTrigger && mainTl.scrollTrigger.direction !== 1) return;
+
+        accuracySpans.forEach((span) => {
+            const target = parseFloat(span.getAttribute('data-target'));
+            const currentVal = parseFloat(span.innerText);
+
+            // If already at target, don't restart to keep it "remaining" there
+            if (currentVal >= target) return;
+
+            const obj = { value: 0 };
+            gsap.to(obj, {
+                value: target,
+                duration: 2.5,
+                ease: "power2.out",
+                overwrite: true,
+                onUpdate: () => {
+                    span.innerText = obj.value.toFixed(2).padStart(5, '0');
+                }
+            });
+        });
+    };
 
     mainTl.to(labelWrappers, {
         opacity: 1,
@@ -76,12 +129,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 2.5);
 
+    // Trigger odometer calculation when passing the 3.2s mark while scrolling DOWN
+    mainTl.call(() => {
+        startOdometers();
+    }, null, 3.2);
+
+    // RESET: Set counters back to 00.00 if scrolling UP past the strands
+    mainTl.call(() => {
+        if (mainTl.scrollTrigger && mainTl.scrollTrigger.direction === -1) {
+            accuracySpans.forEach(span => span.innerText = "00.00");
+        }
+    }, null, 1.1);
+
     // Phase 4: Footer Action
     mainTl.to(footer, {
         opacity: 1,
         bottom: "60px",
         duration: 0.5
-    }, 2.8);
+    }, 3.5);
+
+    // --- REFINE: Drifting Background Grids ---
+    gsap.to('.blueprint-grid-bg', {
+        backgroundPositionY: "-=50px", // Scroll grid up
+        duration: 14, // Faster (was 20)
+        ease: "none",
+        repeat: -1
+    });
+
+    gsap.to('.blueprint-parallax-grid', {
+        backgroundPositionY: "-=100px", // Smaller Grid moves differently
+        duration: 4, // Faster (was 35)
+        ease: "none",
+        repeat: -1
+    });
 
     // --- REFINE: Try Detection Button & Laser Transition ---
     const tryBtn = document.querySelector('.try-detection-btn');
