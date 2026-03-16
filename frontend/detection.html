@@ -35,22 +35,88 @@
                 <p>Click to upload or drag & drop Image</p>
                 <input type="file" id="image-input" accept="image/*" hidden>
             </div>
+            <div class="input-group">
+                <label for="img-model-select">Detection Model:</label>
+                <select id="img-model-select" class="model-select">
+                    <option value="ensemble">Ensemble (Best Overall)</option>
+                    <option value="efficientnet_b4">EfficientNet-B4 Only</option>
+                    <option value="xception">Xception Only</option>
+                </select>
+            </div>
             <button class="btn btn-primary" onclick="analyzeImage()">Analyze Image</button>
             <div class="loader" id="img-loader"></div>
 
             <div class="preview-container" id="img-result" style="display:none;">
-                <div class="preview-box">
-                    <h4>Original</h4>
-                    <img id="preview-img" src="">
-                </div>
-                <div class="preview-box" id="gradcam-box">
-                    <h4>Explainability (Grad-CAM)</h4>
-                    <img id="gradcam-img" src="" style="min-height:100px;">
+                <div class="detection-images-row">
+                    <div class="preview-box">
+                        <h4>Original</h4>
+                        <img id="preview-img" src="">
+                    </div>
+                    <div class="preview-box" id="gradcam-box">
+                        <h4>Grad-CAM Heatmap</h4>
+                        <p class="gradcam-subtitle">Highlighted regions indicate areas of detected manipulation</p>
+                        <img id="gradcam-img" src="" style="min-height:100px;">
+                    </div>
                 </div>
                 <div class="result-box">
                     <p>Prediction: <span id="img-with-pred"></span></p>
                     <p>Confidence: <span id="img-confidence"></span></p>
                     <p id="img-fake-prob"></p>
+                </div>
+
+                <div class="analysis-breakdown" id="analysis-breakdown" style="display:none;">
+                    <h4>Analysis Breakdown</h4>
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <div class="item-header">
+                                <span>EfficientNet-B4:</span>
+                                <span id="status-b4" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="bar-b4" class="progress"></div></div>
+                            <span id="val-b4">0%</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="item-header">
+                                <span>Xception:</span>
+                                <span id="status-xc" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="bar-xc" class="progress"></div></div>
+                            <span id="val-xc">0%</span>
+                        </div>
+                        <div class="breakdown-item refinement">
+                            <div class="item-header">
+                                <span>FFT Analysis:</span>
+                                <span id="status-fft" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="bar-fft" class="progress"></div></div>
+                            <span id="val-fft">0%</span>
+                        </div>
+                        <div class="breakdown-item refinement">
+                            <div class="item-header">
+                                <span>PRNU Noise:</span>
+                                <span id="status-prnu" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="bar-prnu" class="progress"></div></div>
+                            <span id="val-prnu">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="feedback-section" id="feedback-section">
+                    <div class="feedback-question">
+                        <span class="feedback-icon">🤔</span>
+                        <p>Was this prediction accurate?</p>
+                    </div>
+                    <div class="feedback-buttons">
+                        <button class="btn btn-feedback btn-yes" id="btn-feedback-yes" onclick="submitFeedback(true)">
+                            <span>✓</span> Yes, Correct
+                        </button>
+                        <button class="btn btn-feedback btn-no" id="btn-feedback-no" onclick="submitFeedback(false)">
+                            <span>✗</span> No, Wrong
+                        </button>
+                    </div>
+                    <div class="feedback-result" id="feedback-result" style="display:none;">
+                        <p id="feedback-message"></p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,6 +129,14 @@
                 <p>Click to upload or drag & drop Video</p>
                 <input type="file" id="video-input" accept="video/*" hidden>
             </div>
+            <div class="input-group">
+                <label for="vid-model-select">Detection Model:</label>
+                <select id="vid-model-select" class="model-select">
+                    <option value="ensemble">Ensemble (Best Overall)</option>
+                    <option value="efficientnet_b4">EfficientNet-B4 Only</option>
+                    <option value="xception">Xception Only</option>
+                </select>
+            </div>
             <button class="btn btn-primary" onclick="analyzeVideo()">Analyze Video</button>
             <div class="loader" id="vid-loader"></div>
 
@@ -70,6 +144,44 @@
                 <div class="result-box">
                     <p>Prediction: <span id="vid-pred"></span></p>
                     <p>Probability: <span id="vid-prob"></span></p>
+                </div>
+
+                <div class="analysis-breakdown" id="video-analysis-breakdown" style="display:none;">
+                    <h4>Analysis Breakdown</h4>
+                    <div class="breakdown-grid">
+                        <div class="breakdown-item">
+                            <div class="item-header">
+                                <span>EfficientNet-B4:</span>
+                                <span id="v-status-b4" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="v-bar-b4" class="progress"></div></div>
+                            <span id="v-val-b4">0%</span>
+                        </div>
+                        <div class="breakdown-item">
+                            <div class="item-header">
+                                <span>Xception:</span>
+                                <span id="v-status-xc" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="v-bar-xc" class="progress"></div></div>
+                            <span id="v-val-xc">0%</span>
+                        </div>
+                        <div class="breakdown-item refinement">
+                            <div class="item-header">
+                                <span>FFT Analysis:</span>
+                                <span id="v-status-fft" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="v-bar-fft" class="progress"></div></div>
+                            <span id="v-val-fft">0%</span>
+                        </div>
+                        <div class="breakdown-item refinement">
+                            <div class="item-header">
+                                <span>PRNU Noise:</span>
+                                <span id="v-status-prnu" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar"><div id="v-bar-prnu" class="progress"></div></div>
+                            <span id="v-val-prnu">0%</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

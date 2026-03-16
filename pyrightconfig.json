@@ -1,0 +1,15 @@
+{
+    "venvPath": ".",
+    "venv": ".venv",
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Windows",
+    "typeCheckingMode": "basic",
+    "extraPaths": [
+        "ml_modules",
+        "backend"
+    ],
+    "reportMissingImports": true,
+    "analysis": {
+        "useLibraryCodeForTypes": true
+    }
+}

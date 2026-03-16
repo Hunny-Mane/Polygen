@@ -254,6 +254,27 @@
         </div>
     </div>
 
+    <!-- Generation History Modal -->
+    <div id="history-modal" class="history-modal hidden">
+        <div class="history-modal-card">
+            <button id="history-close">✕</button>
+            <h2>Generation Details</h2>
+            <div class="history-content">
+                <img id="history-image" style="display:none;" />
+                <div class="history-fields">
+                    <p><strong>Prompt:</strong></p>
+                    <div class="history-prompt-container">
+                        <span id="history-prompt"></span>
+                    </div>
+                    <p><strong>Type:</strong> <span id="history-type"></span></p>
+                    <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
+                    <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
+                    <p><strong>Seed:</strong> <span id="history-seed"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/dashboard.js"></script>
     <script>
         let activeTab = 'detection';

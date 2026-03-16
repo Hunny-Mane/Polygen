@@ -125,19 +125,23 @@ async function fetchGenerationRecords() {
     }
 }
 
+
+let currentGenerationRecords = [];
+
 function renderGenerationGallery(records) {
+    currentGenerationRecords = records;
     const el = document.getElementById('generation-gallery');
     if (!el) return;
     if (records.length === 0) {
         el.innerHTML = `<div class="empty-gallery"><span>✨</span>No generated media saved yet.<br>Generate an image or apply a filter to auto-save here.</div>`;
         return;
     }
-    el.innerHTML = records.map(r => {
+    el.innerHTML = records.map((r, idx) => {
         const imgSrc = r.image_b64 ? `data:image/png;base64,${r.image_b64}` : '';
         const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
         const prompt = r.prompt || '—';
         return `
-        <div class="gallery-card">
+        <div class="gallery-card history-item" onclick="openHistoryModalById(${idx})">
             ${imgSrc ? `<img src="${imgSrc}" alt="Generated media #${r.id}" loading="lazy">` : '<div style="height:160px;background:rgba(139,92,246,0.08);display:flex;align-items:center;justify-content:center;font-size:2rem;">' + (r.media_type === 'video' ? '🎬' : '🎨') + '</div>'}
             <div class="card-info">
                 <span class="badge-small badge-gen">AI GEN</span>
@@ -149,6 +153,59 @@ function renderGenerationGallery(records) {
         </div>`;
     }).join('');
 }
+
+// ── Generation History Modal ────────────────────────────────────────────────
+function openHistoryModalById(idx) {
+    const data = currentGenerationRecords[idx];
+    if (!data) return;
+    openHistoryModal(data);
+}
+
+function openHistoryModal(data) {
+    const modal = document.getElementById("history-modal");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+
+    document.getElementById("history-prompt").textContent = data.prompt || "—";
+    document.getElementById("history-type").textContent = data.media_type || data.type || "N/A";
+    document.getElementById("history-time").textContent = data.generation_time ? parseFloat(data.generation_time).toFixed(2) + 's' : "N/A";
+    
+    const ts = data.timestamp ? new Date(data.timestamp).toLocaleString() : "N/A";
+    document.getElementById("history-timestamp").textContent = ts;
+    document.getElementById("history-seed").textContent = data.seed || "Random";
+
+    const imgEl = document.getElementById("history-image");
+    if (data.image_b64) {
+        imgEl.src = `data:image/png;base64,${data.image_b64}`;
+        imgEl.style.display = 'block';
+    } else if (data.image) {
+        imgEl.src = data.image;
+        imgEl.style.display = 'block';
+    } else {
+        imgEl.style.display = 'none';
+        imgEl.src = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById("history-close");
+    if (closeBtn) {
+        closeBtn.onclick = () => {
+            document.getElementById("history-modal").classList.add("hidden");
+        };
+    }
+
+    // Close on background click
+    const modal = document.getElementById("history-modal");
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                modal.classList.add("hidden");
+            }
+        };
+    }
+});
 
 // ─────────────────────────────────────────────────────────────
 // Helpers

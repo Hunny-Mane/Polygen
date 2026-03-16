@@ -31,15 +31,179 @@
 
         <div class="card">
             <h3>Text-to-Image Generation</h3>
-            <input type="text" id="prompt-input" placeholder="A futuristic city with flying cars, cyberpunk style..."
-                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: white; margin-bottom: 1rem;">
+            <textarea id="prompt-input" rows="2" placeholder="A futuristic city with flying cars, cyberpunk style..."
+                oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 200)+'px'"
+                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: white; margin-bottom: 1rem; resize: none; font-family: inherit; font-size: inherit; line-height: 1.5; overflow-y: auto; max-height: 200px;"></textarea>
 
-            <button class="btn btn-primary" onclick="generateImage()">Generate</button>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Select AI Model</label>
+                    <select id="model-select"
+                        style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: #1e293b; color: white;">
+                        <option value="">Loading models...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="switch-container">
+                <span class="switch-label">Multi Generation (3 Images)</span>
+                <label class="switch">
+                    <input type="checkbox" id="t2i-multi-gen">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="switch-container">
+                <span class="switch-label">AI Upscale (4x)</span>
+                <label class="switch">
+                    <input type="checkbox" id="t2i-upscale">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+
+            <div class="switch-container">
+                <span class="switch-label">Auto Prompt Enhancement</span>
+                <label class="switch">
+                    <input type="checkbox" id="t2i-enhance">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Negative Prompt (Optional)</label>
+                <textarea id="negative-prompt" rows="1" placeholder="low quality, blurry, distorted..."
+                    oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 100)+'px'"
+                    style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; resize: none; font-family: inherit; font-size: 0.9rem;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+                <button class="btn btn-primary" id="btn-generate" onclick="generateImage()">Generate</button>
+                <button class="btn" id="btn-regenerate" onclick="regenerateSameSeed()" style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
+                <button class="btn" id="btn-variation" onclick="variationGeneration()" style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
+                <button class="btn" id="btn-stop" style="display: none; background: #ef4444; color: white;" onclick="stopGeneration()">Stop</button>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                    <span id="gen-timer" style="display: none; color: #94a3b8; font-family: monospace;">0.0s</span>
+                    <span id="step-counter" style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed (Optional)</label>
+                <input type="number" id="t2i-seed" placeholder="Random"
+                    style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
+            </div>
+            
             <div class="loader" id="gen-loader"></div>
 
             <div class="preview-container" id="gen-result" style="display:none;">
-                <div class="preview-box">
-                    <img id="generated-img" src="">
+                <div id="gen-images-container" class="multi-gen-grid">
+                    <!-- Images will be injected here -->
+                    <div class="preview-box">
+                        <img id="generated-img" src="">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <br><br>
+
+        <!-- ── Image-to-Image (ControlNet) ───────────────────────────────── -->
+        <div class="card">
+            <h3>Image Generation (Image-to-Image)</h3>
+            <p style="color:#94a3b8; margin-bottom:1.2rem; font-size:0.9rem;">
+                Upload a photo, pick a style, and let ControlNet transform it using Stable Diffusion.
+            </p>
+
+            <!-- Upload area -->
+            <div class="upload-area" id="i2i-drop-zone" style="margin-bottom:1.2rem;">
+                <p>Click to upload Image</p>
+                <input type="file" id="i2i-image-input" accept="image/*" hidden>
+            </div>
+
+            <!-- Upload preview (for inpainting) -->
+            <div id="i2i-upload-container" style="display:none; margin-bottom:1.5rem;">
+                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:0.5rem;">Upload Preview (Selection Enabled)</p>
+                <div id="i2i-upload-preview" class="preview-box-container">
+                    <!-- Layered canvases will be injected here -->
+                </div>
+            </div>
+
+            <!-- Style prompt cards -->
+            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:0.6rem;">Choose a Style</p>
+            <div id="i2i-style-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.75rem; margin-bottom:1.2rem;">
+                <div class="i2i-style-card style-vintage" data-prompt="1920s vintage photograph, sepia tone, film grain, aged photo" data-strength="0.6" onclick="selectStyle(this)">Vintage Photo</div>
+                <div class="i2i-style-card style-bw" data-prompt="old black and white portrait photo, high contrast monochrome" data-strength="0.65" onclick="selectStyle(this)">Black &amp; White</div>
+                <div class="i2i-style-card style-anime" data-prompt="anime style illustration, vibrant colors, clean linework" data-strength="0.5" onclick="selectStyle(this)">Anime Style</div>
+                <div class="i2i-style-card style-cyberpunk" data-prompt="cyberpunk futuristic neon city style, dark atmosphere, neon lights" data-strength="0.75" onclick="selectStyle(this)">Cyberpunk</div>
+                <div class="i2i-style-card style-oil" data-prompt="classical oil painting portrait, textured brushstrokes, renaissance style" data-strength="0.8" onclick="selectStyle(this)">Oil Painting</div>
+                <div class="i2i-style-card style-cartoon" data-prompt="pixar style cartoon character, bright colors, 3d animated look" data-strength="0.7" onclick="selectStyle(this)">Cartoon Style</div>
+            </div>
+
+            <!-- Hidden prompt + strength -->
+            <input type="hidden" id="i2i-prompt" value="">
+            <div id="i2i-selected-prompt" style="display:none; background:rgba(255,255,255,0.07); border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; color:#cbd5e1; margin-bottom:1rem;"></div>
+
+            <div style="margin-bottom:1rem;">
+                <label style="display:block; font-size:0.8rem; margin-bottom:0.4rem; color:#94a3b8;">
+                    Strength: <span id="i2i-strength-val">0.75</span>
+                    <span style="font-size:0.75rem; color:#64748b;"> (higher = more transformation)</span>
+                </label>
+                <input type="range" id="i2i-strength" min="0.1" max="1.0" step="0.05" value="0.75"
+                    oninput="document.getElementById('i2i-strength-val').innerText=parseFloat(this.value).toFixed(2)"
+                    style="width:100%; accent-color:#6366f1;">
+            </div>
+
+            <div class="switch-container">
+                <span class="switch-label">Multi Generation (3 Images)</span>
+                <label class="switch">
+                    <input type="checkbox" id="i2i-multi-gen">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="switch-container">
+                <span class="switch-label">AI Upscale (4x)</span>
+                <label class="switch">
+                    <input type="checkbox" id="i2i-upscale">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="switch-container">
+                <span class="switch-label">Auto Prompt Enhancement</span>
+                <label class="switch">
+                    <input type="checkbox" id="i2i-enhance">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+                <button class="btn btn-primary" id="btn-i2i-generate" onclick="generateImageFromImage()">Generate</button>
+                <button class="btn" id="btn-i2i-regenerate" onclick="regenerateSameSeedI2I()" style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
+                <button class="btn" id="btn-i2i-variation" onclick="variationGenerationI2I()" style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
+                <button class="btn" id="btn-i2i-stop" style="display:none; background:#ef4444; color:white;" onclick="stopI2IGeneration()">Stop</button>
+                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
+                    <span id="i2i-timer" style="display:none; color:#94a3b8; font-family:monospace;">0.0s</span>
+                    <span id="i2i-step-counter" style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed (Optional)</label>
+                <input type="number" id="i2i-seed" placeholder="Random"
+                    style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
+            </div>
+
+            <div class="loader" id="i2i-loader"></div>
+
+            <div class="preview-container" id="i2i-result" style="display:none;">
+                <div id="i2i-images-container" class="multi-gen-grid">
+                    <!-- Images will be injected here -->
+                    <div class="preview-box">
+                        <img id="i2i-generated-img" src="">
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,7 +237,68 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <!-- Generation History Modal -->
+    <div id="history-modal" class="history-modal hidden">
+        <div class="history-modal-card">
+            <button id="history-close">✕</button>
+            <h2>Generation Details</h2>
+            <div class="history-content">
+                <img id="history-image" style="display:none;" />
+                <div class="history-fields">
+                    <p><strong>Prompt:</strong></p>
+                    <div class="history-prompt-container">
+                        <span id="history-prompt"></span>
+                    </div>
+                    <p><strong>Type:</strong> <span id="history-type"></span></p>
+                    <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
+                    <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
+                    <p><strong>Seed:</strong> <span id="history-seed"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inpainting Floating Toolbar -->
+    <div id="inpainting-toolbar" class="floating-toolbar hidden">
+        <div class="toolbar-header" id="toolbar-drag-handle">
+            <span>Inpainting Tools</span>
+            <button id="toolbar-close">✕</button>
+        </div>
+        <div class="toolbar-body">
+            <button class="tool-btn active" id="tool-hand" title="Hand (Move)">✋</button>
+            <button class="tool-btn" id="tool-free" title="Free Selection">🖌️</button>
+            <button class="tool-btn" id="tool-rect" title="Rectangle Selection">⬜</button>
+            <button class="tool-btn" id="tool-circle" title="Circle Selection">⭕</button>
+            <button class="tool-btn" id="tool-ellipse" title="Ellipse Selection">💠</button>
+        </div>
+        
+        <!-- Sliding Prompt Panel -->
+        <div id="inpaint-prompt-panel" class="prompt-panel collapsed">
+            <div style="padding: 1rem;">
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Inpainting Prompt</label>
+                <textarea id="inpaint-prompt" rows="3" placeholder="Describe what to add/change in the selection..."
+                    style="width: 100%; min-height: 80px; max-height: 160px; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; resize: none; overflow-y: auto;"></textarea>
+                
+                <div style="margin: 1rem 0;">
+                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Denoise Strength: <span id="inpaint-strength-val">0.65</span></label>
+                    <input type="range" id="inpaint-strength" min="0.5" max="0.8" step="0.05" value="0.65" 
+                           oninput="document.getElementById('inpaint-strength-val').innerText=this.value" 
+                           style="width: 100%; accent-color: var(--primary);">
+                </div>
+
+                <div style="margin: 1rem 0;">
+                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Mask Blur: <span id="inpaint-blur-val">5</span>px</label>
+                    <input type="range" id="inpaint-blur" min="0" max="20" step="1" value="5" 
+                           oninput="document.getElementById('inpaint-blur-val').innerText=this.value" 
+                           style="width: 100%; accent-color: var(--primary);">
+                </div>
+
+                <button class="btn btn-primary" id="btn-inpaint-send" style="width: 100%; padding: 0.6rem;" onclick="sendInpaintRequest()">Send Inpainting</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js?v=2.1"></script>
 </body>
 
 </html>
