@@ -132,6 +132,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // 4. Smooth Scroll to Top for Home Button
+    const homeBtn = document.querySelector('.home-btn');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', (e) => {
+            const currentPath = window.location.pathname;
+            if (currentPath.endsWith('index.html') || currentPath === '/' || currentPath === '') {
+                e.preventDefault();
+                lenis.scrollTo(0, { 
+                    duration: 0.5, 
+                    easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t // Quadratic In-Out
+                });
+            }
+        });
+    }
+
     // 4. Antigravity Particles (particles.js)
     if (document.getElementById('particles-js')) {
         particlesJS('particles-js', {

@@ -1,38 +1,23 @@
-/* Detection Scrollytelling Styles */
+/* Detection Neumorphic Forensic Flow Styles */
 
 :root {
-    --detect-cyan: #00f2ff;
-    --detect-glow: rgba(0, 242, 255, 0.5);
-    --card-bg: rgba(13, 20, 34, 0.7);
-    --card-border: rgba(0, 242, 255, 0.2);
+    --forensic-cyan: #00f2ff;
+    --mist-grey: #F0F2F5;
+    --neumo-shadow-light: #ffffff;
+    --neumo-shadow-dark: #d1d9e6;
+    --alert-red: #ff3e3e;
 }
 
-.detection-scrolly-container {
+.detection-forensic-container {
     position: relative;
     width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
     overflow: hidden;
-    background: #05070a;
+    transition: background 0.5s ease;
 }
 
-/* Background Pattern */
-.circuit-bg {
-    position: absolute;
-    inset: 0;
-    opacity: 0.1;
-    background-image: 
-        radial-gradient(circle at 2px 2px, var(--detect-cyan) 1px, transparent 0);
-    background-size: 40px 40px;
-    z-index: 0;
-    pointer-events: none;
-    transition: opacity 1s ease;
-}
-
-.circuit-bg.glow {
-    opacity: 0.3;
-    filter: drop-shadow(0 0 10px var(--detect-cyan));
-}
-
-#detection-pin-section {
+#detection-pin-wrapper {
     height: 100vh;
     display: flex;
     align-items: center;
@@ -42,226 +27,660 @@
     z-index: 10;
 }
 
-.forensic-layout {
+.forensic-grid {
     display: grid;
-    grid-template-columns: 350px 1fr 350px;
-    gap: 4rem;
+    grid-template-columns: 250px 1fr 300px;
+    gap: 3rem;
     width: 100%;
     max-width: 1600px;
     align-items: center;
-}
-
-/* Left Pinned Text */
-.status-monitor {
-    font-family: 'Audiowide', cursive;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.status-line {
-    font-size: 0.9rem;
-    letter-spacing: 2px;
-    color: var(--detect-cyan);
-    opacity: 0.6;
-    border-left: 2px solid var(--detect-cyan);
-    padding-left: 1rem;
-    transition: all 0.5s ease;
-}
-
-.status-line.active {
-    opacity: 1;
-    text-shadow: 0 0 10px var(--detect-cyan);
-}
-
-/* Center Image Container */
-.forensic-frame {
     position: relative;
-    width: 100%;
-    aspect-ratio: 16/9;
-    border: 1px solid var(--card-border);
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
-}
-
-#detection-main-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transform: scale(1.1);
-    filter: blur(10px) brightness(0.5);
-}
-
-.glitch-flash {
-    position: absolute;
-    inset: 0;
-    background: var(--detect-cyan);
-    opacity: 0;
-    pointer-events: none;
-    mix-blend-mode: overlay;
     z-index: 5;
 }
 
-/* Right Data Cards */
-.model-stack {
+/* Center Image Canvas */
+.image-center-piece {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    justify-content: center;
+    align-items: center;
 }
 
-.glass-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--card-border);
-    padding: 1.5rem;
-    border-radius: 12px;
-    transform: translateX(100px);
-    opacity: 0;
+.neumorphic-frame {
     position: relative;
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 4/5;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 30px;
+    box-shadow: inset 10px 10px 20px var(--neumo-shadow-dark),
+        inset -10px -10px 20px var(--neumo-shadow-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
-.glass-card h4 {
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-    margin-bottom: 0.5rem;
-    color: var(--detect-cyan);
+#forensic-portrait {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 20px;
+    opacity: 0.9;
+    filter: contrast(1.1);
 }
 
-.glass-card p {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    line-height: 1.4;
-}
-
-/* Connecting Lines (SVG) */
-.connection-overlay {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-}
-
-.pulse-line {
-    stroke: var(--detect-cyan);
-    stroke-width: 1;
-    fill: none;
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-    opacity: 0;
-}
-
-/* The Laser Scan */
-.scan-laser {
+/* Laser Scanner */
+.laser-scanner {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, var(--detect-cyan), transparent);
-    box-shadow: 0 0 15px var(--detect-cyan);
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--forensic-cyan), transparent);
+    box-shadow: 0 0 15px var(--forensic-cyan);
     z-index: 10;
     opacity: 0;
     pointer-events: none;
 }
 
-/* Bounding Boxes */
-.detection-box {
+/* Inconsistency Alert */
+.inconsistency-alert {
     position: absolute;
-    border: 1px solid var(--detect-cyan);
-    background: rgba(0, 242, 255, 0.05);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.box-label {
-    position: absolute;
-    top: -20px;
-    left: 0;
-    font-size: 0.6rem;
-    font-family: 'monospace';
-    color: var(--detect-cyan);
-    white-space: nowrap;
-    text-shadow: 0 0 5px var(--detect-cyan);
-}
-
-/* Diagnostic Output */
-.diagnostic-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    z-index: 20;
-}
-
-.binary-log {
-    position: absolute;
-    bottom: 20px;
-    left: 20px;
-    width: 200px;
-    height: 100px;
-    overflow: hidden;
-    font-family: 'monospace';
-    font-size: 0.6rem;
-    color: var(--detect-cyan);
-    opacity: 0.4;
-}
-
-.final-status {
-    text-align: center;
-}
-
-.final-status h3 {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-family: 'Audiowide', cursive;
-    font-size: 2rem;
-    color: #fff;
-    margin-bottom: 1rem;
+    color: var(--alert-red);
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0;
+    z-index: 15;
+    white-space: nowrap;
 }
 
-.integrity-score {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--detect-cyan);
-    text-shadow: 0 0 20px var(--detect-cyan);
+.flicker-anim {
+    animation: alert-flicker 0.2s infinite;
 }
 
-/* Scroll Indicators/Pinned Text at Bottom */
-.pinned-bottom-text {
+@keyframes alert-flicker {
+    0% {
+        opacity: 0.2;
+        transform: translate(-50%, -50%) scale(0.98);
+        color: #ff0000;
+    }
+
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.02);
+        color: var(--alert-red);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+/* Status Badge */
+.status-badge {
     position: absolute;
     bottom: 40px;
     left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    background: #ffffff;
+    color: var(--alert-red);
+    font-family: 'Audiowide', cursive;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    box-shadow: 8px 8px 16px var(--neumo-shadow-dark),
+        -8px -8px 16px var(--neumo-shadow-light);
+    font-weight: 700;
+    opacity: 0;
+    z-index: 20;
+    letter-spacing: 2px;
+}
+
+/* SVG Strands (Straight Lines) */
+.strands-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.neural-strand {
+    fill: none;
+    stroke: var(--forensic-cyan);
+    stroke-width: 1;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    opacity: 0.3;
+}
+
+.label-extension {
+    fill: none;
+    stroke: var(--forensic-cyan);
+    stroke-width: 1;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
+    opacity: 0.2;
+}
+
+.strand-pulse {
+    animation: strand-pulse 3s infinite ease-in-out;
+}
+
+@keyframes strand-pulse {
+    0% {
+        opacity: 0.2;
+        stroke-width: 1.5;
+    }
+
+    50% {
+        opacity: 0.6;
+        stroke-width: 2.5;
+    }
+
+    100% {
+        opacity: 0.2;
+        stroke-width: 1.5;
+    }
+}
+
+/* Stats/Project Panel (Left) */
+.stats-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    opacity: 0;
+    transform: translateX(-50px);
+}
+
+.stats-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.stat-item {
+    font-family: 'Audiowide', cursive;
+    font-size: 0.8rem;
+    color: #475569;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+    border-left: 2px solid var(--forensic-cyan);
+    letter-spacing: 1px;
+}
+
+.stat-item span {
+    display: block;
+    font-size: 1.1rem;
+    color: #000;
+    margin-top: 0.2rem;
+}
+
+.project-card {
+    padding: 1.2rem;
+    border-radius: 18px;
+}
+
+/* Models Panel (Right) */
+.models-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.neumo-card {
+    background: #ffffff;
+    padding: 1.2rem;
+    border-radius: 18px;
+    box-shadow: 10px 10px 20px var(--neumo-shadow-dark),
+        -10px -10px 20px var(--neumo-shadow-light);
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.model-card {
+    position: relative;
+    margin-top: 15px;
+    /* Offset to sit below extension line */
+}
+
+.label-anchor {
+    position: absolute;
+    top: -15px;
+    /* Aligns with extension line */
+    left: -20px;
+    width: 100%;
+    height: 1px;
+}
+
+.neumo-card h4 {
+    font-family: 'Audiowide', cursive;
+    color: var(--forensic-cyan);
+    font-size: 0.9rem;
+    margin-bottom: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.neumo-card p {
+    font-size: 0.8rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* Floating Animation */
+.floating {
+    animation: floating-anim 6s infinite ease-in-out;
+}
+
+@keyframes floating-anim {
+    0% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    33% {
+        transform: translateY(-10px) rotate(0.5deg);
+    }
+
+    66% {
+        transform: translateY(5px) rotate(-0.5deg);
+    }
+
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+}
+
+/* Footer Action */
+.detection-action-footer {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
     transform: translateX(-50%);
-    width: 80%;
-    max-width: 800px;
-    text-align: center;
     opacity: 0;
 }
 
-.pinned-bottom-text p {
-    font-size: 1rem;
-    color: #94a3b8;
-    line-height: 1.6;
-}
-
-/* Nav Blur Override */
+/* Nav Blur Override Integration */
 .nav-wrapper.scrolled nav {
-    background: rgba(10, 14, 23, 0.95) !important;
-    backdrop-filter: blur(30px) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(20px) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05) !important;
 }
 
-@media (max-width: 1100px) {
-    .forensic-layout {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+/* Detection Blueprint Architecture Styles */
+
+:root {
+    --blueprint-cyan: #00f2ff;
+    --blueprint-glow: 0 0 10px rgba(0, 242, 255, 0.5);
+    --neumo-shadow-light: #ffffff;
+    --neumo-shadow-dark: #d1d9e6;
+}
+
+.detection-blueprint-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+#detection-pin-wrapper {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4%;
+    position: relative;
+}
+
+/* Background Grid & Dust */
+.blueprint-grid-bg {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.blueprint-layout-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 280px;
+    gap: 4rem;
+    width: 100%;
+    max-width: 1700px;
+    align-items: center;
+    position: relative;
+    z-index: 5;
+}
+
+/* Centerpiece Area */
+.centerpiece-area {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.neumorphic-recess-frame {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 16/9;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: inset 10px 10px 20px var(--neumo-shadow-dark),
+        inset -10px -10px 20px var(--neumo-shadow-dark);
+    overflow: hidden;
+}
+
+#blueprint-hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    opacity: 0.9;
+    filter: grayscale(0.2) contrast(1.1);
+}
+
+/* Vertical Binary Scroller */
+.binary-scroller.vertical {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    width: 100px;
+    height: 80px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.binary-scroller.vertical .binary-stream {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: var(--blueprint-cyan);
+    opacity: 0.8;
+    white-space: pre;
+    line-height: 1.2;
+    text-shadow: 0 0 8px var(--blueprint-cyan);
+    animation: binary-scroll-v 8s linear infinite;
+}
+
+@keyframes binary-scroll-v {
+    0% {
+        transform: translateY(0);
     }
-    .status-monitor, .model-stack {
-        display: none; /* Simplify for mobile for now if needed, or stack */
+
+    100% {
+        transform: translateY(-50%);
     }
+}
+
+/* Try Detection Button & Overlay */
+.frame-action-overlay {
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    pointer-events: none;
+    /* Let clicks pass through overlay container */
+}
+
+.try-detection-btn {
+    padding: 0.8rem 2rem;
+    font-family: 'Audiowide', cursive !important;
+    font-size: 0.8rem;
+    background-color: #aeecf0;
+    color: black;
+    border: none;
+    border-radius: 50px;
+    box-shadow: 4px 4px 8px var(--neumo-shadow-dark);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
+    pointer-events: auto;
+    /* Ensure button itself is clickable */
+    position: relative;
+    z-index: 100;
+}
+
+.try-detection-btn:hover {
+    box-shadow: inset 4px 4px 8px var(--neumo-shadow-dark),
+        inset -4px -4px 8px var(--neumo-shadow-dark);
+    transform: scale(0.98);
+    color: var(--blueprint-cyan);
+    background-color: white;
+}
+
+/* Instant Laser Transition */
+.instant-laser {
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: var(--blueprint-cyan);
+    box-shadow: 0 0 20px var(--blueprint-cyan);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Refined Dust: Bottom Origin, Glowing, Blinking */
+.blueprint-dust {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
+    background: rgba(0, 242, 255, 0.6) !important;
+    border-radius: 50%;
+    animation: dust-blink 4s infinite ease-in-out;
+}
+
+@keyframes dust-blink {
+
+    0%,
+    100% {
+        opacity: 0.1;
+        box-shadow: 0 0 5px rgba(0, 242, 255, 0.1);
+    }
+
+    50% {
+        opacity: 0.6;
+        box-shadow: 0 0 15px rgba(0, 242, 255, 0.4);
+    }
+}
+
+
+/* Left Flank (Timeline) */
+.left-flank {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.timeline-container {
+    position: relative;
+    width: 20px;
+    height: 300px;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e2e8f0;
+    transform: translateX(-50%);
+}
+
+.liquid-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: var(--blueprint-cyan);
+    box-shadow: var(--blueprint-glow);
+}
+
+.node {
+    position: absolute;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+}
+
+.node.node-top {
+    top: 0;
+}
+
+.node.node-bottom {
+    bottom: 0;
+}
+
+.node.active {
+    border-color: var(--blueprint-cyan);
+    box-shadow: var(--blueprint-glow);
+}
+
+.flank-cards-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    flex: 1;
+}
+
+.flank-card {
+    padding: 1.5rem;
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+.flank-card h5 {
+    font-family: 'Audiowide', cursive;
+    color: var(--blueprint-cyan);
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.flank-card p {
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: 600;
+}
+
+/* Right Flank (Strands) */
+.right-flank {
+    position: relative;
+    height: 400px;
+    display: flex;
+    align-items: center;
+}
+
+.neural-strands-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.circuit-trace {
+    fill: none;
+    stroke: black;
+    stroke-width: 1;
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.6));
+    transition: opacity 0.3s ease;
+}
+
+.model-label.left-label {
+    text-align: right;
+    margin: 0;
+    padding-right: 1.5rem;
+    border-left: none;
+}
+
+.label-with-terminal {
+    position: absolute;
+    /* Allows exact matching with SVG Y-coordinates */
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    opacity: 0;
+    z-index: 20;
+    transition: transform 0.3s ease;
+}
+
+.label-with-terminal.left-side {
+    flex-direction: row-reverse;
+}
+
+.strand-terminal {
+    width: 150px;
+    height: 12px;
+    background: #50bbc3;
+    transform: skewX(-25deg);
+    box-shadow: 0 0 20px #50bbc3, 0 0 20px #50bbc3;
+    filter: brightness(1.2);
+}
+
+.model-labels {
+    display: block;
+    /* Replaced by absolute wrappers in HTML */
+}
+
+.model-label {
+    font-family: 'Audiowide', cursive;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    color: #0e60d3;
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.model-label.active {
+    opacity: 1;
+    transform: translateX(0);
+    color: #0e60d3;
+    /* Keeping user's blue color */
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+/* Footer Action */
+.blueprint-footer {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+}
+
+/* Dust Particles Integration */
+.blueprint-dust {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
 }

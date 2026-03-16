@@ -79,79 +79,130 @@
             </div>
         </section>
 
-        <!-- High-Speed Forensic Detection Scrolly -->
-        <section id="detection" class="detection-scrolly-container">
-            <div class="circuit-bg"></div>
-            
-            <div id="detection-pin-section">
-                <div class="forensic-layout">
-                    
-                    <!-- Left: Status Monitor -->
-                    <div class="status-monitor">
-                        <div class="status-line" id="status-init">INPUT_STREAM: INITIALIZED</div>
-                        <div class="status-line" id="status-arch">ARCHITECTURES: MULTI-STAGE ENSEMBLE</div>
-                    </div>
+        <!-- Chapter 1: Detection (Blueprint Architecture) -->
+        <section id="detection" class="detection-blueprint-container">
+            <div id="detection-pin-wrapper">
 
-                    <!-- Center: Image Analysis Area -->
-                    <div class="forensic-frame">
-                        <img id="detection-main-image" src="assets/detection_demo_image.png" alt="Forensic Analysis Image">
-                        <div class="glitch-flash"></div>
-                        
-                        <!-- Laser Scan Line -->
-                        <div class="scan-laser"></div>
+                <!-- Background Grid Pattern -->
+                <div class="blueprint-grid-bg"></div>
 
-                        <!-- Bounding Boxes (Revealed by Laser) -->
-                        <div class="detection-box" style="top: 20%; left: 40%; width: 20%; height: 25%;">
-                            <span class="box-label">[OBJECT: HUMAN]</span>
-                        </div>
-                        <div class="detection-box" style="top: 55%; left: 30%; width: 40%; height: 30%;">
-                            <span class="box-label">[STATE: AUTHENTIC]</span>
+                <div class="blueprint-layout-grid">
+
+                    <!-- Left Flank: Timeline & System Cards -->
+                    <div class="left-flank">
+                        <div class="timeline-container">
+                            <div class="timeline-line">
+                                <div class="liquid-fill"></div>
+                            </div>
+                            <div class="node node-top"></div>
+                            <div class="node node-bottom"></div>
                         </div>
 
-                        <!-- Diagnostic Report Overlay -->
-                        <div class="diagnostic-overlay">
-                            <div class="final-status">
-                                <h3>DIAGNOSTIC COMPLETE</h3>
-                                <div class="integrity-score">98.4%</div>
-                                <p>MEDIA_INTEGRITY: CONFIRMED</p>
+                        <div class="flank-cards-stack">
+                            <div class="flank-card neumo-card">
+                                <h5 style="color: rgb(0, 0, 0);">DETECTION CORE</h5>
+                                <p>By ensembling multiple neural backbones, we cross-verify pixel-level anomalies to
+                                    ensure a definitive result.</p>
+                            </div>
+                            <div class="flank-card neumo-card">
+                                <h5 style="color: rgb(0, 0, 0);">NEURAL BACKBONE</h5>
+                                <p>With diverse datasets, model can distinguish between natural organic sensors and
+                                    synthetic generative noise.</p>
                             </div>
                         </div>
-
-                        <!-- Binary Log -->
-                        <div class="binary-log"></div>
                     </div>
 
-                    <!-- Right: Model Cards -->
-                    <div class="model-stack">
-                        <div class="glass-card">
-                            <h4>[XCEPTION]</h4>
-                            <p>Depthwise separable convolutions for efficient spatial feature mapping.</p>
+                    <!-- Centerpiece: Horizontal Image Frame -->
+                    <div class="centerpiece-area">
+                        <div class="neumorphic-recess-frame">
+                            <img id="blueprint-hero-image" src="assets/Gemini_Generated_Image_fzcw92fzcw92fzcw.png"
+                                alt="Forensic Analysis Workbench">
+
+
+
+                            <!-- Try Detection Button -->
+
+
+                            <!-- Instant Laser Element -->
+                            <div class="instant-laser"></div>
                         </div>
-                        <div class="glass-card">
-                            <h4>[EXCEPTION]</h4>
-                            <p>Advanced refinement layer for identifying high-frequency noise anomalies.</p>
+                        <div class="frame-action-overlay">
+                            <button class="try-detection-btn neumo-btn">Try Detection</button>
                         </div>
-                        <div class="glass-card">
-                            <h4>[ENSEMBLE]</h4>
-                            <p>Multi-stage voting mechanism combining semantic and geometric heuristics.</p>
-                        </div>
+                    </div>
+
+                    <!-- Right Flank: Neural Labels -->
+                    <div class="right-flank">
                     </div>
                 </div>
 
-                <!-- SVG Connecting Lines -->
-                <svg class="connection-overlay" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path class="pulse-line" d="M 80,40 L 60,45" />
-                    <path class="pulse-line" d="M 80,50 L 60,50" />
-                    <path class="pulse-line" d="M 80,60 L 60,55" />
+                <!-- Absolute Positioned Labels (Aligned to SVG Y-Coordinates) -->
+                <div class="label-with-terminal right-side" id="wrapper-strand-1"
+                    style="top: 16.7%; right: 9.3%; display: flex; flex-direction: column;">
+                    <div style="color: black; font-style: italic; margin-top: -41px;">Accuracy: 94.7%</div>
+                    <div style="display: flex; flex-direction: row;">
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-1" style="margin-left: 5px;"></div>
+                    </div>
+                    <div class="model-label" id="label-xception"
+                        style="margin-top: 0px; font-size:x-large; color: black;">
+                        [ENSEMBLE]
+                    </div>
+
+                </div>
+                <div class="label-with-terminal right-side" id="wrapper-strand-2"
+                    style="top: 56.7%; right: 4.4%; display: flex; flex-direction: column;">
+                    <div class="model-label" id="label-ensemble"
+                        style="margin-top: -10px; font-size:x-large; color: black;">[XCEPTION]</div>
+                    <div style="display: flex; flex-direction: row;">
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-2" style="margin-left: 5px;"></div>
+                    </div>
+                    <div style="color: black; font-style: italic;">Accuracy : 93.45%</div>
+
+                </div>
+                <div class="label-with-terminal left-side" id="wrapper-strand-3"
+                    style="top: 81.7%; left: 26.5%; display: flex; flex-direction: column;">
+                    <div class="model-label left-label" id="label-exception"
+                        style="margin-top: -10px; font-size:x-large; color: black;">[EFFICIENTNET]
+                    </div>
+                    <div style="display: flex; flex-direction: row;">
+                        <div class="strand-terminal" id="terminal-3" style="margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                        <div class="strand-terminal" id="terminal-1"
+                            style="width: 5%; background-color: #50bbc3; margin-left: 5px;"></div>
+                    </div>
+                    <div style="color: black; font-style: italic;">Accuracy: 93.57%</div>
+
+                </div>
+
+                <!-- Global Overlay SVG for Neural Strands -->
+                <svg class="neural-strands-overlay" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+                    <defs>
+                        <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+                                result="glow" />
+                            <feMerge>
+                                <feMergeNode in="glow" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+                    <path class="circuit-trace" id="strand-1" d="M 600,230 L 650,165 L 900,165"
+                        filter="url(#soft-glow)" />
+                    <path class="circuit-trace" id="strand-2" d="M 734,550 L 770,650 L 950,650"
+                        filter="url(#soft-glow)" />
+                    <path class="circuit-trace" id="strand-3" d="M 620,770 L 580,900 L 300,900"
+                        filter="url(#soft-glow)" />
                 </svg>
-
-                <!-- Final Pinned Text -->
-                <div class="pinned-bottom-text">
-                    <p>OBSERVE: Real-time neural parsing. Our models identify and verify media integrity instantly, processing every frame locally on your hardware.</p>
-                    <div style="margin-top: 1.5rem;">
-                        <a href="detection.html" class="btn cyber-btn">Launch Full Detector</a>
-                    </div>
-                </div>
             </div>
         </section>
 
