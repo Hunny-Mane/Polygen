@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="css/neumorphism.css"> <!-- Restoring old nav styles -->
     <link rel="stylesheet" href="css/index.css"> <!-- Landing specific styles -->
     <link rel="stylesheet" href="css/detection_scrolly.css"> <!-- New Detection Scrolly -->
+    <link rel="stylesheet" href="css/generation_scrolly.css"> <!-- New Generation Scrolly -->
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 
     <!-- GSAP & Lenis -->
@@ -217,22 +218,146 @@
             </div>
         </section>
 
-        <!-- Chapter 2: Generation -->
-        <section id="generation" class="chapter-section">
-            <div class="chapter-layout">
-                <div class="chapter-media cyber-card" style="order: 2;">
-                    <img src="assets/bg_generation.png" alt="Generation Process Visualization"
-                        style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
-                </div>
-                <div class="chapter-text" style="order: 1;">
-                    <h2>02. High-Fidelity Synthesis</h2>
-                    <p>
-                        Unleash creativity with state-of-the-art latent diffusion models. From cinematic photorealism to
-                        stylistic transformations, POLYGEN generates the impossible.
-                    </p>
-                    <div style="margin-top: 2rem;">
-                        <a href="generation.html" class="btn cyber-btn">Open Generator</a>
+        <!-- Chapter 2: Generation (White Neumorphic Scrollytelling) -->
+        <section id="generation" class="generation-neumo-scrolly">
+            <div class="gen-bg"></div>
+
+            <div class="gen-pin-wrapper">
+                <div class="gen-layout">
+                    <!-- Left: Copy -->
+                    <div class="gen-copy">
+                        <h1 style="font-family: Audiowide, cursive;">IMAGE GENERATION</h1><br>
+                        <p>
+                            A voxel point-cloud resolves from latent chaos into a cyberpunk cityscape. Witness the
+                            real-time assembly of depth, sharpness, and neon geometry as deep learning models
+                            construct
+                            a synthetic world from the ground up.
+                        </p>
                     </div>
+
+                    <!-- Center: Render Frame -->
+                    <div class="gen-frame">
+                        <div class="gen-frame-inner">
+                            <div class="latent-soup"></div>
+                            <img class="gen-preview" src="assets/gen_20260314_215536_030209.png"
+                                alt="Generated image preview">
+                        </div>
+                    </div>
+
+                    <!-- Right: Prompt Ingredients Tray -->
+                    <div class="token-tray">
+                        <div class="tray-title" data-tray-title>Prompt Ingredients</div>
+                        <div class="token-field">
+                            <!-- Phase 0: Typed prompt (scroll-tied) -->
+                            <div class="typed-prompt" data-typed-prompt aria-label="Prompt being typed">
+                                <span class="typed-label">Prompt</span>
+                                <span class="typed-text">
+                                    <span class="typed-content" data-typed-text></span><span class="typed-caret"
+                                        aria-hidden="true"></span>
+                                </span>
+                            </div>
+
+                            <div class="token-pill variant-dark">
+                                <span class="dot"></span><span>Cinematic Look</span>
+                            </div>
+                            <div class="token-pill variant-warm">
+                                <span class="dot"></span><span>Reflected Lights</span>
+                            </div>
+                            <div class="token-pill variant-cyan">
+                                <span class="dot"></span><span>Sharp Edges</span>
+                            </div>
+                            <div class="token-pill variant-warm">
+                                <span class="dot"></span><span>Non-Fluid</span>
+                            </div>
+                            <div class="token-pill variant-dark">
+                                <span class="dot"></span><span>Overhead</span>
+                            </div>
+
+                            <div class="mix-indicator">
+                                <div class="ring"></div>
+                                <div class="label">Mixing</div>
+                            </div>
+
+                            <!-- Phase 2+: Synthesized info + filter marquee -->
+                            <div class="synth-panel" data-synth-panel aria-label="Synthesized metadata">
+                                <div class="synth-meta">
+                                    <div class="synth-line">
+                                        <span class="k">Model</span>
+                                        <span class="v">SD 1.5</span>
+                                    </div>
+                                    <div class="synth-line" style="justify-content: center; align-items: center;">
+                                        <span class="v" style="font-family: 'Audiowide', cursive;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gen-text-dim);">Apply Various
+                                            Filter</span>
+                                    </div>
+                                </div>
+
+                                <div class="synth-marquee" data-synth-marquee aria-label="Filter marquee">
+                                    <div class="synth-row" data-synth-row="1">
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: blue;"></div>
+                                            <div>Cyberpunk</div>
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: green;"></div>
+                                            <div>Cartoon</div>
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: rgb(87, 2, 102);"></div>
+                                            <div>Anime</div>
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: red;"></div>
+                                            <div>Vintage</div>
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: orange;"></div>
+                                            <div>Painting</div>
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: purple;"></div>
+                                            <div>Sketch</div>
+                                        </div>
+                                    </div>
+                                    <div class="synth-row" data-synth-row="2">
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: purple;"></div>
+                                            Sketch
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: orange;"></div>
+                                            Painting
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: red;"></div>
+                                            Vintage
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: rgb(75, 9, 145);"></div>
+                                            Cartoon
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: green;"></div>
+                                            Cyberpunk
+                                        </div>
+                                        <div class="synth-pill">
+                                            <div class="dots" style="background-color: blue;"></div>
+                                            Anime
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gen-footer-cta">
+                    <a href="generation.html">
+                        <span>Try Generation</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -289,6 +414,7 @@
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="js/landing.js"></script>
     <script src="js/detection_scrolly.js"></script>
+    <script src="js/generation_scrolly.js"></script>
 </body>
 
 </html>
