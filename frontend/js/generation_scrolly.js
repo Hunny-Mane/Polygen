@@ -65,23 +65,41 @@ document.addEventListener('DOMContentLoaded', () => {
   // ────────────────────────────────────────────────────────────────────────────
   // Background: single fullscreen Canvas reveal blobs
   // ────────────────────────────────────────────────────────────────────────────
-  const revealCanvas = section.querySelector('[data-gen-reveal-canvas]') || document.querySelector('[data-gen-reveal-canvas]');
-  const revealCtx = revealCanvas ? revealCanvas.getContext('2d', { alpha: true, desynchronized: true }) : null;
+  // Background reveal blobs have been disabled for performance.
+  // Keep references null so all related logic is effectively a no-op.
+  const revealCanvas = null;
+  const revealCtx = null;
   let gradientCanvas = null;
   let gradientCtx = null;
   let dpr = 1;
   let w = 0;
   let h = 0;
 
-  const blobs = Array.from({ length: blobCount }).map((_, i) => ({
-    // Normalized centers; animated by GSAP for minimal overhead.
-    x: Math.random(),
-    y: Math.random(),
-    r: 0.12 + Math.random() * 0.12,
-    phase: Math.random() * Math.PI * 2,
-    speed: 0.35 + Math.random() * 0.55,
-    drift: (i % 2 ? 1 : -1) * (0.05 + Math.random() * 0.09),
-  }));
+  // Background blobs are fully disabled for performance. We keep an empty array
+  // so downstream reveal logic is a harmless no-op and does not impact layout.
+  const blobs = [];
+
+  // Chapter 1-style animated grid background (independent of reveal blobs)
+  const genGrid = section.querySelector('.gen-grid-bg');
+  const genParallax = section.querySelector('.gen-parallax-grid');
+
+  if (genGrid) {
+    gsap.to(genGrid, {
+      backgroundPositionY: "-=50px",
+      duration: 18,
+      ease: "none",
+      repeat: -1,
+    });
+  }
+
+  if (genParallax) {
+    gsap.to(genParallax, {
+      backgroundPositionY: "-=100px",
+      duration: 6,
+      ease: "none",
+      repeat: -1,
+    });
+  }
 
   const resizeReveal = () => {
     if (!revealCanvas || !revealCtx) return;
@@ -205,16 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Click Event: "Vacuum" implosion + SVG expansion reveal (transform-only)
   // ────────────────────────────────────────────────────────────────────────────
   const ctaLink = cta ? cta.querySelector('a') : null;
-  const obsidianSvg = section.querySelector('[data-gen-obsidian-reveal]');
-  const obsidianCircle = section.querySelector('[data-gen-obsidian-circle]');
 
-  const getViewportRadius = (cx, cy) => {
-    const dx = Math.max(cx, window.innerWidth - cx);
-    const dy = Math.max(cy, window.innerHeight - cy);
-    return Math.ceil(Math.hypot(dx, dy));
-  };
-
-  if (ctaLink && obsidianSvg && obsidianCircle) {
+  if (ctaLink) {
     let locked = false;
     ctaLink.addEventListener('click', (e) => {
       // Let the link work normally if GSAP is unavailable.
@@ -225,58 +235,62 @@ document.addEventListener('DOMContentLoaded', () => {
       locked = true;
       e.preventDefault();
 
+      // Final, synchronous capture right before redirect ("data implosion" sync)
+      if (window.captureActiveSession) {
+        try {
+          window.captureActiveSession('generation_cta');
+        } catch (err) {
+          console.warn('PolyGen capture before CTA navigation failed:', err);
+        }
+      }
+
       const href = ctaLink.getAttribute('href') || 'generation.html';
       const r = ctaLink.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
 
-      // Start state: clip circle at CTA center.
-      obsidianSvg.style.opacity = '1';
-      obsidianCircle.setAttribute('cx', String(cx));
-      obsidianCircle.setAttribute('cy', String(cy));
-      obsidianCircle.setAttribute('r', '0');
-
       const vacuumTl = gsap.timeline({
-        defaults: { duration: 0.35, ease: 'expo.in' },
+        defaults: { duration: 0.45, ease: 'expo.in' },
         onComplete: () => {
           window.location.href = href;
         },
       });
 
-      // Vacuum target transforms (no layout).
-      const targets = [copy, tray, frame].filter(Boolean);
+      // Vacuum target transforms (no layout) – pull everything in the
+      // generation chapter (cards, tray, blobs, background canvas) behind CTA.
+      const extraTargets = [
+        pinWrapper,
+        revealCanvas,
+        soup,
+        preview,
+        typedPrompt,
+        synthPanel,
+        ...tokens,
+      ].filter(Boolean);
+
+      const targets = [copy, tray, frame, ...extraTargets].filter(Boolean);
       vacuumTl.to(targets, {
         x: (i, el) => {
           const br = el.getBoundingClientRect();
           const ex = br.left + br.width / 2;
-          return (cx - ex) * 0.45;
+          return (cx - ex);
         },
         y: (i, el) => {
           const br = el.getBoundingClientRect();
           const ey = br.top + br.height / 2;
-          return (cy - ey) * 0.45;
+          return (cy - ey);
         },
-        scale: 0.88,
-        opacity: 0.12,
+        scale: 0.25,
+        opacity: 0,
         force3D: true,
-        stagger: 0.02,
+        stagger: 0,
       }, 0);
 
-      // Fade the reveal canvas gently with the vacuum.
+      // Stop the background reveal animation and make sure canvas is hidden.
       if (revealCanvas) {
-        vacuumTl.to(revealCanvas, { opacity: 0.0 }, 0);
+        stopReveal();
+        vacuumTl.set(revealCanvas, { opacity: 0 }, 0);
       }
-
-      // Expand the obsidian reveal circle.
-      vacuumTl.to({}, {
-        duration: 0.38,
-        ease: 'power2.out',
-        onUpdate: function () {
-          const p = this.progress();
-          const rr = getViewportRadius(cx, cy) * p;
-          obsidianCircle.setAttribute('r', rr.toFixed(2));
-        },
-      }, 0.02);
     }, { passive: false });
   }
 
@@ -551,7 +565,10 @@ document.addEventListener('DOMContentLoaded', () => {
       // Final: CTA reveal
       mainTl.addLabel('cta', 3.6);
       mainTl.to(cta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 'cta')
-        .set(cta, { pointerEvents: 'auto' }, 'cta+=0.05');
+        .set(cta, { pointerEvents: 'auto' }, 'cta+=0.05')
+        .call(() => {
+          if (cta) cta.classList.add('is-visible');
+        }, null, 'cta+=0.1');
 
       // Final Phase: flip book + enable tilt once everything is revealed
       if (bookFront && bookBack) {
@@ -565,6 +582,10 @@ document.addEventListener('DOMContentLoaded', () => {
           duration: 0.85,
           ease: 'power2.inOut',
         }, 'cta-=0.2');
+        mainTl.call(() => {
+          bookFront.classList.add('is-flipped');
+          bookBack.classList.add('is-flipped');
+        }, null, 'cta');
       }
       // Cleanup on refresh
       ScrollTrigger.addEventListener('refreshInit', () => {

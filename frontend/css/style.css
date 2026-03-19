@@ -22,7 +22,7 @@
 }
 
 body {
-  background: radial-gradient(circle at top left, #ffffff, #ffffff);
+  background: rgba(13, 44, 28, 0.721);
   color: var(--text-light);
   min-height: 100vh;
   overflow-x: hidden;

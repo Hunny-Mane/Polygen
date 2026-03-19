@@ -24,6 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
             scrub: 1.5
         }
     });
+    // Expose for optional external state capture if needed
+    window.detectionMainTl = mainTl;
 
     // Layer 3: Parallax Grid
     gsap.to('.blueprint-parallax-grid', {
@@ -191,6 +193,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             setTimeout(() => {
+                // Capture a last snapshot before navigation
+                if (window.captureActiveSession) {
+                    try {
+                        window.captureActiveSession('detection_cta');
+                    } catch (err) {
+                        console.warn('PolyGen capture before detection navigation failed:', err);
+                    }
+                }
                 window.location.href = "detection.html";
             }, 1200);
         });

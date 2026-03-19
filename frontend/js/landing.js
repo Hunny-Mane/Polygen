@@ -3,7 +3,164 @@
  * Handles Scrollytelling (GSAP + Lenis) and Logo Scramble effect
  */
 
+// BFCache / Back button resilience
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        try {
+            if (window.ScrollTrigger && typeof ScrollTrigger.refresh === 'function') {
+                ScrollTrigger.refresh();
+            }
+            window.dispatchEvent(new Event('resize'));
+        } catch (e) {
+            console.warn('PolyGen pageshow hydration error:', e);
+        }
+    }
+});
+
+// Persistent state key
+const POLYGEN_SESSION_KEY = 'polygen_active_session';
+
+// Global capture helper – can be called from other modules before navigation
+function captureActiveSession(reason) {
+    try {
+        const state = computePageState();
+        state.meta = state.meta || {};
+        state.meta.reason = reason || 'interval';
+        // If a Three.js clock exists, capture its elapsed time
+        if (window.threeClock && typeof window.threeClock.getElapsedTime === 'function') {
+            state.meta.threeClockTime = window.threeClock.getElapsedTime();
+        }
+        sessionStorage.setItem(POLYGEN_SESSION_KEY, JSON.stringify(state));
+        window.pageState = state;
+        return state;
+    } catch (e) {
+        console.warn('PolyGen captureActiveSession error:', e);
+    }
+}
+window.captureActiveSession = window.captureActiveSession || captureActiveSession;
+
+// Compute a lightweight snapshot of the current UI state
+function computePageState() {
+    const doc = document.documentElement;
+    const scrollMax = Math.max(1, doc.scrollHeight - window.innerHeight);
+    const scrollPos = window.scrollY || window.pageYOffset || 0;
+    const scrollProgress = Math.min(1, Math.max(0, scrollPos / scrollMax));
+
+    // Active chapter heuristic based on section positions
+    const chapters = [
+        { id: 'hero', name: 'hero' },
+        { id: 'detection', name: 'detection' },
+        { id: 'generation', name: 'generation' },
+        { id: 'intelligence', name: 'intelligence' },
+        { id: 'archive', name: 'archive' },
+    ];
+    let activeChapter = 'hero';
+    let bestScore = -Infinity;
+    chapters.forEach(({ id, name }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        // Higher score if the section center is closer to viewport center
+        const center = rect.top + rect.height / 2;
+        const score = -Math.abs(center - window.innerHeight / 2);
+        if (score > bestScore) {
+            bestScore = score;
+            activeChapter = name;
+        }
+    });
+
+    // Detection odometer values (in DOM order)
+    const accuracySpans = Array.from(document.querySelectorAll('.accuracy-value'));
+    const detection = {
+        ensemble: accuracySpans[0] ? parseFloat(accuracySpans[0].innerText) || 0 : 0,
+        xception: accuracySpans[1] ? parseFloat(accuracySpans[1].innerText) || 0 : 0,
+        efficientNet: accuracySpans[2] ? parseFloat(accuracySpans[2].innerText) || 0 : 0,
+    };
+
+    // Generation chapter UI flags
+    const bookFront = document.querySelector('[data-gen-page-front]');
+    const bookBack = document.querySelector('[data-gen-page-back]');
+    const cta = document.querySelector('.gen-footer-cta');
+
+    const isBookFlipped = !!(bookBack && bookBack.classList.contains('is-flipped'));
+    const isCtaVisible = !!(cta && cta.classList.contains('is-visible'));
+
+    const pageState = {
+        scrollPos,
+        scrollProgress,
+        activeChapter,
+        detection,
+        ui: {
+            isBookFlipped,
+            isCtaVisible,
+        },
+        meta: {
+            capturedAt: Date.now(),
+        },
+    };
+
+    return pageState;
+}
+
+// Hydrate from previous session if present
+function hydrateFromSession() {
+    try {
+        const raw = sessionStorage.getItem(POLYGEN_SESSION_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (!saved || typeof saved !== 'object') return;
+
+        window.pageState = saved;
+
+        // Restore scroll position
+        if (typeof saved.scrollPos === 'number') {
+            window.scrollTo(0, saved.scrollPos);
+        }
+
+        // Restore detection odometers to their last known values
+        if (saved.detection) {
+            const accuracySpans = Array.from(document.querySelectorAll('.accuracy-value'));
+            const values = [
+                saved.detection.ensemble,
+                saved.detection.xception,
+                saved.detection.efficientNet,
+            ];
+            accuracySpans.forEach((span, idx) => {
+                const v = values[idx];
+                if (typeof v === 'number' && !Number.isNaN(v)) {
+                    span.innerText = v.toFixed(2).padStart(5, '0');
+                }
+            });
+        }
+
+        // Restore generation chapter UI (flip state, CTA visibility)
+        if (saved.ui) {
+            const bookFront = document.querySelector('[data-gen-page-front]');
+            const bookBack = document.querySelector('[data-gen-page-back]');
+            const cta = document.querySelector('.gen-footer-cta');
+
+            if (window.gsap) {
+                if (saved.ui.isBookFlipped && bookFront && bookBack) {
+                    gsap.set(bookFront, { rotateY: -180, transformOrigin: '0% 50%' });
+                    gsap.set(bookBack, { rotateY: 0, transformOrigin: '0% 50%' });
+                    bookFront.classList.add('is-flipped');
+                    bookBack.classList.add('is-flipped');
+                }
+                if (saved.ui.isCtaVisible && cta) {
+                    gsap.set(cta, { opacity: 1, y: 0 });
+                    cta.classList.add('is-visible');
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('PolyGen hydration error:', e);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Hydrate any previous session before wiring animations
+    hydrateFromSession();
+
     // 1. Initialize Lenis Smooth Scroll
     const lenis = new Lenis({
         duration: 1.2,
@@ -216,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!inner) return;
 
         const card = inner;
-        const MAX = 12;
+        const MAX = 3.5;
 
         card.addEventListener('mousemove', (e) => {
             if (!card.classList.contains('tilt-active')) return;
