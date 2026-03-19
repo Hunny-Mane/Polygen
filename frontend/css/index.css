@@ -38,6 +38,37 @@ body {
     pointer-events: none;
 }
 
+/* Warp Transition Overlay */
+#warp-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    background: transparent;
+}
+
+#warp-transition.is-active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#warp-transition #warp-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#warp-transition .warp-flash {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    opacity: 0;
+    pointer-events: none;
+}
+
 
 /* Luxury Cyber Borders */
 .cyber-card {

@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const soup = section.querySelector('.latent-soup');
   const preview = section.querySelector('.gen-preview');
   const cta = section.querySelector('.gen-footer-cta');
+  const bookFront = section.querySelector('[data-gen-page-front]');
+  const bookBack = section.querySelector('[data-gen-page-back]');
 
   const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -82,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
         gsap.set(soup, { opacity: 0 });
       }
       if (frame) frame.classList.remove('is-upscaled');
+      if (bookFront) gsap.set(bookFront, { rotateY: 0, transformOrigin: '0% 50%' });
+      if (bookBack) gsap.set(bookBack, { rotateY: 180, transformOrigin: '0% 50%' });
 
       // Token initial placement: stacked, slightly offset, invisible.
       tokens.forEach((t, i) => {
@@ -144,6 +148,12 @@ document.addEventListener('DOMContentLoaded', () => {
           scrub: prefersReducedMotion ? true : 1.4,
           anticipatePin: 1,
           invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            const inner = section.querySelector('.gen-frame-inner');
+            if (!inner) return;
+            // Enable tilt only in final phase (CTA region).
+            inner.classList.toggle('tilt-active', self.progress >= 0.82);
+          },
         },
       });
 
@@ -285,6 +295,19 @@ document.addEventListener('DOMContentLoaded', () => {
       mainTl.to(cta, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, 'cta')
         .set(cta, { pointerEvents: 'auto' }, 'cta+=0.05');
 
+      // Final Phase: flip book + enable tilt once everything is revealed
+      if (bookFront && bookBack) {
+        mainTl.to(bookFront, {
+          rotateY: -180,
+          duration: 0.85,
+          ease: 'power2.inOut',
+        }, 'cta-=0.2');
+        mainTl.to(bookBack, {
+          rotateY: 0,
+          duration: 0.85,
+          ease: 'power2.inOut',
+        }, 'cta-=0.2');
+      }
       // Cleanup on refresh
       ScrollTrigger.addEventListener('refreshInit', () => {
         if (frame) frame.classList.remove('is-upscaled');

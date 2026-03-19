@@ -91,6 +91,73 @@
   max-width: 34ch;
 }
 
+/* Page-turn "book" panel (Phase 1) */
+.generation-neumo-scrolly .gen-book {
+  position: relative;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  min-height: 340px;
+}
+
+.generation-neumo-scrolly .gen-page {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+.generation-neumo-scrolly .gen-page-front {
+  transform-origin: 0% 50%;
+  transform: rotateY(0deg);
+  will-change: transform;
+}
+
+.generation-neumo-scrolly .gen-page-back {
+  transform-origin: 0% 50%;
+  transform: rotateY(180deg);
+  display: grid;
+  align-content: start;
+  gap: 1.1rem;
+  padding-top: 0.4rem;
+}
+
+.generation-neumo-scrolly .gen-models-title {
+  font-family: 'Audiowide', cursive;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: var(--gen-text-dim);
+  opacity: 0.95;
+}
+
+.generation-neumo-scrolly .gen-models {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.generation-neumo-scrolly .gen-model {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 18px;
+  padding: 0.95rem 1.05rem;
+  box-shadow: 10px 10px 20px var(--gen-shadow-dark),
+    -10px -10px 20px var(--gen-shadow-light);
+  border: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+.generation-neumo-scrolly .gen-model .name {
+  font-family: 'Audiowide', cursive;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+.generation-neumo-scrolly .gen-model .desc {
+  margin-top: 0.35rem;
+  color: var(--gen-text-dim);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 /* Center render frame */
 .generation-neumo-scrolly .gen-frame {
   position: relative;
@@ -125,6 +192,13 @@
   box-shadow: 1px 1px 24px var(--gen-shadow-dark),
     -1px -1px 24px var(--gen-shadow-dark);
   overflow: hidden;
+}
+
+/* Chapter 2 parallax tilt target (inner only to avoid GSAP transform conflicts) */
+.generation-neumo-scrolly .gen-frame-inner {
+  transition: transform 0.15s ease-out;
+  will-change: transform;
+  pointer-events: auto;
 }
 
 

@@ -208,4 +208,29 @@ document.addEventListener('DOMContentLoaded', () => {
             window.pJSDom[0].pJS.fn.particlesRefresh();
         }
     });
+
+
+    // ── Chapter 2 Parallax Tilt (moved from Ch3) ──────────────────────────────
+    (function initCh2Tilt() {
+        const inner = document.querySelector('#generation .gen-frame-inner');
+        if (!inner) return;
+
+        const card = inner;
+        const MAX = 12;
+
+        card.addEventListener('mousemove', (e) => {
+            if (!card.classList.contains('tilt-active')) return;
+            const r = card.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width;
+            const y = (e.clientY - r.top) / r.height;
+            const ry = (x - 0.5) * 2 * MAX;
+            const rx = -(y - 0.5) * 2 * MAX;
+            card.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale(1.02)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+        });
+    })();
+
 });
