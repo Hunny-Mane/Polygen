@@ -7,6 +7,7 @@
   --gen-text-dim: #4b5563;
   --gen-accent: #6366f1;
   --gen-accent-2: #00f2ff;
+  --gen-grid-step: 15px;
 
   --gen-shadow-light: #ffffff;
   --gen-shadow-dark: #d1d9e6;
@@ -15,6 +16,7 @@
   background: var(--gen-bg);
   color: var(--gen-text);
   position: relative;
+  isolation: isolate;
   overflow: hidden;
 }
 
@@ -27,21 +29,62 @@
     linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(245, 248, 252, 1));
   transform: translateZ(0);
   pointer-events: none;
-  z-index: 0;
+  z-index: -2;
 }
 
 .generation-neumo-scrolly .gen-bg::after {
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.20;
+  opacity: 0.80;
   background-image:
     repeating-linear-gradient(0deg,
-      rgba(17, 24, 39, 0.04),
-      rgba(17, 24, 39, 0.04) 1px,
+      rgba(17, 24, 39, 0.085),
+      rgba(17, 24, 39, 0.085) 1px,
       transparent 1px,
-      transparent 5px);
+      transparent var(--gen-grid-step)),
+    repeating-linear-gradient(90deg,
+      rgba(17, 24, 39, 0.075),
+      rgba(17, 24, 39, 0.075) 1px,
+      transparent 1px,
+      transparent var(--gen-grid-step));
   mix-blend-mode: multiply;
+  background-size: var(--gen-grid-step) var(--gen-grid-step), var(--gen-grid-step) var(--gen-grid-step);
+  background-position: 0 0, 0 0;
+  animation: gen-grid-drift 14s linear infinite;
+  will-change: background-position;
+}
+
+@keyframes gen-grid-drift {
+  0% {
+    background-position: 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 calc(var(--gen-grid-step) * 10), calc(var(--gen-grid-step) * 10) 0;
+  }
+}
+
+.generation-neumo-scrolly .gen-reveal-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.92;
+  transform: translateZ(0);
+  will-change: opacity, transform;
+}
+
+.generation-neumo-scrolly .gen-obsidian-reveal {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
 }
 
 .generation-neumo-scrolly .gen-pin-wrapper {
@@ -70,7 +113,7 @@
   border-radius: 30px;
   padding: 2.5rem 2.5rem;
   box-shadow: 14px 14px 28px var(--gen-shadow-dark),
-    -14px -14px 28px var(--gen-shadow-light);
+    -14px -14px 28px var(--gen-shadow-dark);
   backdrop-filter: blur(10px);
   opacity: 0;
   transform: translateX(-40px);
@@ -121,6 +164,7 @@
   padding-top: 0.4rem;
 }
 
+
 .generation-neumo-scrolly .gen-models-title {
   font-family: 'Audiowide', cursive;
   letter-spacing: 0.18em;
@@ -140,14 +184,14 @@
   border-radius: 18px;
   padding: 0.95rem 1.05rem;
   box-shadow: 10px 10px 20px var(--gen-shadow-dark),
-    -10px -10px 20px var(--gen-shadow-light);
+    -10px -10px 20px var(--gen-shadow-dark);
   border: 1px solid rgba(17, 24, 39, 0.06);
 }
 
 .generation-neumo-scrolly .gen-model .name {
   font-family: 'Audiowide', cursive;
   letter-spacing: 0.08em;
-  font-size: 0.9rem;
+  font-size: 1.0rem;
   color: #111827;
 }
 
@@ -254,7 +298,7 @@
   padding: 2.2rem;
   background: var(--gen-bg);
   box-shadow: 14px 14px 28px var(--gen-shadow-dark),
-    -14px -14px 28px var(--gen-shadow-light);
+    -14px -14px 28px var(--gen-shadow-dark);
   min-height: 420px;
   opacity: 0;
   transform: translateX(40px);
@@ -580,18 +624,46 @@
   padding: 0.95rem 1.6rem;
   border-radius: 999px;
   background: #ffffff;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
   color: #111827;
   font-weight: 700;
   letter-spacing: 0.02em;
   box-shadow: 10px 10px 20px var(--gen-shadow-dark),
-    -10px -10px 20px var(--gen-shadow-light);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+    -10px -10px 20px var(--gen-shadow-dark);
+}
+
+.generation-neumo-scrolly .gen-footer-cta a span {
+  background: linear-gradient(60deg, #00f2ff, #7000ff, #f59e0b, #00f2ff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-flow 8s linear infinite;
+  transition: color 0.3s ease;
+  display: inline-block;
 }
 
 .generation-neumo-scrolly .gen-footer-cta a:hover {
   transform: translateY(1px) scale(0.99);
-  box-shadow: inset 8px 8px 16px var(--gen-shadow-dark),
-    inset -8px -8px 16px var(--gen-shadow-light);
+  background: linear-gradient(60deg, #00f2ffb6, #6f00ffb4, #f59f0bb6, #00f2ffb6);
+  background-size: 200% auto;
+  animation: liquid-flow 12s linear infinite;
+  box-shadow: 0 0 25px rgba(0, 242, 255, 0.4);
+}
+
+.generation-neumo-scrolly .gen-footer-cta a:hover span {
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  background: none;
+  color: #ffffff; 
+  font-weight: 800;
+}
+
+@keyframes liquid-flow {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
 }
 
 .generation-neumo-scrolly .gen-footer-cta .spark {
