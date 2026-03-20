@@ -1,6 +1,12 @@
 /* Chapter 2 (Generation) — White Neumorphic Scrollytelling
    Scoped to .generation-neumo-scrolly so it can coexist with the landing's dark theme. */
 
+   #generation {
+    position: relative;
+    z-index: 10;
+    background: #fff; /* Or your main theme color to mask the grid below */
+}
+
 .generation-neumo-scrolly {
   /* Light / white neumorphic palette (restored) */
   --gen-bg: #ffffff;

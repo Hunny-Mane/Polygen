@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="css/index.css"> <!-- Landing specific styles -->
     <link rel="stylesheet" href="css/detection_scrolly.css"> <!-- New Detection Scrolly -->
     <link rel="stylesheet" href="css/generation_scrolly.css"> <!-- New Generation Scrolly -->
+    <link rel="stylesheet" href="css/synthesis_scrolly.css"> <!-- New Synthesis Scrolly -->
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 
     <!-- GSAP & Lenis -->
@@ -403,59 +404,101 @@
             </div>
         </section>
 
-        <!-- Chapter 3: Intelligence -->
-        <section id="intelligence" class="chapter-section">
-            <div class="chapter-layout">
-                <div class="chapter-text">
-                    <h2>03. Live Intelligence</h2>
-                    <p>
-                        Monitor the global media landscape in real-time. Track accuracy trends, throughput metrics, and
-                        model performance through our unified intelligence dashboard.
-                    </p>
-                    <div style="margin-top: 2rem;">
-                        <a href="dashboard.html" class="btn cyber-btn">View Live Stats</a>
+        <!-- Chapter 3: Synthesis -->
+        <section id="intelligence" class="synthesis-scrolly">
+            <div class="synth-blueprint-grid-bg" aria-hidden="true"></div>
+            <div class="synth-blueprint-parallax-grid" aria-hidden="true"></div>
+            <div class="synth-pin-wrapper" aria-label="Synthesis scrollytelling stage">
+                <div class="synth-stage">
+                    <!-- 1) Logic-Creative Split Core -->
+                    <div class="synth-logic-core" data-synth-logic-core>
+                        <div class="synth-hex-rotor" data-synth-hex-rotor>
+                            <div class="synth-hex-half synth-hex-half--left" data-synth-hex-left></div>
+                            <div class="synth-hex-half synth-hex-half--right" data-synth-hex-right></div>
+                            <div class="synth-hex-shield" data-synth-hex-shield aria-hidden="true"></div>
+                            <div class="synth-hex-outline" aria-hidden="true"></div>
+                        </div>
+                        <div class="synth-polygen-reveal" aria-hidden="true">POLYGEN</div>
+                        <div class="synth-message">Analysis validates. Synthesis creates. PolyGen secures.</div>
+                        <div class="synth-clasp-sfx" data-synth-clasp-sfx aria-hidden="true">
+                            <span class="synth-sfx-label">CLASP</span>
+                        </div>
                     </div>
-                </div>
-                <div class="chapter-media cyber-card">
-                    <img src="assets/bg_dashboard.png" alt="Analytics Dashboard UI"
-                        style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
-                </div>
-            </div>
-        </section>
 
-        <!-- Chapter 4: Archive -->
-        <section id="archive" class="chapter-section">
-            <div class="chapter-layout">
-                <div class="chapter-media cyber-card" style="order: 2;">
-                    <img src="assets/bg_database.png" alt="Encrypted Database Storage"
-                        style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
+                    <!-- 2) Neural Vault -->
+                    <div class="synth-vault-area" data-synth-vault-area>
+                        <div class="vault-stack-perspective">
+                            <div class="vault-stack" data-synth-vault>
+                                <div class="vault-card" data-vault-card>
+                                    <div class="vault-seed-thumb"
+                                        style="background-image: url(assets/detection_demo_image.png);"></div>
+                                    <div class="vault-badge" role="status" aria-label="Forensic seal accuracy">
+                                        <span class="vault-badge-title">FAKE CONFIDENCE</span>
+                                        <span class="vault-badge-accuracy" data-vault-accuracy>74.00%</span>
+                                    </div>
+                                    <div class="vault-hash">BADGE : PG-882-X</div>
+                                </div>
+
+                                <div class="vault-card" data-vault-card>
+                                    <div class="vault-seed-thumb"
+                                        style="background-image: url(assets/detection_portrait.png);"></div>
+                                    <div class="vault-badge" role="status" aria-label="Forensic seal accuracy">
+                                        <span class="vault-badge-title">REAL CONFIDENCE</span>
+                                        <span class="vault-badge-accuracy" data-vault-accuracy>64.96%</span>
+                                    </div>
+                                    <div class="vault-hash">BADGE : PG-103-Y</div>
+                                </div>                               
+                            </div>
+                        </div>
+                    </div>                  
+
+                   
                 </div>
-                <div class="chapter-text" style="order: 1;">
-                    <h2>04. Secure Registry</h2>
-                    <p>
-                        Every transformation is indexed and cryptographically logged. Maintain a transparent audit trail
-                        of every synthetic asset created or verified within the ecosystem.
-                    </p>
-                    <div style="margin-top: 2rem;">
-                        <a href="database.html" class="btn cyber-btn">Browse Registry</a>
+                <footer class="synth-archive-panel">
+                    <div class="footer-grid">
+                        <div class="footer-stat">
+                            <span class="label">PROJECT STATUS</span>
+                            <span class="value">SYNTHESIS COMPLETE</span>
+                        </div>
+                
+                        <div class="footer-manifesto">
+                            <h3 style="color: #000;">POLYGEN TERMINAL</h3>
+                            <p>
+                                The transition from detection to generation is now stabilized. 
+                                PolyGen has successfully mapped 28,000 neural data points to reconcile 
+                                forensic integrity with creative expansion. This interface marks the 
+                                final boundary of the Synthesis Chapter.
+                            </p>
+                            <p class="copyright">POLYGEN CORE — ALL METRICS SECURED</p>
+                        </div>
+                
+                        <div class="footer-specs" style="
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 10px 10px 20px var(--gen-shadow-dark), 
+               -10px -10px 20px var(--gen-shadow-dark);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+">
+    <div class="spec-row"><span>CORE MODEL:</span> <span>ENSEMBLE-X9</span></div>
+    <div class="spec-row"><span>FIDELITY:</span> <span>98.70%</span></div>
+    <div class="spec-row"><span>ENCRYPTION:</span> <span>OBSIDIAN VAULT</span></div>
+</div>
                     </div>
-                </div>
+                </footer>
             </div>
         </section>
 
     </main>
 
-    <footer style="padding: 5rem 0; text-align: center; border-top: 1px solid var(--glass-border); margin-top: 10rem;">
-        <div class="polygen-logo" style="font-size: 2rem; letter-spacing: 0.2rem; margin-bottom: 1rem;">POLYGEN</div>
-        <p style="color: var(--text-mid); font-size: 0.9rem;">&copy; 2026 POLYGEN. ALL RIGHTS RESERVED. UNITING
-            SYNTHESIS & INTEGRITY.</p>
-    </footer>
+    
 
     <!-- Custom Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="js/landing.js"></script>
     <script src="js/detection_scrolly.js"></script>
     <script src="js/generation_scrolly.js"></script>
+    <script src="js/synthesis_scrolly.js"></script>
 </body>
 
 </html>
