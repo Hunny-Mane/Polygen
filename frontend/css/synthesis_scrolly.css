@@ -614,6 +614,16 @@
     font-weight: 600;
 }
 
+#particles-jss {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 900px) {
     .footer-grid {
@@ -669,4 +679,3 @@
         top: 72%;
     }
 }
-
