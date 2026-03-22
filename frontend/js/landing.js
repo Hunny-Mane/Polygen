@@ -102,6 +102,36 @@ function computePageState() {
     return pageState;
 }
 
+function initHomeButtonFlip() {
+    const inner = document.querySelector('.flip-inner');
+    if (!inner) return;
+
+    const flipTl = gsap.timeline({
+        repeat: -1,         // Infinite loop
+        repeatDelay: 10     // Wait 10 seconds before starting the next flip
+    });
+
+    flipTl
+        // 1. Flip to Logo
+        .to(inner, {
+            rotateY: 180,
+            duration: 0.6,
+            ease: "back.out(1.7)"
+        })
+        // 2. Hold Logo for 2 seconds
+        .to({}, { duration: 1.5 })
+        // 3. Flip back to Home Icon
+        .to(inner, {
+            rotateY: 0,
+            duration: 0.6,
+            ease: "back.inOut(1.7)"
+        });
+}
+
+
+initHomeButtonFlip();
+
+
 // Hydrate from previous session if present
 function hydrateFromSession() {
     try {
@@ -296,8 +326,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const currentPath = window.location.pathname;
             if (currentPath.endsWith('index.html') || currentPath === '/' || currentPath === '') {
                 e.preventDefault();
-                lenis.scrollTo(0, { 
-                    duration: 0.5, 
+                lenis.scrollTo(0, {
+                    duration: 0.5,
                     easing: (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t // Quadratic In-Out
                 });
             }

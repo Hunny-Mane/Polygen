@@ -6,9 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Polygen</title>
 
+    <link rel="icon" href="assets/gemini1.png">
+
     <!-- Meta Tags for SEO -->
     <meta name="description"
         content="POLYGEN - Advanced ecosystem for high-fidelity media synthesis and microscopic integrity detection. Leverage cutting-edge AI for creative generation and deepfake verification.">
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +26,7 @@
     <link rel="stylesheet" href="css/detection_scrolly.css"> <!-- New Detection Scrolly -->
     <link rel="stylesheet" href="css/generation_scrolly.css"> <!-- New Generation Scrolly -->
     <link rel="stylesheet" href="css/synthesis_scrolly.css"> <!-- New Synthesis Scrolly -->
-    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/gemini1.png" type="image/x-icon">
 
     <!-- GSAP & Lenis -->
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
@@ -44,12 +47,18 @@
             </div>
             <div class="neu-nav-links">
                 <a href="detection.html" class="nav-item">Detection</a>
-                <a href="index.html" class="nav-item home-btn active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
+                <a href="index.html" class="nav-item home-btn active flip-container">
+                    <div class="flip-inner">
+                        <div class="flip-front">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <div class="flip-back">
+                        </div>
+                    </div>
                 </a>
                 <a href="generation.html" class="nav-item">Generation</a>
             </div>
@@ -240,7 +249,8 @@
                         <circle cx="0" cy="0" r="0" data-gen-obsidian-circle></circle>
                     </clipPath>
                 </defs>
-                <rect width="100%" height="100%" fill="url(#gen-obsidian-grad)" clip-path="url(#gen-obsidian-clip)"></rect>
+                <rect width="100%" height="100%" fill="url(#gen-obsidian-grad)" clip-path="url(#gen-obsidian-clip)">
+                </rect>
             </svg>
 
             <div class="gen-pin-wrapper">
@@ -251,7 +261,8 @@
                             <div class="gen-page gen-page-front" data-gen-page-front>
                                 <h1 style="font-family: Audiowide, cursive;">IMAGE GENERATION</h1><br><br>
                                 <p>
-                                    A voxel point-cloud resolves from latent chaos into a cyberpunk cityscape. Witness the
+                                    A voxel point-cloud resolves from latent chaos into a cyberpunk cityscape. Witness
+                                    the
                                     real-time assembly of depth, sharpness, and neon geometry as deep learning models
                                     construct
                                     a synthetic world from the ground up
@@ -430,7 +441,7 @@
                     <div class="synth-vault-area" data-synth-vault-area>
                         <div class="vault-stack-perspective">
                             <div class="vault-stack" data-synth-vault>
-                                <div class="vault-card" data-vault-card>
+                                <div class="vault-card" data-vault-card style=" margin-bottom: 25px;">
                                     <div class="vault-seed-thumb"
                                         style="background-image: url(assets/detection_demo_image.png);"></div>
                                     <div class="vault-badge" role="status" aria-label="Forensic seal accuracy">
@@ -448,12 +459,22 @@
                                         <span class="vault-badge-accuracy" data-vault-accuracy>64.96%</span>
                                     </div>
                                     <div class="vault-hash">BADGE : PG-103-Y</div>
-                                </div>                               
+                                </div>
+
+                                <div class="vault-card" data-vault-card>
+                                    <div class="vault-seed-thumb" style="background-image: url(assets/fake.jpg);"></div>
+                                    <div class="vault-badge" role="status" aria-label="Forensic seal accuracy">
+                                        <span class="vault-badge-title">REAL CONFIDENCE</span>
+                                        <span class="vault-badge-accuracy" data-vault-accuracy>54.06%</span>
+                                    </div>
+                                    <div class="vault-hash">BADGE : PG-103-Z</div>
+                                </div>
+
                             </div>
                         </div>
-                    </div>                  
+                    </div>
 
-                   
+
                 </div>
                 <footer class="synth-archive-panel">
                     <div class="footer-grid">
@@ -461,18 +482,18 @@
                             <span class="label">PROJECT STATUS</span>
                             <span class="value">SYNTHESIS COMPLETE</span>
                         </div>
-                
+
                         <div class="footer-manifesto">
                             <h3 style="color: #000;">POLYGEN TERMINAL</h3>
                             <p>
-                                The transition from detection to generation is now stabilized. 
-                                PolyGen has successfully mapped 28,000 neural data points to reconcile 
-                                forensic integrity with creative expansion. This interface marks the 
+                                The transition from detection to generation is now stabilized.
+                                PolyGen has successfully mapped 28,000 neural data points to reconcile
+                                forensic integrity with creative expansion. This interface marks the
                                 final boundary of the Synthesis Chapter.
                             </p>
                             <p class="copyright">POLYGEN CORE — ALL METRICS SECURED</p>
                         </div>
-                
+
                         <div class="footer-specs" style="
     background: #ffffff;
     border-radius: 20px;
@@ -481,10 +502,10 @@
                -10px -10px 20px var(--gen-shadow-dark);
     border: 1px solid rgba(0, 0, 0, 0.02);
 ">
-    <div class="spec-row"><span>CORE MODEL:</span> <span>ENSEMBLE-X9</span></div>
-    <div class="spec-row"><span>FIDELITY:</span> <span>98.70%</span></div>
-    <div class="spec-row"><span>ENCRYPTION:</span> <span>OBSIDIAN VAULT</span></div>
-</div>
+                            <div class="spec-row"><span>CORE MODEL:</span> <span>ENSEMBLE-X9</span></div>
+                            <div class="spec-row"><span>FIDELITY:</span> <span>98.70%</span></div>
+                            <div class="spec-row"><span>ENCRYPTION:</span> <span>OBSIDIAN VAULT</span></div>
+                        </div>
                     </div>
                 </footer>
             </div>
@@ -492,7 +513,7 @@
 
     </main>
 
-    
+
 
     <!-- Custom Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>

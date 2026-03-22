@@ -48,7 +48,7 @@ async function analyzeImage() {
     if (btnNo) { btnNo.style.display = ''; btnNo.disabled = false; }
 
     const modelType = document.getElementById('img-model-select').value;
-    
+
     try {
         const res = await fetch(`${API_URL}/api/detection/predict/image?model_type=${modelType}`, {
             method: 'POST',
@@ -86,14 +86,14 @@ async function analyzeImage() {
 
         document.getElementById('img-confidence').innerText = (data.confidence * 100).toFixed(2) + '%';
         document.getElementById('img-fake-prob').innerText = 'Fake Probability: ' + (data.fake_probability * 100).toFixed(2) + '%';
-        
+
         // Render Breakdown
         console.log("Analysis Breakdown Data:", data.breakdown);
         const breakdown = data.breakdown || {};
         const breakdownArea = document.getElementById('analysis-breakdown');
         if (breakdownArea) {
             breakdownArea.style.display = 'block';
-            
+
             const setBar = (id, val, show = true) => {
                 const item = document.getElementById('bar-' + id)?.closest('.breakdown-item');
                 if (!item) return;
@@ -107,10 +107,10 @@ async function analyzeImage() {
                 const bar = document.getElementById('bar-' + id);
                 const text = document.getElementById('val-' + id);
                 const status = document.getElementById('status-' + id);
-                
+
                 if (bar) bar.style.width = (val * 100) + '%';
                 if (text) text.innerText = (val * 100).toFixed(1) + '%';
-                
+
                 if (status) {
                     const isFake = val >= 0.5;
                     status.innerText = isFake ? 'Fake' : 'Real';
@@ -124,7 +124,7 @@ async function analyzeImage() {
                     else bar.style.backgroundColor = 'var(--accent-green)';
                 }
             };
-            
+
             setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
             setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
             setBar('fft', breakdown.fft_score || 0);
@@ -143,6 +143,8 @@ async function analyzeImage() {
         document.getElementById('img-loader').style.display = 'none';
     }
 }
+
+
 
 // ── User Feedback ──────────────────────────────────────────────────────────
 async function submitFeedback(isCorrect) {
@@ -174,7 +176,7 @@ async function submitFeedback(isCorrect) {
         // Show result message
         const feedbackResult = document.getElementById('feedback-result');
         const feedbackMessage = document.getElementById('feedback-message');
-        
+
         if (isCorrect) {
             feedbackMessage.innerHTML = '✅ Thanks! Your feedback confirms the model is working well.';
             feedbackMessage.className = 'feedback-success';
@@ -182,7 +184,7 @@ async function submitFeedback(isCorrect) {
             feedbackMessage.innerHTML = `✗ Got it — you indicated the image is actually <strong>${trueLabel}</strong>. This feedback will help improve future predictions.`;
             feedbackMessage.className = 'feedback-correction';
         }
-        
+
         feedbackResult.style.display = 'block';
         btnYes.style.display = 'none';
         btnNo.style.display = 'none';
@@ -221,7 +223,7 @@ async function analyzeVideo() {
         labelSpan.className = data.label === 'Real' ? 'label-real' : 'label-fake';
 
         document.getElementById('vid-prob').innerText = (data.probability * 100).toFixed(2) + '% Fake Probability';
-        
+
         // Render Video Breakdown
         const breakdown = data.breakdown || {};
         const breakdownArea = document.getElementById('video-analysis-breakdown');
@@ -243,7 +245,7 @@ async function analyzeVideo() {
 
                 if (bar) bar.style.width = (val * 100) + '%';
                 if (text) text.innerText = (val * 100).toFixed(1) + '%';
-                
+
                 if (status) {
                     const isFake = val >= 0.5;
                     status.innerText = isFake ? 'Fake' : 'Real';
@@ -383,27 +385,27 @@ async function generateImage() {
             const box = document.createElement('div');
             box.className = (modelKey === 'quality') ? 'preview-box-container' : 'preview-box';
             box.id = `preview-slot-${i}`;
-            
+
             if (modelKey === 'quality') {
                 const base = document.createElement('canvas');
                 base.className = 'preview-canvas base-layer';
                 base.id = `base-canvas-${i}`;
                 base.width = 512; base.height = 512; // Standard SD 1.5 size
-                
+
                 const mask = document.createElement('canvas');
                 mask.className = 'preview-canvas mask-overlay';
                 mask.id = `mask-canvas-${i}`;
                 mask.width = 512; mask.height = 512;
-                
+
                 const interaction = document.createElement('canvas');
                 interaction.className = 'preview-canvas interaction-layer';
                 interaction.id = `interaction-canvas-${i}`;
                 interaction.width = 512; interaction.height = 512;
-                
+
                 box.appendChild(base);
                 box.appendChild(mask);
                 box.appendChild(interaction);
-                
+
                 inpaintManager.attachToCanvas(box);
             } else {
                 const img = document.createElement('img');
@@ -416,7 +418,7 @@ async function generateImage() {
     if (btnGen) btnGen.style.display = 'none';
     if (btnStop) btnStop.style.display = 'inline-block';
     if (stepCounter) { stepCounter.style.display = 'block'; stepCounter.innerText = 'Initializing...'; }
-    
+
     startTimer();
 
     try {
@@ -452,11 +454,11 @@ async function generateImage() {
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
-                        
+
                         if (stepCounter && event.type === 'preview_step') {
                             stepCounter.innerText = `Generating Image ${idx + 1}/${total} — Step ${step}/${total_steps}`;
                         }
-                        
+
                         if (b64) {
                             if (modelKey === 'quality') {
                                 const canvas = document.getElementById(`base-canvas-${idx}`);
@@ -542,7 +544,7 @@ function selectStyle(card) {
 
     const prompt = card.getAttribute('data-prompt');
     document.getElementById('i2i-prompt').value = prompt;
-    
+
     // Update default strength based on selected style
     const strength = card.getAttribute('data-strength');
     if (strength) {
@@ -570,11 +572,11 @@ async function stopI2IGeneration() {
 
 async function generateImageFromImage() {
     const fileInput = document.getElementById('i2i-image-input');
-    const prompt    = document.getElementById('i2i-prompt').value;
-    const strength  = parseFloat(document.getElementById('i2i-strength').value);
+    const prompt = document.getElementById('i2i-prompt').value;
+    const strength = parseFloat(document.getElementById('i2i-strength').value);
 
     if (!fileInput.files[0]) return alert('Please upload an image first.');
-    if (!prompt)             return alert('Please select a style card first.');
+    if (!prompt) return alert('Please select a style card first.');
 
     const multiGen = document.getElementById('i2i-multi-gen')?.checked || false;
     const upscale = document.getElementById('i2i-upscale')?.checked || false;
@@ -583,24 +585,24 @@ async function generateImageFromImage() {
     const seed = seedInput?.value ? parseInt(seedInput.value) : null;
 
     const formData = new FormData(); // Initialize formData
-    formData.append('image',    fileInput.files[0]);
-    formData.append('prompt',   prompt);
+    formData.append('image', fileInput.files[0]);
+    formData.append('prompt', prompt);
     formData.append('strength', strength);
     formData.append('multi_gen', multiGen);
     formData.append('upscale', upscale);
     formData.append('enhance_prompt', enhancePrompt);
     if (seed !== null) formData.append('seed', seed);
 
-    const loader   = document.getElementById('i2i-loader');
-    const result   = document.getElementById('i2i-result');
+    const loader = document.getElementById('i2i-loader');
+    const result = document.getElementById('i2i-result');
     const container = document.getElementById('i2i-images-container');
-    const btnGen   = document.getElementById('btn-i2i-generate');
-    const btnStop  = document.getElementById('btn-i2i-stop');
-    const timerEl  = document.getElementById('i2i-timer');
+    const btnGen = document.getElementById('btn-i2i-generate');
+    const btnStop = document.getElementById('btn-i2i-stop');
+    const timerEl = document.getElementById('i2i-timer');
 
     // UI: loading state
-    if (loader)  loader.style.display  = 'block';
-    if (result)  result.style.display  = 'none';
+    if (loader) loader.style.display = 'block';
+    if (result) result.style.display = 'none';
     if (container) {
         container.innerHTML = '';
         const count = multiGen ? 3 : 1;
@@ -614,9 +616,9 @@ async function generateImageFromImage() {
             container.appendChild(box);
         }
     }
-    if (btnGen)  btnGen.style.display  = 'none';
+    if (btnGen) btnGen.style.display = 'none';
     if (btnStop) { btnStop.style.display = 'inline-block'; btnStop.innerText = 'Stop'; btnStop.disabled = false; }
-    
+
     const i2iStepCounter = document.getElementById('i2i-step-counter');
     if (i2iStepCounter) { i2iStepCounter.style.display = 'block'; i2iStepCounter.innerText = 'Initializing...'; }
 
@@ -658,11 +660,11 @@ async function generateImageFromImage() {
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
-                        
+
                         if (i2iStepCounter && event.type === 'preview_step') {
                             i2iStepCounter.innerText = `Generating Image ${idx + 1}/${total} — Step ${step}/${total_steps}`;
                         }
-                        
+
                         if (b64) {
                             // I2I currently uses simple IMG tags in all cases for simplicity,
                             // but if high-quality SD 1.5 is selected we might want layered canvases too?
@@ -697,8 +699,8 @@ async function generateImageFromImage() {
     } finally {
         clearInterval(i2iTimerInterval);
         if (timerEl) timerEl.classList.add('finished');
-        if (loader)  loader.style.display  = 'none';
-        if (btnGen)  btnGen.style.display  = 'inline-block';
+        if (loader) loader.style.display = 'none';
+        if (btnGen) btnGen.style.display = 'inline-block';
         if (i2iStepCounter) i2iStepCounter.style.display = 'none';
         if (btnStop) { btnStop.style.display = 'none'; btnStop.innerText = 'Stop'; btnStop.disabled = false; }
     }
@@ -770,7 +772,7 @@ class InpaintingManager {
         this.startPos = { x: 0, y: 0 };
         this.endPos = { x: 0, y: 0 };
         this.toolbarPos = { x: 50, y: 100 };
-        
+
         // Active canvas context
         this.activeMaskCtx = null;
         this.activeInteractionCtx = null;
@@ -830,29 +832,29 @@ class InpaintingManager {
             i2iInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                
+
                 const model = modelSelect?.value;
                 const container = document.getElementById('i2i-upload-preview');
                 const outer = document.getElementById('i2i-upload-container');
-                
+
                 if (model === 'quality') {
                     outer.style.display = 'block';
                     container.innerHTML = '';
-                    
+
                     const base = document.createElement('canvas');
                     base.className = 'preview-canvas base-layer';
                     base.width = 512; base.height = 512;
-                    
+
                     const mask = document.createElement('canvas');
                     mask.className = 'preview-canvas mask-overlay';
                     mask.width = 512; mask.height = 512;
-                    
+
                     const it = document.createElement('canvas');
                     it.className = 'preview-canvas interaction-layer';
                     it.width = 512; it.height = 512;
-                    
+
                     container.appendChild(base); container.appendChild(mask); container.appendChild(it);
-                    
+
                     const ctx = base.getContext('2d');
                     const img = new Image();
                     img.onload = () => {
@@ -906,7 +908,7 @@ class InpaintingManager {
             if (!this.active) return;
             const rect = interactionLayer.getBoundingClientRect();
             const coords = getCoords(e);
-            
+
             if (this.currentTool === 'hand') {
                 this.isPanning = true;
                 this.dragStart = { x: e.clientX, y: e.clientY };
@@ -1004,9 +1006,9 @@ class InpaintingManager {
         osCtx.fillStyle = 'black'; osCtx.fillRect(0, 0, offscreen.width, offscreen.height);
         const imgData = this.activeMaskCtx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imgData.data;
-        for(let i=0; i<data.length; i+=4) {
-            if(data[i+3] > 0) { data[i]=255; data[i+1]=255; data[i+2]=255; data[i+3]=255; }
-            else { data[i]=0; data[i+1]=0; data[i+2]=0; data[i+3]=255; }
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 0) { data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255; }
+            else { data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = 255; }
         }
         osCtx.putImageData(imgData, 0, 0);
         return offscreen.toDataURL('image/png');
