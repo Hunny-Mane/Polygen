@@ -1,232 +1,232 @@
+/**
+ * POLYGEN DASHBOARD CORE ENGINE - V8 (FULL SYNC)
+ */
 
 const API_URL = "http://localhost:8000";
+let activeModule = 'detection';
+let allDetectionRecords = [];
+let allGenerationRecords = [];
+let logPage = 0;
+const LOGS_PER_PAGE = 20;
 
-// ─────────────────────────────────────────────────────────────
-// Stats fetch & render
-// ─────────────────────────────────────────────────────────────
-async function fetchStats() {
+// 1. Core Data Fetch
+async function refreshAll() {
     try {
-        const res = await fetch(`${API_URL}/api/stats`);
-        const data = await res.json();
-        const d = data.detection;
-        const g = data.generation;
+        const [detRes, genRes, statsRes] = await Promise.all([
+            fetch(`${API_URL}/api/detection/records`),
+            fetch(`${API_URL}/api/generation/records`),
+            fetch(`${API_URL}/api/stats`)
+        ]);
 
-        // Detection
-        const totalFake = (d.images.fake || 0) + (d.videos.fake || 0);
+        allDetectionRecords = (await detRes.json()).records || [];
+        allGenerationRecords = (await genRes.json()).records || [];
+        const statsData = await statsRes.json();
 
-        setText('det-img-total',  d.images.total ?? 0);
-        setText('det-img-real',   d.images.real  ?? 0);
-        setText('det-img-fake',   d.images.fake  ?? 0);
-        setText('det-vid-total',  d.videos.total ?? 0);
-        setText('det-vid-real',   d.videos.real  ?? 0);
-        setText('det-vid-fake',   d.videos.fake  ?? 0);
-        setText('det-total-fake', totalFake);
+        // Update UI components
+        renderStats(statsData);
+        updateThroughputChart();
+        renderActivityLog();
 
-        // Generation
-        const totalGen = (g.images.total || 0) + (g.videos.total || 0);
-        setText('gen-img-total', g.images.total ?? 0);
-        setText('gen-vid-total', g.videos.total ?? 0);
-        setText('gen-total',     totalGen);
     } catch (e) {
-        console.warn('Stats fetch failed:', e);
+        console.error('Data Sync Error:', e);
     }
 }
 
-// ─────────────────────────────────────────────────────────────
-// Detection records
-// ─────────────────────────────────────────────────────────────
-async function fetchDetectionRecords() {
-    try {
-        const res  = await fetch(`${API_URL}/api/detection/records`);
-        const data = await res.json();
-        const records = data.records || [];
+// 2. Module Switcher (Fixes the Generation Button)
+window.setDashboardModule = function (module) {
+    activeModule = module;
 
-        // Summary counts
-        const images = records.filter(r => r.media_type === 'image').length;
-        const videos = records.filter(r => r.media_type === 'video').length;
-        setAll('db-det-total',  records.length);
-        setAll('db-det-images', images);
-        setAll('db-det-videos', videos);
+    // Toggle CSS classes for the buttons
+    document.getElementById('btn-det')?.classList.toggle('active-module', module === 'detection');
+    document.getElementById('btn-gen')?.classList.toggle('active-module', module === 'generation');
 
-        renderDetectionGallery(records);
-        renderActivityLog(records);
-    } catch (e) {
-        console.warn('Detection records fetch failed:', e);
-    }
-}
+    console.log("Switched to:", module);
+    updateThroughputChart(); // Refresh chart immediately
+};
 
-function renderDetectionGallery(records) {
-    const el = document.getElementById('detection-gallery');
-    if (!el) return;
-    if (records.length === 0) {
-        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No fake detections saved yet.<br>Analyze an image or video to auto-save here.</div>`;
-        return;
-    }
-    el.innerHTML = records.map(r => {
-        const imgSrc = r.image_b64 ? `data:image/jpeg;base64,${r.image_b64}` : '';
-        const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
-        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(1) + '%' : '—';
-        const conf = r.confidence !== undefined ? (r.confidence * 100).toFixed(1) + '%' : '—';
-        return `
-        <div class="gallery-card">
-            ${imgSrc ? `<img src="${imgSrc}" alt="Fake detection #${r.id}" loading="lazy">` : '<div style="height:160px;background:rgba(239,68,68,0.08);display:flex;align-items:center;justify-content:center;font-size:2rem;">🎭</div>'}
-            <div class="card-info">
-                <span class="badge-small badge-detect">FAKE</span>
-                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
-                <div class="prob">Fake Prob: ${prob}</div>
-                <div class="meta">Confidence: ${conf}</div>
-                <div class="meta">📅 ${ts}</div>
-                <div class="meta" style="margin-top:0.3rem; font-size:0.72rem; color:rgba(255,255,255,0.3);">${r.filename}</div>
-            </div>
-        </div>`;
-    }).join('');
-}
+// 3. Activity Logs (Fixes 20-40-60 Increments and Page Numbers)
+function renderActivityLog() {
+    const tbody = document.querySelector('tbody');
+    const startEl = document.getElementById('log-start');
+    const endEl = document.getElementById('log-end');
+    const totalEl = document.getElementById('log-total');
+    const pageNumBtn = document.getElementById('active-page-num');
 
-function renderActivityLog(records) {
-    const tbody = document.getElementById('log-body');
     if (!tbody) return;
-    if (records.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-log">No activity yet.</td></tr>`;
-        return;
-    }
-    tbody.innerHTML = records.slice(0, 20).map(r => {
-        const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
-        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(1) + '%' : '—';
-        const conf = r.confidence !== undefined ? (r.confidence * 100).toFixed(1) + '%' : '—';
-        return `<tr>
-            <td>${r.id}</td>
-            <td><span class="badge badge-fake">FAKE</span></td>
-            <td><span class="badge ${r.media_type === 'video' ? '' : 'badge-gen'}" style="background:rgba(59,130,246,0.12);color:#60a5fa;padding:0.2rem 0.6rem;border-radius:12px;font-size:0.75rem;">${r.media_type}</span></td>
-            <td>${prob}</td>
-            <td>${conf}</td>
-            <td>${ts}</td>
-        </tr>`;
-    }).join('');
-}
 
-// ─────────────────────────────────────────────────────────────
-// Generation records
-// ─────────────────────────────────────────────────────────────
-async function fetchGenerationRecords() {
-    try {
-        const res  = await fetch(`${API_URL}/api/generation/records`);
-        const data = await res.json();
-        const records = data.records || [];
+    // Merge and Sort
+    const merged = [...allDetectionRecords, ...allGenerationRecords]
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-        const images = records.filter(r => r.media_type === 'image').length;
-        const videos = records.filter(r => r.media_type === 'video').length;
-        setAll('db-gen-total',  records.length);
-        setAll('db-gen-images', images);
-        setAll('db-gen-videos', videos);
+    const totalLogs = merged.length;
+    const startIdx = logPage * LOGS_PER_PAGE;
+    const paginated = merged.slice(startIdx, startIdx + LOGS_PER_PAGE);
 
-        renderGenerationGallery(records);
-    } catch (e) {
-        console.warn('Generation records fetch failed:', e);
-    }
-}
+    // Update Counter Numbers (Increments of 20)
+    if (startEl) startEl.textContent = totalLogs > 0 ? startIdx + 1 : 0;
+    if (endEl) endEl.textContent = Math.min(startIdx + LOGS_PER_PAGE, totalLogs);
+    if (totalEl) totalEl.textContent = totalLogs;
 
+    // Update the middle button to show Current Page (1, 2, 3...)
+    if (pageNumBtn) pageNumBtn.textContent = logPage + 1;
 
-let currentGenerationRecords = [];
+    // Render Table Rows
+    tbody.innerHTML = paginated.map(r => {
+        const isGen = r.prompt !== undefined;
+        const d = new Date(r.timestamp);
+        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+        const timeStr = d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
 
-function renderGenerationGallery(records) {
-    currentGenerationRecords = records;
-    const el = document.getElementById('generation-gallery');
-    if (!el) return;
-    if (records.length === 0) {
-        el.innerHTML = `<div class="empty-gallery"><span>✨</span>No generated media saved yet.<br>Generate an image or apply a filter to auto-save here.</div>`;
-        return;
-    }
-    el.innerHTML = records.map((r, idx) => {
-        const imgSrc = r.image_b64 ? `data:image/png;base64,${r.image_b64}` : '';
-        const ts = r.timestamp ? new Date(r.timestamp).toLocaleString() : '—';
-        const prompt = r.prompt || '—';
+        const hash = r.filename ? `0x${r.filename.slice(0, 4).toUpperCase()}` : `#${r.id}`;
+        const opName = isGen ? 'AI_GENERATION' : 'FORENSIC_DET';
+        let status = isGen ? 'STABLE' : (r.fake_prob > 0.8 ? 'CRITICAL' : 'VERIFIED');
+        let badgeClass = isGen ? 'text-purple-400' : (r.fake_prob > 0.8 ? 'text-red-500' : 'text-cyan-500');
+
         return `
-        <div class="gallery-card history-item" onclick="openHistoryModalById(${idx})">
-            ${imgSrc ? `<img src="${imgSrc}" alt="Generated media #${r.id}" loading="lazy">` : '<div style="height:160px;background:rgba(139,92,246,0.08);display:flex;align-items:center;justify-content:center;font-size:2rem;">' + (r.media_type === 'video' ? '🎬' : '🎨') + '</div>'}
-            <div class="card-info">
-                <span class="badge-small badge-gen">AI GEN</span>
-                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
-                <div class="prompt-text" title="${prompt}">💬 ${prompt}</div>
-                <div class="meta">📅 ${ts}</div>
-                <div class="meta" style="margin-top:0.3rem; font-size:0.72rem; color:rgba(255,255,255,0.3);">${r.filename}</div>
-            </div>
-        </div>`;
+            <tr class="hover:bg-white/5 border-b border-white/5">
+                <td class="px-8 py-4 text-[10px] font-mono">
+                    <span class="opacity-40 mr-2">${dateStr}</span>
+                    <span class="text-primary font-bold">${timeStr}</span>
+                </td>
+                <td class="px-8 py-4 text-[10px] font-mono text-slate-400">${hash}</td>
+                <td class="px-8 py-4 text-[11px] font-bold tracking-widest">${opName}</td>
+                <td class="px-8 py-4 text-right">
+                    <span class="px-2 py-0.5 rounded text-[9px] border border-current ${badgeClass}">${status}</span>
+                </td>
+            </tr>`;
     }).join('');
 }
 
-// ── Generation History Modal ────────────────────────────────────────────────
-function openHistoryModalById(idx) {
-    const data = currentGenerationRecords[idx];
-    if (!data) return;
-    openHistoryModal(data);
-}
-
-function openHistoryModal(data) {
-    const modal = document.getElementById("history-modal");
-    if (!modal) return;
-
-    modal.classList.remove("hidden");
-
-    document.getElementById("history-prompt").textContent = data.prompt || "—";
-    document.getElementById("history-type").textContent = data.media_type || data.type || "N/A";
-    document.getElementById("history-time").textContent = data.generation_time ? parseFloat(data.generation_time).toFixed(2) + 's' : "N/A";
-    
-    const ts = data.timestamp ? new Date(data.timestamp).toLocaleString() : "N/A";
-    document.getElementById("history-timestamp").textContent = ts;
-    document.getElementById("history-seed").textContent = data.seed || "Random";
-
-    const imgEl = document.getElementById("history-image");
-    if (data.image_b64) {
-        imgEl.src = `data:image/png;base64,${data.image_b64}`;
-        imgEl.style.display = 'block';
-    } else if (data.image) {
-        imgEl.src = data.image;
-        imgEl.style.display = 'block';
-    } else {
-        imgEl.style.display = 'none';
-        imgEl.src = '';
-    }
-}
-
+// 4. Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById("history-close");
-    if (closeBtn) {
-        closeBtn.onclick = () => {
-            document.getElementById("history-modal").classList.add("hidden");
-        };
-    }
+    refreshAll();
+    setInterval(refreshAll, 10000);
 
-    // Close on background click
-    const modal = document.getElementById("history-modal");
-    if (modal) {
-        modal.onclick = (e) => {
-            if (e.target === modal) {
-                modal.classList.add("hidden");
-            }
-        };
-    }
+    // Chevron Next
+    document.getElementById('log-next')?.addEventListener('click', () => {
+        const total = allDetectionRecords.length + allGenerationRecords.length;
+        if ((logPage + 1) * LOGS_PER_PAGE < total) {
+            logPage++;
+            renderActivityLog();
+        }
+    });
+
+    // Chevron Back
+    document.getElementById('log-prev')?.addEventListener('click', () => {
+        if (logPage > 0) {
+            logPage--;
+            renderActivityLog();
+        }
+    });
 });
 
-// ─────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────
-function setText(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
+// Helper for Stats and Chart
+function updateThroughputChart() {
+    const chartContainer = document.querySelector('.throughput-bars');
+    if (!chartContainer) return;
+    const records = activeModule === 'detection' ? allDetectionRecords : allGenerationRecords;
+    const now = Date.now();
+    const buckets = Array(12).fill(0);
+    records.forEach(r => {
+        const age = now - new Date(r.timestamp).getTime();
+        const bucketIndex = Math.floor(age / (2 * 60 * 60 * 1000));
+        if (bucketIndex >= 0 && bucketIndex < 12) buckets[11 - bucketIndex]++;
+    });
+    const maxVal = Math.max(...buckets, 5);
+    const bars = chartContainer.querySelectorAll('.bar');
+    bars.forEach((bar, i) => {
+        bar.style.height = `${Math.max((buckets[i] / maxVal) * 100, 8)}%`;
+    });
 }
 
-function setAll(id, val) {
-    document.querySelectorAll(`#${id}`).forEach(el => { el.textContent = val; });
+function renderStats(data) {
+    const d = data.detection || { images: { total: 0, fake: 0 } };
+    const g = data.generation || { images: { total: 0 }, videos: { total: 0 } };
+    const set = (id, val) => { if (document.getElementById(id)) document.getElementById(id).textContent = val; };
+    set('det-img-total', d.images.total);
+    set('det-img-fake', d.images.fake);
+    set('gen-total', (g.images.total || 0) + (g.videos.total || 0));
 }
 
-// ─────────────────────────────────────────────────────────────
-// Init + auto-refresh
-// ─────────────────────────────────────────────────────────────
-function refreshAll() {
-    fetchStats();
-    fetchDetectionRecords();
-    fetchGenerationRecords();
+function initHomeButtonFlip() {
+    const inner = document.querySelector('.flip-inner');
+    if (!inner) return;
+
+    const flipTl = gsap.timeline({
+        repeat: -1,         // Infinite loop
+        repeatDelay: 10     // Wait 10 seconds before starting the next flip
+    });
+
+    flipTl
+        // 1. Flip to Logo
+        .to(inner, {
+            rotateY: 180,
+            duration: 0.6,
+            ease: "back.out(1.7)"
+        })
+        // 2. Hold Logo for 2 seconds
+        .to({}, { duration: 1.5 })
+        // 3. Flip back to Home Icon
+        .to(inner, {
+            rotateY: 0,
+            duration: 0.6,
+            ease: "back.inOut(1.7)"
+        });
 }
 
-refreshAll();
-setInterval(refreshAll, 5000);
+/**
+ * EXPORT ENGINE: CSV GENERATOR
+ */
+window.exportToCSV = function () {
+    // 1. Merge all records for a full history export
+    const merged = [...allDetectionRecords, ...allGenerationRecords]
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (merged.length === 0) {
+        alert("No data available to export.");
+        return;
+    }
+
+    // 2. Define CSV Headers
+    const headers = ["Timestamp", "ID", "Type", "Filename/Prompt", "Status", "Fake Probability"];
+
+    // 3. Map data to rows
+    const rows = merged.map(r => {
+        const isGen = r.prompt !== undefined;
+        const type = isGen ? "GENERATION" : "DETECTION";
+        const content = isGen ? r.prompt : (r.filename || "N/A");
+        const status = isGen ? "STABLE" : (r.fake_prob > 0.8 ? "CRITICAL" : "VERIFIED");
+        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(2) + "%" : "N/A";
+
+        return [
+            `"${r.timestamp}"`,
+            `"${r.id}"`,
+            `"${type}"`,
+            `"${content.replace(/"/g, '""')}"`, // Escape quotes for CSV safety
+            `"${status}"`,
+            `"${prob}"`
+        ];
+    });
+
+    // 4. Construct CSV String
+    const csvContent = [
+        headers.join(","),
+        ...rows.map(e => e.join(","))
+    ].join("\n");
+
+    // 5. Trigger Browser Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        const dateTag = new Date().toISOString().split('T')[0];
+
+        link.setAttribute("href", url);
+        link.setAttribute("download", `polygen_export_${dateTag}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+};

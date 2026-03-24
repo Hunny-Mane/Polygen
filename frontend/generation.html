@@ -4,23 +4,221 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyGen - Generation</title>
+    <title>Polygen</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/gemini1.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 </head>
 
-<body>
-    <!-- Simplified dark background; heavy reveal blobs removed for performance -->
+<style>
+    .nav-wrapper {
+        display: flex;
+        justify-content: center;
+        top: 0.01rem;
+        z-index: 1000;
+        /* Higher z-index for safety */
+        position: sticky;
+        pointer-events: none;
+        /* Container itself shouldn't block */
+    }
 
-    <nav>
-        <div class="logo">PolyGen</div>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="detection.html">Deepfake Detection</a>
-            <a href="generation.html" class="active">Media Generation</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="database.html">Database</a>
-        </div>
-    </nav>
+    .neu-nav {
+        display: flex;
+        padding: 0.6rem 1.2rem;
+        /* Reduced padding from 1rem 1.5rem */
+        border-bottom-left-radius: 35px;
+        /* Slightly reduced radius for smaller size */
+        border-bottom-right-radius: 35px;
+        box-shadow: 6px 6px 15px #afc4e7,
+            -6px -6px 15px #afc4e7;
+        /* Scaled down shadows */
+        transition: all 0.3s ease;
+        pointer-events: auto;
+        /* Buttons inside are clickable */
+    }
+
+    .neu-nav-links {
+        display: flex;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+        gap: 1rem;
+        /* Reduced gap from 1.5rem */
+    }
+
+    .neu-nav-links a {
+        color: var(--neu-text-dim);
+        text-decoration: none;
+        padding: 0.5rem 1.4rem;
+        /* Reduced padding from 0.8rem 1.8rem */
+        border-radius: 30px;
+        /* Adjusted radius */
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+        font-size: 0.9rem;
+        /* Slightly smaller font */
+        background: #ffffff;
+        box-shadow: 4px 4px 10px var(--neu-dark-shadow),
+            -4px -4px 10px var(--neu-light-shadow);
+        /* Scaled shadows */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .neu-nav-links a.home-btn {
+        padding: 0.6rem;
+        width: 38px;
+        /* Reduced from 45px */
+        height: 38px;
+        /* Reduced from 45px */
+        border-radius: 50%;
+    }
+
+
+    .home-btn.flip-container {
+        perspective: 1000px;
+        background: transparent !important;
+        /* The inner faces handle background */
+        box-shadow: none !important;
+        padding: 0 !important;
+        border: none;
+    }
+
+    .flip-inner {
+        position: relative;
+        width: 38px;
+        height: 38px;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-style: preserve-3d;
+    }
+
+    .flip-front,
+    .flip-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        /* Re-applying your Neumorphic styling here */
+        background: #ffffff;
+        box-shadow: 4px 4px 10px #d1d9e6, -4px -4px 10px #ffffff;
+    }
+
+    .flip-back {
+        transform: rotateY(180deg);
+        background-image: url("../frontend/assets/gemini1.png");
+        background-size: cover;
+        background-position: center;
+    }
+
+    .flip-front:hover {
+        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+            inset -4px -4px 10px var(--neu-light-shadow);
+        transform: translateY(1px);
+    }
+
+
+    .neu-nav-links a:hover,
+    .neu-nav-links a:active {
+        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+            inset -4px -4px 10px var(--neu-light-shadow);
+        transform: translateY(1px);
+        color: var(--neu-accent-blue);
+    }
+
+    .neu-nav-links a.active {
+        background: #ffffff;
+        color: var(--neu-accent-blue);
+        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+            inset -4px -4px 10px var(--neu-light-shadow);
+        /* Outward when current page */
+        transform: translateY(0);
+    }
+
+    .neu-nav-links a.active:hover,
+    .neu-nav-links a.active:active {
+        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+            inset -4px -4px 10px var(--neu-light-shadow);
+        transform: translateY(1px);
+    }
+</style>
+
+<script>
+    window.addEventListener('DOMContentLoaded', initHomeButtonFlip);
+    function initHomeButtonFlip() {
+        const inner = document.querySelector('.flip-inner');
+        if (!inner) return;
+
+        const flipTl = gsap.timeline({
+            repeat: -1,         // Infinite loop
+            repeatDelay: 10     // Wait 10 seconds before starting the next flip
+        });
+
+        flipTl
+            // 1. Flip to Logo
+            .to(inner, {
+                rotateY: 180,
+                duration: 0.6,
+                ease: "back.out(1.7)"
+            })
+            // 2. Hold Logo for 2 seconds
+            .to({}, { duration: 1.5 })
+            // 3. Flip back to Home Icon
+            .to(inner, {
+                rotateY: 0,
+                duration: 0.6,
+                ease: "back.inOut(1.7)"
+            });
+    }
+
+
+    initHomeButtonFlip();
+</script>
+
+<link rel="stylesheet" href="css/neumorphism.css">
+
+<body class="landing-page dark-theme">
+
+    <div class="nav-wrapper" style="backdrop-filter: blur(10px); max-width: fit-content; left: 29.9%;">
+        <nav class="neu-nav animate-in" style="padding-bottom: 11.5px;">
+            <div class="neu-nav-links">
+                <a href="dashboard.html" class="nav-item" style="padding-top: 10px; padding-bottom: 10px;">Dashboard</a>
+            </div>
+            <div class="neu-nav-links">
+                <a href="detection.html" class="nav-item">Detection</a>
+                <a href="index.html" class="nav-item home-btn flip-container">
+                    <div class="flip-inner">
+                        <div class="flip-front">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <div class="flip-back">
+                        </div>
+                    </div>
+                </a>
+                <a href="generation.html" class="nav-item" style="color: var(--neu-accent-blue);">Generation</a>
+            </div>
+            <div class="neu-nav-links">
+                <a href="database.html" class="nav-item" style="padding-top: 10px; padding-bottom: 10px;">Database</a>
+            </div>
+        </nav>
+    </div>
 
     <div class="container">
         <div class="hero">
@@ -36,7 +234,8 @@
 
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                 <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Select AI Model</label>
+                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Select AI
+                        Model</label>
                     <select id="model-select"
                         style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: #1e293b; color: white;">
                         <option value="">Loading models...</option>
@@ -70,7 +269,8 @@
             </div>
 
             <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Negative Prompt (Optional)</label>
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Negative Prompt
+                    (Optional)</label>
                 <textarea id="negative-prompt" rows="1" placeholder="low quality, blurry, distorted..."
                     oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 100)+'px'"
                     style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; resize: none; font-family: inherit; font-size: 0.9rem;"></textarea>
@@ -78,21 +278,26 @@
 
             <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
                 <button class="btn btn-primary" id="btn-generate" onclick="generateImage()">Generate</button>
-                <button class="btn" id="btn-regenerate" onclick="regenerateSameSeed()" style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
-                <button class="btn" id="btn-variation" onclick="variationGeneration()" style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
-                <button class="btn" id="btn-stop" style="display: none; background: #ef4444; color: white;" onclick="stopGeneration()">Stop</button>
+                <button class="btn" id="btn-regenerate" onclick="regenerateSameSeed()"
+                    style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
+                <button class="btn" id="btn-variation" onclick="variationGeneration()"
+                    style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
+                <button class="btn" id="btn-stop" style="display: none; background: #ef4444; color: white;"
+                    onclick="stopGeneration()">Stop</button>
                 <div style="display: flex; flex-direction: column; gap: 0.2rem;">
                     <span id="gen-timer" style="display: none; color: #94a3b8; font-family: monospace;">0.0s</span>
-                    <span id="step-counter" style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
+                    <span id="step-counter"
+                        style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
                 </div>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed (Optional)</label>
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed
+                    (Optional)</label>
                 <input type="number" id="t2i-seed" placeholder="Random"
                     style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
             </div>
-            
+
             <div class="loader" id="gen-loader"></div>
 
             <div class="preview-container" id="gen-result" style="display:none;">
@@ -130,18 +335,33 @@
 
             <!-- Style prompt cards -->
             <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:0.6rem;">Choose a Style</p>
-            <div id="i2i-style-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.75rem; margin-bottom:1.2rem;">
-                <div class="i2i-style-card style-vintage" data-prompt="1920s vintage photograph, sepia tone, film grain, aged photo" data-strength="0.6" onclick="selectStyle(this)">Vintage Photo</div>
-                <div class="i2i-style-card style-bw" data-prompt="old black and white portrait photo, high contrast monochrome" data-strength="0.65" onclick="selectStyle(this)">Black &amp; White</div>
-                <div class="i2i-style-card style-anime" data-prompt="anime style illustration, vibrant colors, clean linework" data-strength="0.5" onclick="selectStyle(this)">Anime Style</div>
-                <div class="i2i-style-card style-cyberpunk" data-prompt="cyberpunk futuristic neon city style, dark atmosphere, neon lights" data-strength="0.75" onclick="selectStyle(this)">Cyberpunk</div>
-                <div class="i2i-style-card style-oil" data-prompt="classical oil painting portrait, textured brushstrokes, renaissance style" data-strength="0.8" onclick="selectStyle(this)">Oil Painting</div>
-                <div class="i2i-style-card style-cartoon" data-prompt="pixar style cartoon character, bright colors, 3d animated look" data-strength="0.7" onclick="selectStyle(this)">Cartoon Style</div>
+            <div id="i2i-style-grid"
+                style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.75rem; margin-bottom:1.2rem;">
+                <div class="i2i-style-card style-vintage"
+                    data-prompt="1920s vintage photograph, sepia tone, film grain, aged photo" data-strength="0.6"
+                    onclick="selectStyle(this)">Vintage Photo</div>
+                <div class="i2i-style-card style-bw"
+                    data-prompt="old black and white portrait photo, high contrast monochrome" data-strength="0.65"
+                    onclick="selectStyle(this)">Black &amp; White</div>
+                <div class="i2i-style-card style-anime"
+                    data-prompt="anime style illustration, vibrant colors, clean linework" data-strength="0.5"
+                    onclick="selectStyle(this)">Anime Style</div>
+                <div class="i2i-style-card style-cyberpunk"
+                    data-prompt="cyberpunk futuristic neon city style, dark atmosphere, neon lights"
+                    data-strength="0.75" onclick="selectStyle(this)">Cyberpunk</div>
+                <div class="i2i-style-card style-oil"
+                    data-prompt="classical oil painting portrait, textured brushstrokes, renaissance style"
+                    data-strength="0.8" onclick="selectStyle(this)">Oil Painting</div>
+                <div class="i2i-style-card style-cartoon"
+                    data-prompt="pixar style cartoon character, bright colors, 3d animated look" data-strength="0.7"
+                    onclick="selectStyle(this)">Cartoon Style</div>
             </div>
 
             <!-- Hidden prompt + strength -->
             <input type="hidden" id="i2i-prompt" value="">
-            <div id="i2i-selected-prompt" style="display:none; background:rgba(255,255,255,0.07); border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; color:#cbd5e1; margin-bottom:1rem;"></div>
+            <div id="i2i-selected-prompt"
+                style="display:none; background:rgba(255,255,255,0.07); border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; color:#cbd5e1; margin-bottom:1rem;">
+            </div>
 
             <div style="margin-bottom:1rem;">
                 <label style="display:block; font-size:0.8rem; margin-bottom:0.4rem; color:#94a3b8;">
@@ -179,18 +399,24 @@
 
             <!-- Buttons -->
             <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-                <button class="btn btn-primary" id="btn-i2i-generate" onclick="generateImageFromImage()">Generate</button>
-                <button class="btn" id="btn-i2i-regenerate" onclick="regenerateSameSeedI2I()" style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
-                <button class="btn" id="btn-i2i-variation" onclick="variationGenerationI2I()" style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
-                <button class="btn" id="btn-i2i-stop" style="display:none; background:#ef4444; color:white;" onclick="stopI2IGeneration()">Stop</button>
+                <button class="btn btn-primary" id="btn-i2i-generate"
+                    onclick="generateImageFromImage()">Generate</button>
+                <button class="btn" id="btn-i2i-regenerate" onclick="regenerateSameSeedI2I()"
+                    style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
+                <button class="btn" id="btn-i2i-variation" onclick="variationGenerationI2I()"
+                    style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
+                <button class="btn" id="btn-i2i-stop" style="display:none; background:#ef4444; color:white;"
+                    onclick="stopI2IGeneration()">Stop</button>
                 <div style="display: flex; flex-direction: column; gap: 0.2rem;">
                     <span id="i2i-timer" style="display:none; color:#94a3b8; font-family:monospace;">0.0s</span>
-                    <span id="i2i-step-counter" style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
+                    <span id="i2i-step-counter"
+                        style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
                 </div>
             </div>
 
             <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed (Optional)</label>
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed
+                    (Optional)</label>
                 <input type="number" id="i2i-seed" placeholder="Random"
                     style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
             </div>
@@ -270,29 +496,33 @@
             <button class="tool-btn" id="tool-circle" title="Circle Selection">⭕</button>
             <button class="tool-btn" id="tool-ellipse" title="Ellipse Selection">💠</button>
         </div>
-        
+
         <!-- Sliding Prompt Panel -->
         <div id="inpaint-prompt-panel" class="prompt-panel collapsed">
             <div style="padding: 1rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Inpainting Prompt</label>
+                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Inpainting
+                    Prompt</label>
                 <textarea id="inpaint-prompt" rows="3" placeholder="Describe what to add/change in the selection..."
                     style="width: 100%; min-height: 80px; max-height: 160px; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; resize: none; overflow-y: auto;"></textarea>
-                
+
                 <div style="margin: 1rem 0;">
-                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Denoise Strength: <span id="inpaint-strength-val">0.65</span></label>
-                    <input type="range" id="inpaint-strength" min="0.5" max="0.8" step="0.05" value="0.65" 
-                           oninput="document.getElementById('inpaint-strength-val').innerText=this.value" 
-                           style="width: 100%; accent-color: var(--primary);">
+                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Denoise
+                        Strength: <span id="inpaint-strength-val">0.65</span></label>
+                    <input type="range" id="inpaint-strength" min="0.5" max="0.8" step="0.05" value="0.65"
+                        oninput="document.getElementById('inpaint-strength-val').innerText=this.value"
+                        style="width: 100%; accent-color: var(--primary);">
                 </div>
 
                 <div style="margin: 1rem 0;">
-                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Mask Blur: <span id="inpaint-blur-val">5</span>px</label>
-                    <input type="range" id="inpaint-blur" min="0" max="20" step="1" value="5" 
-                           oninput="document.getElementById('inpaint-blur-val').innerText=this.value" 
-                           style="width: 100%; accent-color: var(--primary);">
+                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Mask Blur:
+                        <span id="inpaint-blur-val">5</span>px</label>
+                    <input type="range" id="inpaint-blur" min="0" max="20" step="1" value="5"
+                        oninput="document.getElementById('inpaint-blur-val').innerText=this.value"
+                        style="width: 100%; accent-color: var(--primary);">
                 </div>
 
-                <button class="btn btn-primary" id="btn-inpaint-send" style="width: 100%; padding: 0.6rem;" onclick="sendInpaintRequest()">Send Inpainting</button>
+                <button class="btn btn-primary" id="btn-inpaint-send" style="width: 100%; padding: 0.6rem;"
+                    onclick="sendInpaintRequest()">Send Inpainting</button>
             </div>
         </div>
     </div>

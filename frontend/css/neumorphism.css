@@ -190,6 +190,11 @@
     background-position: center;
 }
 
+.flip-front:hover {
+    box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+        inset -4px -4px 10px var(--neu-light-shadow);
+    transform: translateY(1px);
+}
 
 
 .landing-page .neu-nav-links a:hover,
@@ -203,8 +208,8 @@
 .landing-page .neu-nav-links a.active {
     background: #ffffff;
     color: var(--neu-accent-blue);
-    box-shadow: 4px 4px 10px var(--neu-dark-shadow),
-        -4px -4px 10px var(--neu-light-shadow);
+    box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+        inset -4px -4px 10px var(--neu-light-shadow);
     /* Outward when current page */
     transform: translateY(0);
 }

@@ -1,366 +1,971 @@
 <!DOCTYPE html>
-<html lang="en">
+
+<html class="light" lang="en">
+<title>Polygen</title>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PolyGen - Dashboard</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <link rel="icon" href="assets/gemini1.png" type="image/x-icon">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Audiowide&amp;family=Outfit:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f9f9ff",
+                        "primary": "#005cb8",
+                        "on-surface": "#181c22",
+                        "on-surface-variant": "#414753",
+                        "outline-variant": "#c1c6d5",
+                        "surface-container": "#ebedf7",
+                        "surface-container-high": "#e6e8f1",
+                        "cyan-glow": "#00f2ff",
+                        "magenta-glow": "#ff00ff"
+                    },
+                    fontFamily: {
+                        "headline": ["Audiowide", "Inter"],
+                        "body": ["Inter"],
+                        "label": ["Outfit", "Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
     <style>
-        .stat-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2.5rem;
+        :root {
+            --blueprint-grid: rgba(0, 92, 184, 0.05);
+            --blueprint-line: rgba(0, 242, 255, 0.1);
         }
 
-        .stat-card {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 1.8rem;
-            backdrop-filter: blur(12px);
-            transition: 0.3s;
+        body {
+            background-color: #f9f9ff;
+            overflow-x: hidden;
+        }
+
+        .blueprint-bg {
+            background-image:
+                linear-gradient(var(--blueprint-grid) 1px, transparent 1px),
+                linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+            background-size: 40px 40px;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .blueprint-dots {
+            background-image: radial-gradient(var(--blueprint-line) 1px, transparent 1px);
+            background-size: 10px 10px;
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .neumorphic-card {
+            background: #f9f9ff;
+            box-shadow: 12px 12px 24px #d9d9e3, -12px -12px 24px #ffffff;
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        .scrolly-section {
+            /* min-height: 100vh; */
+            height: max-content;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
             position: relative;
-            overflow: hidden;
         }
 
-        .stat-card::before {
-            content: '';
+        .obsidian-text {
+            color: #181c22;
+        }
+
+        /* SVG Strands */
+        .strand-svg {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--primary);
-        }
-
-        .stat-card .label {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .icon {
-            font-size: 2rem;
-            margin-bottom: 0.8rem;
-        }
-
-        .stat-card .big-num {
-            font-size: 3rem;
-            font-weight: 700;
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            line-height: 1;
-        }
-
-        .stat-card .sub-stats {
-            display: flex;
-            gap: 1rem;
-            margin-top: 0.8rem;
-            flex-wrap: wrap;
-        }
-
-        .sub-stat {
-            font-size: 0.82rem;
-            color: var(--text-dim);
-        }
-
-        .sub-stat span {
-            font-weight: 600;
-            color: var(--text-light);
-        }
-
-        .real-color {
-            color: #10b981 !important;
-        }
-
-        .fake-color {
-            color: #ef4444 !important;
-        }
-
-        /* Activity Log */
-        .activity-log {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 1.8rem;
-            backdrop-filter: blur(12px);
-            margin-bottom: 2rem;
-        }
-
-        .activity-log h3 {
-            margin-bottom: 1.2rem;
-            font-size: 1.2rem;
-        }
-
-        .log-table {
             width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .log-table th {
-            text-align: left;
-            padding: 0.6rem 1rem;
-            color: var(--text-dim);
-            border-bottom: 1px solid var(--glass-border);
-            font-weight: 500;
+        .strand-path {
+            fill: none;
+            stroke: #005cb8;
+            stroke-width: 1.5;
+            stroke-dasharray: 5, 5;
+            opacity: 0.2;
         }
 
-        .log-table td {
-            padding: 0.7rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            color: var(--text-dim);
+        .pulse-circle {
+            fill: #00f2ff;
+            filter: blur(2px);
         }
 
-        .log-table tr:last-child td {
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e0e2eb;
+            border-radius: 10px;
+        }
+
+        .nav-wrapper {
+            display: flex;
+            justify-content: center;
+            top: 0.01rem;
+            z-index: 1000;
+            /* Higher z-index for safety */
+            position: sticky;
+            pointer-events: none;
+            /* Container itself shouldn't block */
+        }
+
+        .neu-nav {
+            display: flex;
+            padding: 0.6rem 1.2rem;
+            /* Reduced padding from 1rem 1.5rem */
+            border-bottom-left-radius: 35px;
+            /* Slightly reduced radius for smaller size */
+            border-bottom-right-radius: 35px;
+            box-shadow: 6px 6px 15px #afc4e7,
+                -6px -6px 15px #afc4e7;
+            /* Scaled down shadows */
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            /* Buttons inside are clickable */
+        }
+
+        .neu-nav-links {
+            display: flex;
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+            gap: 1rem;
+            /* Reduced gap from 1.5rem */
+        }
+
+        .neu-nav-links a {
+            color: var(--neu-text-dim);
+            text-decoration: none;
+            padding: 0.5rem 1.4rem;
+            /* Reduced padding from 0.8rem 1.8rem */
+            border-radius: 30px;
+            /* Adjusted radius */
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            font-size: 0.9rem;
+            /* Slightly smaller font */
+            background: #ffffff;
+            box-shadow: 4px 4px 10px var(--neu-dark-shadow),
+                -4px -4px 10px var(--neu-light-shadow);
+            /* Scaled shadows */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .neu-nav-links a.home-btn {
+            padding: 0.6rem;
+            width: 38px;
+            /* Reduced from 45px */
+            height: 38px;
+            /* Reduced from 45px */
+            border-radius: 50%;
+        }
+
+
+        .home-btn.flip-container {
+            perspective: 1000px;
+            background: transparent !important;
+            /* The inner faces handle background */
+            box-shadow: none !important;
+            padding: 0 !important;
+            border: none;
+        }
+
+        .flip-inner {
+            position: relative;
+            width: 38px;
+            height: 38px;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .flip-front,
+        .flip-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            /* Re-applying your Neumorphic styling here */
+            background: #ffffff;
+            box-shadow: 4px 4px 10px #d1d9e6, -4px -4px 10px #ffffff;
+        }
+
+        .flip-back {
+            transform: rotateY(180deg);
+            background-image: url("../frontend/assets/gemini1.png");
+            background-size: cover;
+            background-position: center;
+        }
+
+        .flip-front:hover {
+            box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+                inset -4px -4px 10px var(--neu-light-shadow);
+            transform: translateY(1px);
+        }
+
+
+        .neu-nav-links a:hover,
+        .neu-nav-links a:active {
+            box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+                inset -4px -4px 10px var(--neu-light-shadow);
+            transform: translateY(1px);
+            color: var(--neu-accent-blue);
+        }
+
+        .neu-nav-links a.active {
+            background: #ffffff;
+            color: var(--neu-accent-blue);
+            box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+                inset -4px -4px 10px var(--neu-light-shadow);
+            /* Outward when current page */
+            transform: translateY(0);
+        }
+
+        .neu-nav-links a.active:hover,
+        .neu-nav-links a.active:active {
+            box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
+                inset -4px -4px 10px var(--neu-light-shadow);
+            transform: translateY(1px);
+        }
+
+        .synth-archive-panel {
+            position: relative;
+            /* Keep it in the document flow */
+            width: 100%;
+            min-height: 40vh;
+            /* Give it a set height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            z-index: 2000;
+            opacity: 1 !important;
+            /* FORCE VISIBILITY */
+            visibility: visible !important;
+            pointer-events: auto !important;
+            /* ENABLE CLICKS */
+            padding: 4rem 5%;
+            margin-top: 5rem;
+            /* Space it from the last section */
+            box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.05);
+            /* Slight shadow for depth */
+        }
+
+        .footer-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 220px 1fr 280px;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Status Column */
+        .footer-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 3px solid #000;
+            padding-left: 1.5rem;
+        }
+
+        .active-module {
+            background: #f1f3fc !important;
+            color: #005cb8 !important;
+        }
+
+        .footer-stat .label {
+            font-family: 'Audiowide', cursive;
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.2em;
+        }
+
+        .footer-stat .value {
+            font-family: 'Audiowide', cursive;
+            font-size: 1.1rem;
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* Manifesto / Center Column */
+        .footer-manifesto h3 {
+            font-family: 'Audiowide', cursive;
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.1em;
+            color: #000;
+        }
+
+        .footer-manifesto p {
+            color: #333;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+        }
+
+        .footer-manifesto .copyright {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            opacity: 0.4;
+            color: #000;
+        }
+
+        /* Specs Column - Neumorphic Style */
+        .footer-specs {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 20px;
+            /* Soft Neumorphic Shadow */
+            box-shadow:
+                8px 8px 16px var(--gen-shadow-dark),
+                -8px -8px 16px var(--gen-shadow-dark);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.75rem;
+        }
+
+        .spec-row:last-child {
             border-bottom: none;
         }
 
-        .log-table .badge {
-            padding: 0.2rem 0.7rem;
-            border-radius: 20px;
-            font-size: 0.78rem;
+        .spec-row span:first-child {
+            font-family: 'Audiowide', cursive;
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .spec-row span:last-child {
+            font-family: 'ui-monospace', monospace;
+            color: #000;
             font-weight: 600;
         }
 
-        .badge-fake {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
+        .synth-pin-wrapper {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            z-index: 5;
         }
 
-        .badge-real {
-            background: rgba(16, 185, 129, 0.15);
-            color: #10b981;
+        .blueprint-grid-bg {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 242, 255, 0.06) 1.5px, transparent 1.5px),
+                linear-gradient(90deg, rgba(0, 242, 255, 0.06) 1.5px, transparent 1.5px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
         }
 
-        .badge-gen {
-            background: rgba(139, 92, 246, 0.15);
-            color: #a78bfa;
+        .blueprint-parallax-grid {
+            position: absolute;
+            inset: -10% -10%;
+            width: 120%;
+            height: 580%;
+            background-image:
+                linear-gradient(rgba(200, 210, 220, 0.4) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(200, 210, 220, 0.4) 2px, transparent 2px);
+            background-size: 100px 100px;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.8;
+            will-change: transform;
         }
 
-        .refresh-note {
-            text-align: center;
-            color: var(--text-dim);
-            font-size: 0.8rem;
-            margin-bottom: 2rem;
+        /* Core Claymorphism Styles */
+        .clay-card {
+            background: #f9f9ff;
+            box-shadow:
+                8px 8px 16px #d1d9e6,
+                -8px -8px 16px #d1d9e6ab,
+                inset 2px 2px 5px rgba(255, 255, 255, 0.5),
+                inset -2px -2px 5px rgba(0, 0, 0, 0.212);
+            border-radius: 2rem;
+            width: max-content;
+            right: 30%;
+            top: 10%;
         }
 
-        .pulse-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #10b981;
-            animation: pulse 1.5s infinite;
-            margin-right: 6px;
-            vertical-align: middle;
+        .clay-inset {
+            background: #f1f3fc;
+            box-shadow:
+                inset 6px 6px 12px #d1d9e6af,
+                inset -6px -6px 12px #ffffff00;
+            border-radius: 1.5rem;
         }
 
+        /* SVG Neural Animations */
+        .neural-strand {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: dash 5s linear infinite;
+            margin-bottom: 3em;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Global/Utility Animations */
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
             50% {
-                opacity: 0.5;
-                transform: scale(0.8);
+                opacity: .5;
             }
         }
 
-        .section-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 1.2rem;
-            color: var(--text-light);
-        }
-
-        .section-title span {
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .empty-log {
-            text-align: center;
-            color: var(--text-dim);
-            padding: 2rem;
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
     </style>
 </head>
+<link rel="stylesheet" href="css/neumorphism.css">
 
-<body>
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
+<body class="landing-page dark-theme">
+    <div class="blueprint-grid-bg" style="z-index: 10;"></div>
 
-    <nav>
-        <div class="logo">PolyGen</div>
-        <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="detection.html">Deepfake Detection</a>
-            <a href="generation.html">Media Generation</a>
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="database.html">Database</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="hero" style="padding: 2.5rem 0 1.5rem;">
-            <h1>Live Dashboard</h1>
-            <p>Real-time stats for detection and generation operations.</p>
-        </div>
-
-        <p class="refresh-note"><span class="pulse-dot"></span> Auto-refreshes every 5 seconds</p>
-
-        <!-- ── Detection Section ──────────────────────────────────── -->
-        <div class="section-title">🔍 <span>Detection Stats</span></div>
-        <div class="stat-grid" id="detection-stats-grid">
-            <!-- Image Detection Card -->
-            <div class="stat-card">
-                <div class="icon">🖼️</div>
-                <div class="label">Image Detections</div>
-                <div class="big-num" id="det-img-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Real: <span class="real-color" id="det-img-real">–</span></div>
-                    <div class="sub-stat">Fake: <span class="fake-color" id="det-img-fake">–</span></div>
-                </div>
+    <!-- Layer 3: Parallax Grid Background -->
+    <div class="blueprint-parallax-grid"></div>
+    <!-- Integrated Navigation Bar -->
+    <div class="nav-wrapper" style="backdrop-filter: blur(10px); max-width: fit-content; left: 29.9%;">
+        <nav class="neu-nav animate-in" style="padding-bottom: 11.5px;">
+            <div class="neu-nav-links">
+                <a href="dashboard.html" class="nav-item" style="color: var(--neu-accent-blue);">Dashboard</a>
             </div>
-            <!-- Video Detection Card -->
-            <div class="stat-card">
-                <div class="icon">🎥</div>
-                <div class="label">Video Detections</div>
-                <div class="big-num" id="det-vid-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Real: <span class="real-color" id="det-vid-real">–</span></div>
-                    <div class="sub-stat">Fake: <span class="fake-color" id="det-vid-fake">–</span></div>
-                </div>
-            </div>
-            <!-- Total Fakes Card -->
-            <div class="stat-card">
-                <div class="icon">⚠️</div>
-                <div class="label">Total Fakes Detected</div>
-                <div class="big-num" id="det-total-fake">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Across images + videos</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Generation Section ─────────────────────────────────── -->
-        <div class="section-title">✨ <span>Generation Stats</span></div>
-        <div class="stat-grid">
-            <!-- Image Generation Card -->
-            <div class="stat-card">
-                <div class="icon">🎨</div>
-                <div class="label">Images Generated</div>
-                <div class="big-num" id="gen-img-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">AI text-to-image</div>
-                </div>
-            </div>
-            <!-- Video Generation Card -->
-            <div class="stat-card">
-                <div class="icon">🎬</div>
-                <div class="label">Videos Processed</div>
-                <div class="big-num" id="gen-vid-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Filters applied</div>
-                </div>
-            </div>
-            <!-- Total Generation Card -->
-            <div class="stat-card">
-                <div class="icon">📦</div>
-                <div class="label">Total Media Created</div>
-                <div class="big-num" id="gen-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Images + videos</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Database Summary ───────────────────────────────────── -->
-        <div class="section-title">🗄️ <span>Database Summary</span></div>
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="icon">🛑</div>
-                <div class="label">Saved Fake Detections</div>
-                <div class="big-num" id="db-det-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Images: <span id="db-det-images">–</span></div>
-                    <div class="sub-stat">Videos: <span id="db-det-videos">–</span></div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="icon">💾</div>
-                <div class="label">Saved Generated Media</div>
-                <div class="big-num" id="db-gen-total">–</div>
-                <div class="sub-stats">
-                    <div class="sub-stat">Images: <span id="db-gen-images">–</span></div>
-                    <div class="sub-stat">Videos: <span id="db-gen-videos">–</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ── Activity Log ───────────────────────────────────────── -->
-        <div class="activity-log">
-            <h3>📋 Recent Activity (Detection Saves)</h3>
-            <div id="log-container">
-                <table class="log-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Type</th>
-                            <th>Media</th>
-                            <th>Fake Prob</th>
-                            <th>Confidence</th>
-                            <th>Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="log-body">
-                        <tr>
-                            <td colspan="6" class="empty-log">Loading...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Generation History Modal -->
-    <div id="history-modal" class="history-modal hidden">
-        <div class="history-modal-card">
-            <button id="history-close">✕</button>
-            <h2>Generation Details</h2>
-            <div class="history-content">
-                <img id="history-image" style="display:none;" />
-                <div class="history-fields">
-                    <p><strong>Prompt:</strong></p>
-                    <div class="history-prompt-container">
-                        <span id="history-prompt"></span>
+            <div class="neu-nav-links">
+                <a href="detection.html" class="nav-item">Detection</a>
+                <a href="index.html" class="nav-item home-btn flip-container">
+                    <div class="flip-inner">
+                        <div class="flip-front">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <div class="flip-back">
+                        </div>
                     </div>
-                    <p><strong>Type:</strong> <span id="history-type"></span></p>
-                    <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
-                    <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
-                    <p><strong>Seed:</strong> <span id="history-seed"></span></p>
+                </a>
+                <a href="generation.html" class="nav-item">Generation</a>
+            </div>
+            <div class="neu-nav-links">
+                <a href="database.html" class="nav-item">Database</a>
+            </div>
+        </nav>
+    </div>
+    <main class="w-full">
+        <!-- Section 1: Hero -->
+        <section class="scrolly-section flex-col" id="hero-section">
+            <svg class="strand-svg" viewbox="0 0 1440 800">
+                <path class="strand-path" d="M1440,100 Q1200,150 1000,400 T600,700 L0,800"></path>
+            </svg>
+            <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center z-10">
+                <div class="space-y-6">
+
+                    <h1 class="text-6xl font-black obsidian-text tracking-tighter leading-none font-headline">
+                        POLYGEN<br /><span class="text-primary">FORENSICS</span>
+                    </h1>
+                    <p class="text-lg text-on-surface-variant max-w-md font-label">
+                        Interrogating the digital lattice. We don't just see pixels; we calculate intent. Our neural
+                        core isolates GAN-signatures and frequency-domain anomalies at a sub-pixel resolution, ensuring
+                        that every frame is architecturally sound.
+                    </p>
+                </div>
+                <div class="grid grid-cols-2 gap-6">
+                    <section class="mb-12 relative">
+                        <div class="clay-card p-8 min-h-[400px] min-w-[650px] flex flex-col overflow-hidden relative">
+                            <div class="flex justify-between items-start z-10">
+                                <div>
+                                    <h2 class="text-3xl font-black tracking-tight text-on-surface">Neural Core Topology
+                                    </h2>
+                                    <p class="text-slate-500 font-medium">Real-time synaptic mapping
+                                    </p>
+                                </div>
+                                <div class="flex gap-4">
+                                    <div
+                                        class="px-4 py-2 clay-inset text-xs font-bold text-primary flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                                        Online
+                                    </div>
+                                </div>
+                            </div>
+                            <div
+                                class="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
+                                <!-- Abstract Neural SVG -->
+                                <svg class="w-full h-full max-w-4xl" viewbox="0 0 800 400">
+                                    <path class="neural-strand" d="M100,200 C200,100 300,300 400,200 S600,100 700,200"
+                                        fill="none" stroke="#005cb8" stroke-width="2"></path>
+                                    <path class="neural-strand" d="M100,250 C250,150 350,350 450,250 S650,150 750,250"
+                                        fill="none" stroke="#1275e2" stroke-width="1.5" style="animation-delay: -1s;">
+                                    </path>
+                                    <path class="neural-strand" d="M50,150 C150,50 250,250 350,150 S550,50 650,150"
+                                        fill="none" stroke="#aac7ff" stroke-width="1" style="animation-delay: -2s;">
+                                    </path>
+                                    <circle cx="100" cy="200" fill="#005cb8" r="4"></circle>
+                                    <circle class="animate-pulse" cx="400" cy="200" fill="#005cb8" r="6"></circle>
+                                    <circle cx="700" cy="200" fill="#005cb8" r="4"></circle>
+                                    <circle cx="250" cy="250" fill="#1275e2" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div class="mt-auto grid grid-cols-2 md:grid-cols-4 gap-6 z-10">
+                                <div class="clay-inset p-4">
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">
+                                        Inference</p>
+                                    <p class="text-2xl font-black text-on-surface">93.7<span
+                                            class="text-sm font-normal text-slate-400">%</span></p>
+                                </div>
+                                <div class="clay-inset p-4">
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">
+                                        Assets</p>
+                                    <p class="text-2xl font-black text-on-surface">161<span
+                                            class="text-sm font-normal text-slate-400">MB</span></p>
+                                </div>
+                                <div class="clay-inset p-4">
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">
+                                        Datasets</p>
+                                    <p class="text-2xl font-black text-on-surface">683<span
+                                            class="text-sm font-normal text-slate-400">MB</span></p>
+                                </div>
+                                <div class="clay-inset p-4">
+                                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">Total
+                                    </p>
+                                    <p class="text-2xl font-black text-on-surface">844<span
+                                            class="text-sm font-normal text-slate-400">MB</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
-        </div>
-    </div>
+        </section>
+        <!-- Section 2: 24h Forensic Volume Line Chart -->
+        <section class="scrolly-section" id="chart-section"
+            style="width: fit-content; align-items: center; justify-content: center;">
 
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <!-- Metrics -->
+                <div class="space-y-8" style="padding-left: 30%;">
+                    <div class="clay-card p-10 flex flex-col items-center">
+                        <p class="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.4em] mb-10">
+                            DETECTION RATE</p>
+                        <div class="relative w-56 h-56 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="112" cy="112" fill="transparent" r="100" stroke="#e0e2eb" stroke-width="16">
+                                </circle>
+                                <circle class="" cx="112" cy="112" fill="transparent" r="100" stroke="#00f2ff"
+                                    stroke-dasharray="628" stroke-dashoffset="157" stroke-linecap="round"
+                                    stroke-width="16"></circle>
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span class="text-5xl font-black obsidian-text">75%</span>
+                                <span class="text-[10px] text-slate-400 font-bold mt-2">OPTIMAL SYNC</span>
+                            </div>
+                        </div>
+                        <div class="mt-12 grid grid-cols-2 gap-6 w-full">
+                            <div class="clay-inset p-5 text-center">
+                                <span
+                                    class="block text-[9px] text-slate-400 font-black mb-1 tracking-widest">LATENCY</span>
+                                <span class="text-lg font-black obsidian-text">12ms</span>
+                            </div>
+                            <div class="clay-inset p-5 text-center">
+                                <span
+                                    class="block text-[9px] text-slate-400 font-black mb-1 tracking-widest">STABILITY</span>
+                                <span class="text-lg font-black obsidian-text">93.2%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Main Performance Visual -->
+                <div class="lg:col-span-1 clay-card p-10 flex flex-col" style="width: 140%;;">
+                    <div class="flex justify-between items-center mb-12">
+                        <div>
+                            <h3 class="text-2xl font-black obsidian-text uppercase tracking-tight">Throughput Epochs
+                            </h3>
+                            <p class="text-xs text-on-surface-variant mt-1">24h Micro-detail telemetry data</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="btn-det" onclick="setDashboardModule('detection')">Detection</button>
+                            <button id="btn-gen" onclick="setDashboardModule('generation')">Generation</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex items-end gap-3 relative pb-8 px-4">
+                        <div
+                            class="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-5 px-4 mb-8">
+                            <div class="border-b-2 border-slate-900 w-full"></div>
+                            <div class="border-b-2 border-slate-900 w-full"></div>
+                            <div class="border-b-2 border-slate-900 w-full"></div>
+                            <div class="border-b-2 border-slate-900 w-full"></div>
+                        </div>
+                        <div class="flex-1 h-full flex items-end gap-2 throughput-bars">
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 45%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 60%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-pink-500/30 to-pink-500 rounded-full"
+                                style="height: 85%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 70%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 50%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-cyan-500/30 to-cyan-500 rounded-full"
+                                style="height: 40%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-pink-500/30 to-pink-500 rounded-full"
+                                style="height: 98%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 75%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 55%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-pink-500/30 to-pink-500 rounded-full"
+                                style="height: 88%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 45%"></div>
+                            <div class="bar flex-1 bg-gradient-to-t from-blue-500/30 to-blue-500 rounded-full"
+                                style="height: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between px-6">
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest">00:00</span>
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest">06:00</span>
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest">12:00</span>
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest">18:00</span>
+                        <span class="text-[9px] font-black text-slate-400 tracking-widest">23:59</span>
+                    </div>
+                </div>
+            </div>
+
+
+        </section>
+        <!-- Section 3: Model Ensemble Accuracy -->
+        <section class="scrolly-section" id="gauges-section">
+            <svg class="strand-svg" viewbox="0 0 1440 800">
+                <path class="strand-path" d="M1440,200 Q1000,300 720,400 T0,600"></path>
+            </svg>
+            <div class="max-w-6xl w-full z-10">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl font-black obsidian-text font-headline mb-4">Model Matrix</h2>
+                    <p class="text-on-surface-variant font-label text-lg">Multi-backbone verification accuracy</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Gauge 1 -->
+                    <div class="gauge-card neumorphic-card p-10 flex flex-col items-center opacity-0 translate-y-8">
+                        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-8">XCEPTION-V4
+                        </p>
+                        <div class="relative w-48 h-48 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="96" cy="96" fill="transparent" r="84" stroke="#e0e2eb" stroke-width="14">
+                                </circle>
+                                <circle class="gauge-path" cx="96" cy="96" data-offset="55" fill="transparent" r="84"
+                                    stroke="#00f2ff" stroke-dasharray="528" stroke-dashoffset="528" stroke-width="14">
+                                </circle>
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span class="text-4xl font-black obsidian-text">93.45%</span>
+                                <span class="text-[10px] text-slate-400 font-bold">ACCURACY</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gauge 2 -->
+                    <div class="gauge-card neumorphic-card p-10 flex flex-col items-center opacity-0 translate-y-8">
+                        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-8">
+                            ENSEMBLE</p>
+                        <div class="relative w-48 h-48 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="96" cy="96" fill="transparent" r="84" stroke="#e0e2eb" stroke-width="14">
+                                </circle>
+                                <circle class="gauge-path" cx="96" cy="96" data-offset="50" fill="transparent" r="84"
+                                    stroke="#ff00ff" stroke-dasharray="528" stroke-dashoffset="528" stroke-width="14">
+                                </circle>
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span class="text-4xl font-black obsidian-text">94.70%</span>
+                                <span class="text-[10px] text-slate-400 font-bold">STABILITY</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gauge 3 -->
+                    <div class="gauge-card neumorphic-card p-10 flex flex-col items-center opacity-0 translate-y-8">
+                        <p class="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-8">EFFICIENTNET
+                        </p>
+                        <div class="relative w-48 h-48 flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90">
+                                <circle cx="96" cy="96" fill="transparent" r="84" stroke="#e0e2eb" stroke-width="14">
+                                </circle>
+                                <circle class="gauge-path" cx="96" cy="96" data-offset="55" fill="transparent" r="84"
+                                    stroke="#005cb8" stroke-dasharray="528" stroke-dashoffset="528" stroke-width="14">
+                                </circle>
+                            </svg>
+                            <div class="absolute flex flex-col items-center">
+                                <span class="text-4xl font-black obsidian-text">93.57%</span>
+                                <span class="text-[10px] text-slate-400 font-bold">RELIABILITY</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Section 4: Forensic Logs -->
+        <section class="scrolly-section" id="logs-section">
+            <svg class="strand-svg" viewbox="0 0 1440 800">
+                <path class="strand-path" d="M0,800 L1440,0"></path>
+            </svg>
+            <div class="max-w-6xl w-full z-10">
+                <div class="neumorphic-card overflow-hidden">
+                    <div
+                        class="p-8 border-b border-white/50 flex justify-between items-center bg-white/30 backdrop-blur-sm">
+                        <div>
+                            <h3 class="text-2xl font-black obsidian-text font-headline">Tactical Event Logs</h3>
+                            <p class="text-xs text-on-surface-variant">Real-time operation audit stream</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="btn-export" onclick="exportToCSV()"
+                                class="neumorphic-inset px-4 py-2 rounded-xl text-xs font-bold obsidian-text flex items-center gap-2 hover:bg-white transition-colors">
+                                <span class="material-symbols-outlined text-sm">download</span> EXPORT
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-surface-container/50">
+                                <tr class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <th class="px-8 py-5">Timestamp</th>
+                                    <th class="px-8 py-5">Entity Hash</th>
+                                    <th class="px-8 py-5">Operation</th>
+                                    <th class="px-8 py-5 text-right">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="log-body" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="4" class="px-8 py-10 text-center text-xs font-mono text-slate-400">
+                                        Loading event logs…</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-6 bg-slate-50/50 flex justify-between items-center border-t border-white">
+                        <p class="text-[10px] font-bold text-slate-400">
+                            SHOWING <span id="log-start">0</span> - <span id="log-end">20</span>
+                            OF <span id="log-total">0</span> EVENTS
+                        </p>
+                        <div class="flex gap-2">
+                            <div class="flex gap-2">
+                                <button id="log-prev"> <span class="material-symbols-outlined">chevron_left</span>
+                                </button>
+
+                                <button id="active-page-num"
+                                    class="neumorphic-inset w-10 h-10 bg-white text-primary font-black">1</button>
+
+                                <button id="log-next"> <span class="material-symbols-outlined">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="synth-archive-panel">
+        <div class="footer-grid">
+            <div class="footer-stat">
+                <span class="label">PROJECT STATUS</span>
+                <span class="value">SYNTHESIS COMPLETE</span>
+            </div>
+
+            <div class="footer-manifesto">
+                <h3 style="color: #000;">POLYGEN TERMINAL</h3>
+                <p>
+                    The transition from detection to generation is now stabilized.
+                    PolyGen has successfully mapped 28,000 neural data points to reconcile
+                    forensic integrity with creative expansion. This interface marks the
+                    final boundary of the Synthesis Chapter.
+                </p>
+                <p class="copyright">POLYGEN CORE — ALL METRICS SECURED</p>
+            </div>
+
+            <div class="footer-specs" style="
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 10px 10px 20px var(--gen-shadow-dark), 
+               -10px -10px 20px var(--gen-shadow-dark);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+">
+                <div class="spec-row"><span>CORE MODEL:</span> <span>ENSEMBLE-X9</span></div>
+                <div class="spec-row"><span>FIDELITY:</span> <span>98.70%</span></div>
+                <div class="spec-row"><span>ENCRYPTION:</span> <span>OBSIDIAN VAULT</span></div>
+            </div>
+        </div>
+    </footer>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            const container = document.querySelector('.detection-blueprint-container');
+            const centerpiece = document.querySelector('.centerpiece-area');
+            const liquid = document.querySelector('.liquid-fill');
+            const nodes = gsap.utils.toArray('.node');
+            const cards = gsap.utils.toArray('.flank-card');
+            const labels = gsap.utils.toArray('.model-label');
+            const footer = document.querySelector('.blueprint-footer');
+
+            // Master Timeline
+            const mainTl = gsap.timeline({
+                scrollTrigger: {
+                    trigger: container,
+                    start: "top top",
+                    end: "+=300%",
+                    pin: true,
+                    scrub: 1.5
+                }
+            });
+            // Expose for optional external state capture if needed
+            window.detectionMainTl = mainTl;
+
+            gsap.to('.blueprint-parallax-grid', {
+                y: '-10%',
+                ease: 'none',
+                scrollTrigger: {
+                    trigger: container,
+                    start: 'top top',
+                    end: '+=300%',
+                    scrub: 1.5
+                }
+            });
+
+            function initHomeButtonFlip() {
+                const inner = document.querySelector('.flip-inner');
+                if (!inner) return;
+
+                const flipTl = gsap.timeline({
+                    repeat: -1,         // Infinite loop
+                    repeatDelay: 10     // Wait 10 seconds before starting the next flip
+                });
+
+                flipTl
+                    // 1. Flip to Logo
+                    .to(inner, {
+                        rotateY: 180,
+                        duration: 0.6,
+                        ease: "back.out(1.7)"
+                    })
+                    // 2. Hold Logo for 2 seconds
+                    .to({}, { duration: 1.5 })
+                    // 3. Flip back to Home Icon
+                    .to(inner, {
+                        rotateY: 0,
+                        duration: 0.6,
+                        ease: "back.inOut(1.7)"
+                    });
+            }
+
+            initHomeButtonFlip();
+
+            gsap.to('.blueprint-grid-bg', {
+                backgroundPositionY: "-=50px", // Scroll grid up
+                duration: 14, // Faster (was 20)
+                ease: "none",
+                repeat: -1
+            });
+
+            gsap.to('.blueprint-parallax-grid', {
+                backgroundPositionY: "-=100px", // Smaller Grid moves differently
+                duration: 4, // Faster (was 35)
+                ease: "none",
+                repeat: -1
+            });
+
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Section 2: Bar Chart Animation
+            ScrollTrigger.create({
+                trigger: "#chart-section",
+                start: "top center",
+                onEnter: () => {
+                    document.querySelectorAll('#volume-chart div').forEach(bar => {
+                        bar.style.height = bar.dataset.height;
+                    });
+                }
+            });
+
+            // Section 3: Gauges Staggered Reveal
+            gsap.to(".gauge-card", {
+                opacity: 1,
+                y: 0,
+                stagger: 0.2,
+                duration: 0.8,
+                scrollTrigger: {
+                    trigger: "#gauges-section",
+                    start: "top 60%"
+                },
+                onComplete: () => {
+                    document.querySelectorAll('.gauge-path').forEach(path => {
+                        const offset = path.dataset.offset;
+                        path.style.transition = 'stroke-dashoffset 2s cubic-bezier(0.4, 0, 0.2, 1)';
+                        path.style.strokeDashoffset = offset;
+                    });
+                }
+            });
+
+            // Strand Pulse Animation Logic (Conceptual)
+            const paths = document.querySelectorAll('.strand-path');
+            paths.forEach(path => {
+                const length = path.getTotalLength();
+                // Add subtle animation to dash array if desired
+            });
+        });
+    </script>
     <script src="js/dashboard.js"></script>
 </body>
 
