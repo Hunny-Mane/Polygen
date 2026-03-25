@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .to(polyReveal, { opacity: 1, scale: 1, letterSpacing: "0.26em", duration: 1.5 }, 'split+=0.4')
 
         .addLabel('compress', '+=0.8')
-        .to(logicCore, { x: "-55vh", y: "-35vh", scale: 0.65, duration: 2 }, 'compress')
+        .to(logicCore, { x: "-55vh", y: "0vh", scale: 0.65, duration: 2 }, 'compress')
         .addLabel('cards', '+=0.2')
         .to(vaultCards, {
             opacity: 1,

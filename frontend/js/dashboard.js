@@ -27,6 +27,10 @@ async function refreshAll() {
         updateThroughputChart();
         renderActivityLog();
 
+        // Database Gallery Updates
+        renderDetectionGallery();
+        renderGenerationGallery();
+
     } catch (e) {
         console.error('Data Sync Error:', e);
     }
@@ -74,8 +78,8 @@ function renderActivityLog() {
     tbody.innerHTML = paginated.map(r => {
         const isGen = r.prompt !== undefined;
         const d = new Date(r.timestamp);
-        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-        const timeStr = d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
+        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        const timeStr = d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
         const hash = r.filename ? `0x${r.filename.slice(0, 4).toUpperCase()}` : `#${r.id}`;
         const opName = isGen ? 'AI_GENERATION' : 'FORENSIC_DET';
@@ -85,10 +89,10 @@ function renderActivityLog() {
         return `
             <tr class="hover:bg-white/5 border-b border-white/5">
                 <td class="px-8 py-4 text-[10px] font-mono">
-                    <span class="opacity-40 mr-2">${dateStr}</span>
-                    <span class="text-primary font-bold">${timeStr}</span>
+                    <span class="text-primary mr-2 text-[11px]">${dateStr}</span>
+                    <span class="text-primary font-bold text-[11px]">${timeStr}</span>
                 </td>
-                <td class="px-8 py-4 text-[10px] font-mono text-slate-400">${hash}</td>
+                <td class="px-8 py-4 text-[13px] font-mono text-slate-400">${hash}</td>
                 <td class="px-8 py-4 text-[11px] font-bold tracking-widest">${opName}</td>
                 <td class="px-8 py-4 text-right">
                     <span class="px-2 py-0.5 rounded text-[9px] border border-current ${badgeClass}">${status}</span>
@@ -230,3 +234,112 @@ window.exportToCSV = function () {
         document.body.removeChild(link);
     }
 };
+
+// ─────────────────────────────────────────────────────────────
+// DATABASE GALLERY RENDERERS (V8 COMPATIBLE)
+// ─────────────────────────────────────────────────────────────
+function renderDetectionGallery() {
+    const el = document.getElementById('detection-gallery');
+    if (!el) return;
+
+    if (allDetectionRecords.length === 0) {
+        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No detections saved yet.</div>`;
+        return;
+    }
+
+    el.innerHTML = allDetectionRecords.map(r => {
+        const imgSrc = r.image_b64 ? `data:image/jpeg;base64,${r.image_b64}` : '';
+        const ts = new Date(r.timestamp).toLocaleString();
+        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(1) + '%' : '—';
+
+        // Added onclick="openDetails('detection', '${r.id}')"
+        return `
+        <div class="gallery-card" onclick="openDetails('detection', '${r.id}')" style="cursor:pointer;">
+            ${imgSrc ? `<img src="${imgSrc}" alt="Detection">` : '<div class="placeholder-icon">🎭</div>'}
+            <div class="card-info">
+                <span class="badge-small badge-detect">FAKE</span>
+                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
+                <div class="prob">Fake Prob: ${prob}</div>
+                <div class="meta">📅 ${ts}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function renderGenerationGallery() {
+    const el = document.getElementById('generation-gallery');
+    if (!el) return;
+
+    if (allGenerationRecords.length === 0) {
+        el.innerHTML = `<div class="empty-gallery"><span>✨</span>No generated media saved yet.</div>`;
+        return;
+    }
+
+    el.innerHTML = allGenerationRecords.map(r => {
+        const imgSrc = r.image_b64 ? `data:image/png;base64,${r.image_b64}` : '';
+        const ts = new Date(r.timestamp).toLocaleString();
+
+        // Added onclick="openDetails('generation', '${r.id}')"
+        return `
+        <div class="gallery-card" onclick="openDetails('generation', '${r.id}')" style="cursor:pointer;">
+            ${imgSrc ? `<img src="${imgSrc}" alt="Generated">` : '<div class="placeholder-icon">🎨</div>'}
+            <div class="card-info">
+                <span class="badge-small badge-gen">AI GEN</span>
+                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
+                <div class="prompt-text">💬 ${r.prompt || 'No Prompt'}</div>
+                <div class="meta">📅 ${ts}</div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+/**
+ * MODAL ENGINE: DETAILS POPUP
+ */
+window.openDetails = function (type, id) {
+    const modal = document.getElementById('history-modal');
+    const records = type === 'detection' ? allDetectionRecords : allGenerationRecords;
+    const data = records.find(r => r.id == id);
+
+    if (!data || !modal) return;
+
+    // Fill Image
+    const modalImg = document.getElementById('history-image');
+    if (data.image_b64) {
+        modalImg.src = `data:image/${type === 'detection' ? 'jpeg' : 'png'};base64,${data.image_b64}`;
+        modalImg.style.display = 'block';
+    } else {
+        modalImg.style.display = 'none';
+    }
+
+    // Fill Text Data
+    document.getElementById('history-prompt').textContent = data.prompt || data.filename || "N/A";
+    document.getElementById('history-type').textContent = (data.media_type || "image").toUpperCase();
+    document.getElementById('history-timestamp').textContent = new Date(data.timestamp).toLocaleString();
+
+    // Detection Specifics vs Generation Specifics
+    const seedEl = document.getElementById('history-seed');
+    if (type === 'detection') {
+        document.querySelector('p strong').textContent = "Filename:";
+        seedEl.textContent = data.fake_prob ? `Fake Probability: ${(data.fake_prob * 100).toFixed(2)}%` : "N/A";
+    } else {
+        document.querySelector('p strong').textContent = "Prompt:";
+        seedEl.textContent = data.seed || "Random";
+    }
+
+    // Show Modal
+    modal.classList.remove('hidden');
+    gsap.fromTo(".history-modal-card", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" });
+};
+
+// Close Modal Event
+document.getElementById('history-close')?.addEventListener('click', () => {
+    const modal = document.getElementById('history-modal');
+    modal.classList.add('hidden');
+});
+
+// Close on background click
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('history-modal');
+    if (e.target === modal) modal.classList.add('hidden');
+});
