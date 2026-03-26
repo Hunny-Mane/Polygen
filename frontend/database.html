@@ -28,28 +28,6 @@
             padding-bottom: 0.5rem;
         }
 
-        .tab-btn {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 1rem;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 0.5rem 1.2rem;
-            border-radius: 8px 8px 0 0;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active,
-        .tab-btn:hover {
-            color: var(--text-light);
-            background: var(--glass);
-        }
-
-        .tab-btn.active {
-            border-bottom: 2px solid var(--primary);
-        }
 
         .tab-panel {
             display: none;
@@ -101,8 +79,7 @@
         }
 
         .gallery-card {
-            background: var(--glass);
-            border: 1px solid var(--glass-border);
+            background: #e0e0e0;
             border-radius: 16px;
             overflow: hidden;
             transition: 0.3s;
@@ -403,14 +380,14 @@
                 linear-gradient(90deg, rgba(0, 242, 255, 0.06) 1.5px, transparent 1.5px);
             background-size: 50px 50px;
             pointer-events: none;
-            z-index: 1;
+            z-index: -1;
         }
 
         .blueprint-parallax-grid {
             position: absolute;
             inset: -10% -10%;
             width: 120%;
-            height: 400%;
+            height: 120%;
             background-image:
                 linear-gradient(rgba(200, 210, 220, 0.4) 2px, transparent 2px),
                 linear-gradient(90deg, rgba(200, 210, 220, 0.4) 2px, transparent 2px);
@@ -420,11 +397,297 @@
             opacity: 0.8;
             will-change: transform;
         }
+
+        :root {
+            /* Claymorphism Palette */
+            --clay-bg: rgba(30, 34, 45, 0.85);
+            --clay-border: rgba(255, 255, 255, 0.05);
+            /* Outer Shadows (The "Lift") */
+            --clay-shadow-out: 12px 12px 24px rgba(0, 0, 0, 0.5),
+                -4px -4px 12px rgba(255, 255, 255, 0.03);
+            /* Inner Shadows (The "Clay/Volume" effect) */
+            --clay-shadow-in: inset 4px 4px 8px rgba(255, 255, 255, 0.05),
+                inset -4px -4px 8px rgba(0, 0, 0, 0.3);
+
+            /* High Visibility Text */
+            --text-light: #ffffff;
+            --text-dim: #b0b8c4;
+            --primary: #00f2ff;
+            /* Cyan Tech */
+            --secondary: #8b5cf6;
+            /* Purple AI */
+        }
+
+        /* Updated Gallery Card (Clay Style) */
+        .gallery-card {
+            border-radius: 24px;
+            /* More rounded for clay look */
+            box-shadow: var(--clay-shadow-out), var(--clay-shadow-in);
+            padding: 10px;
+            /* Internal spacing for the "inset" look */
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(15px);
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 15px 15px 30px rgba(0, 0, 0, 0.6),
+                -5px -5px 15px rgba(255, 255, 255, 0.05);
+        }
+
+        .gallery-card img {
+            border-radius: 18px;
+            /* Matching the soft card corners */
+            margin-bottom: 8px;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+
+        /* High Visibility Text on Cards */
+        .card-info .prob {
+            color: rgba(0, 0, 0, 0.514);
+            text-shadow: 0 0 8px rgba(0, 242, 255, 0.3);
+            font-size: 1.1rem;
+        }
+
+        .card-info .meta {
+            color: black;
+            /* Changed from dim for visibility */
+            font-weight: 500;
+        }
+
+        /* Updated Summary Bar (Clay style) */
+        .summary-bar {
+            background: var(--clay-bg);
+            border-radius: 20px;
+            box-shadow: var(--clay-shadow-out);
+            padding: 2rem;
+            border: 1px solid var(--clay-border);
+        }
+
+
+        /* Modal Enhancements */
+        .history-modal-card {
+            background: #14171f;
+            border-radius: 32px;
+            box-shadow: var(--clay-shadow-out), var(--clay-shadow-in);
+            border: 1px solid var(--primary);
+            /* Technical glow edge */
+        }
+
+        /* Container for the whole bar */
+        .summary-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Pushes items to opposite ends */
+            padding: 20px 30px;
+            background: #e0e0e0;
+            /* Match your light gray background */
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 6px 6px 12px #bebebe, -6px -6px 12px #ffffff;
+        }
+
+        /* Stats Grouping */
+        .summary-stats-group {
+            display: flex;
+            gap: 40px;
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .s-num {
+            font-family: 'Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #444;
+        }
+
+        .s-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+        }
+
+        /* Tab Bar Alignment */
+        .tab-bar-container {
+            display: flex;
+            gap: 15px;
+            background: #e0e0e0;
+            padding: 15px;
+            border-radius: 50px;
+        }
+
+        /* Improved Neumorphic Buttons */
+        /* CONSOLIDATED NEUMORPHIC BUTTONS */
+        .tab-btn {
+            border: none;
+            outline: none;
+            padding: 10px 25px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            background: #e0e0e0;
+            /* Solid background is key for Neumorphism */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 4px 4px 8px #bebebe, -4px -4px 8px #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tab-btn:hover {
+            color: #222;
+            transform: translateY(-1px);
+        }
+
+        /* The "Pushed Down" State */
+        .tab-btn.active {
+            color: #007bff !important;
+            /* Forces the theme color */
+            background: #e0e0e0;
+            box-shadow: inset 4px 4px 8px #bebebe,
+                inset -4px -4px 8px #ffffff !important;
+            /* Subtle physical press effect */
+
+        }
+
+        .synth-archive-panel {
+            position: absolute;
+            /* Keep it in the document flow */
+            width: 130%;
+            min-height: 40vh;
+            /* Give it a set height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            z-index: 1;
+            opacity: 1 !important;
+            /* FORCE VISIBILITY */
+            visibility: visible !important;
+            pointer-events: auto !important;
+            /* ENABLE CLICKS */
+            padding: 4rem 5%;
+            margin-left: -12em;
+            margin-top: 5rem;
+            /* Space it from the last section */
+            box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.05);
+            /* Slight shadow for depth */
+        }
+
+        .footer-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 220px 1fr 280px;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        /* Status Column */
+        .footer-stat {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            border-left: 3px solid #000;
+            padding-left: 1.5rem;
+        }
+
+        .active-module {
+            background: #f1f3fc !important;
+            color: #005cb8 !important;
+        }
+
+        .footer-stat .label {
+            font-family: 'Audiowide', cursive;
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.5);
+            letter-spacing: 0.2em;
+        }
+
+        .footer-stat .value {
+            font-family: 'Audiowide', cursive;
+            font-size: 1.1rem;
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* Manifesto / Center Column */
+        .footer-manifesto h3 {
+            font-family: 'Audiowide', cursive;
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.1em;
+            color: #000;
+        }
+
+        .footer-manifesto p {
+            color: #333;
+            line-height: 1.7;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+        }
+
+        .footer-manifesto .copyright {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            opacity: 0.4;
+            color: #000;
+        }
+
+        /* Specs Column - Neumorphic Style */
+        .footer-specs {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 20px;
+            /* Soft Neumorphic Shadow */
+            box-shadow:
+                8px 8px 16px var(--gen-shadow-dark),
+                -8px -8px 16px var(--gen-shadow-dark);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.75rem;
+        }
+
+        .spec-row:last-child {
+            border-bottom: none;
+        }
+
+        .spec-row span:first-child {
+            font-family: 'Audiowide', cursive;
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        .spec-row span:last-child {
+            font-family: 'ui-monospace', monospace;
+            color: #000;
+            font-weight: 600;
+        }
+
+        .synth-pin-wrapper {
+            position: relative;
+            height: 100vh;
+            width: 100%;
+            z-index: 5;
+        }
     </style>
 </head>
 <link rel="stylesheet" href="css/neumorphism.css">
 
-<body class="landing-page dark-theme">
+<body class="landing-page dark-theme" style="background-color: #c9c9c952;">
 
     <div class="blueprint-grid-bg" style="z-index: 10;"></div>
 
@@ -461,178 +724,241 @@
     </div>
 
     <div class="container">
-        <div class="hero" style="padding: 2.5rem 0 1.5rem;">
-            <h1>Database</h1>
-            <p>Browse all saved detected fakes and generated media.</p>
+        <div class="hero" style="padding: 2.5rem 0 1.5rem; margin-top: -5em;">
+            <h1 style="font-family: Audiowide, Inter; font-size: 300;">POLYGEN <span
+                    style="font-family: Audiowide, Inter; color: rgb(0 92 184 / var(--tw-text-opacity, 1)); font-size: 300;">DATABASE</span>
+            </h1>
+            <p>This serves as the primary encrypted terminal for the PolyGen ecosystem, providing a centralized,
+                high-fidelity repository.</p>
         </div>
 
-        <div class="tab-bar">
-            <button class="tab-btn active" onclick="switchTab('detection')">🛑 Detection Storage</button>
-            <button class="tab-btn" onclick="switchTab('generation')">✨ Generation Storage</button>
-        </div>
+
+
 
         <!-- ── Detection Storage Tab ──────────────────────────────── -->
         <div class="tab-panel active" id="tab-detection">
             <div class="summary-bar">
-                <div class="summary-item">
-                    <div class="s-num" id="db-det-total">–</div>
-                    <div class="s-label">Total Saved</div>
+                <div class="summary-stats-group">
+                    <div class="summary-item">
+                        <div class="s-num" id="db-det-total">0</div>
+                        <div class="s-label">Total</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="s-num" id="db-det-images">0</div>
+                        <div class="s-label">Images</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="s-num" id="db-det-videos">0</div>
+                        <div class="s-label">Videos</div>
+                    </div>
                 </div>
-                <div class="summary-item">
-                    <div class="s-num" id="db-det-images">–</div>
-                    <div class="s-label">From Images</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num" id="db-det-videos">–</div>
-                    <div class="s-label">From Videos</div>
-                </div>
-                <div style="margin-left:auto;">
-                    <small style="color:var(--text-dim);">📁 Stored in <code>database/detection_storage/</code></small>
+
+                <div class="tab-bar-container">
+                    <button class="tab-btn active" onclick="switchTab('detection')">Detection Storage</button>
+                    <button class="tab-btn" onclick="switchTab('generation')">Generation Storage</button>
                 </div>
             </div>
+
             <div class="gallery" id="detection-gallery">
                 <div class="empty-gallery"><span>⏳</span>Loading...</div>
             </div>
         </div>
 
-        <!-- ── Generation Storage Tab ─────────────────────────────── -->
         <div class="tab-panel" id="tab-generation">
             <div class="summary-bar">
-                <div class="summary-item">
-                    <div class="s-num" id="db-gen-total">–</div>
-                    <div class="s-label">Total Saved</div>
+                <div class="summary-stats-group">
+                    <div class="summary-item">
+                        <div class="s-num" id="db-gen-total">0</div>
+                        <div class="s-label">Total</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="s-num" id="db-gen-images">0</div>
+                        <div class="s-label">Images</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="s-num" id="db-gen-videos">0</div>
+                        <div class="s-label">Videos</div>
+                    </div>
                 </div>
-                <div class="summary-item">
-                    <div class="s-num" id="db-gen-images">–</div>
-                    <div class="s-label">Images</div>
-                </div>
-                <div class="summary-item">
-                    <div class="s-num" id="db-gen-videos">–</div>
-                    <div class="s-label">Videos</div>
-                </div>
-                <div style="margin-left:auto;">
-                    <small style="color:var(--text-dim);">📁 Stored in <code>database/generation_storage/</code></small>
+
+                <div class="tab-bar-container">
+                    <button class="tab-btn" onclick="switchTab('detection')">Detection Storage</button>
+                    <button class="tab-btn active" onclick="switchTab('generation')">Generation Storage</button>
                 </div>
             </div>
+
             <div class="gallery" id="generation-gallery">
                 <div class="empty-gallery"><span>⏳</span>Loading...</div>
             </div>
         </div>
-    </div>
 
-    <!-- Generation History Modal -->
-    <div id="history-modal" class="history-modal hidden">
-        <div class="history-modal-card">
-            <button id="history-close">✕</button>
-            <h2>Generation Details</h2>
-            <div class="history-content">
-                <img id="history-image" style="display:none;" />
-                <div class="history-fields">
-                    <p><strong>Prompt:</strong></p>
-                    <div class="history-prompt-container">
-                        <span id="history-prompt"></span>
+        <!-- Generation History Modal -->
+        <div id="history-modal" class="history-modal hidden">
+            <div class="history-modal-card">
+                <button id="history-close">✕</button>
+                <h2>Generation Details</h2>
+                <div class="history-content">
+                    <img id="history-image" style="display:none;" />
+                    <div class="history-fields">
+                        <p><strong>Prompt:</strong></p>
+                        <div class="history-prompt-container">
+                            <span id="history-prompt"></span>
+                        </div>
+                        <p><strong>Type:</strong> <span id="history-type"></span></p>
+                        <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
+                        <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
+                        <p><strong>Seed:</strong> <span id="history-seed"></span></p>
                     </div>
-                    <p><strong>Type:</strong> <span id="history-type"></span></p>
-                    <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
-                    <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
-                    <p><strong>Seed:</strong> <span id="history-seed"></span></p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
+        <footer class="synth-archive-panel">
+            <div class="footer-grid">
+                <div class="footer-stat">
+                    <span class="label">PROJECT STATUS</span>
+                    <span class="value">SYNTHESIS COMPLETE</span>
+                </div>
 
+                <div class="footer-manifesto">
+                    <h3 style="color: #000;">POLYGEN TERMINAL</h3>
+                    <p>
+                        The transition from detection to generation is now stabilized.
+                        PolyGen has successfully mapped 28,000 neural data points to reconcile
+                        forensic integrity with creative expansion. This interface marks the
+                        final boundary of the Synthesis Chapter.
+                    </p>
+                    <p class="copyright">POLYGEN CORE — ALL METRICS SECURED</p>
+                </div>
 
-        let activeTab = 'detection';
-        function switchTab(tab) {
-            activeTab = tab;
-            document.querySelectorAll('.tab-btn').forEach((b, i) => {
-                b.classList.toggle('active', (i === 0 && tab === 'detection') || (i === 1 && tab === 'generation'));
-            });
-            document.getElementById('tab-detection').classList.toggle('active', tab === 'detection');
-            document.getElementById('tab-generation').classList.toggle('active', tab === 'generation');
-        }
+                <div class="footer-specs" style="
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 10px 10px 20px var(--gen-shadow-dark), 
+               -10px -10px 20px var(--gen-shadow-dark);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+">
+                    <div class="spec-row"><span>CORE MODEL:</span> <span>ENSEMBLE-X9</span></div>
+                    <div class="spec-row"><span>FIDELITY:</span> <span>98.70%</span></div>
+                    <div class="spec-row"><span>ENCRYPTION:</span> <span>OBSIDIAN VAULT</span></div>
+                </div>
+            </div>
+        </footer>
 
-        function initHomeButtonFlip() {
-            const inner = document.querySelector('.flip-inner');
-            if (!inner) return;
+        <script>
 
-            const flipTl = gsap.timeline({
-                repeat: -1,         // Infinite loop
-                repeatDelay: 10     // Wait 10 seconds before starting the next flip
-            });
-
-            flipTl
-                // 1. Flip to Logo
-                .to(inner, {
-                    rotateY: 180,
-                    duration: 0.6,
-                    ease: "back.out(1.7)"
-                })
-                // 2. Hold Logo for 2 seconds
-                .to({}, { duration: 1.5 })
-                // 3. Flip back to Home Icon
-                .to(inner, {
-                    rotateY: 0,
-                    duration: 0.6,
-                    ease: "back.inOut(1.7)"
+            window.switchTab = function (tabName) {
+                // 1. Handle Panels
+                document.querySelectorAll('.tab-panel').forEach(panel => {
+                    panel.classList.remove('active');
                 });
-        }
+                document.getElementById('tab-' + tabName).classList.add('active');
 
-        document.addEventListener('DOMContentLoaded', () => {
-            gsap.registerPlugin(ScrollTrigger);
+                // 2. Handle Buttons
+                // This finds ALL tab buttons across both summary bars and syncs them
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
 
-            const container = document.querySelector('.detection-blueprint-container');
-            const centerpiece = document.querySelector('.centerpiece-area');
-            const liquid = document.querySelector('.liquid-fill');
-            const nodes = gsap.utils.toArray('.node');
-            const cards = gsap.utils.toArray('.flank-card');
-            const labels = gsap.utils.toArray('.model-label');
-            const footer = document.querySelector('.blueprint-footer');
+                    // If the button's text or onclick matches the tabName, activate it
+                    if (btn.getAttribute('onclick').includes(tabName)) {
+                        btn.classList.add('active');
+                    }
+                });
 
-            // Master Timeline
-            const mainTl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: container,
-                    start: "top top",
-                    end: "+=300%",
-                    pin: true,
-                    scrub: 1.5
-                }
+                console.log(`Switched to: ${tabName} Storage`);
+            };
+
+
+            let activeTab = 'detection';
+            function switchTab(tab) {
+                activeTab = tab;
+                document.querySelectorAll('.tab-btn').forEach((b, i) => {
+                    b.classList.toggle('active', (i === 0 && tab === 'detection') || (i === 1 && tab === 'generation'));
+                });
+                document.getElementById('tab-detection').classList.toggle('active', tab === 'detection');
+                document.getElementById('tab-generation').classList.toggle('active', tab === 'generation');
+            }
+
+            function initHomeButtonFlip() {
+                const inner = document.querySelector('.flip-inner');
+                if (!inner) return;
+
+                const flipTl = gsap.timeline({
+                    repeat: -1,         // Infinite loop
+                    repeatDelay: 10     // Wait 10 seconds before starting the next flip
+                });
+
+                flipTl
+                    // 1. Flip to Logo
+                    .to(inner, {
+                        rotateY: 180,
+                        duration: 0.6,
+                        ease: "back.out(1.7)"
+                    })
+                    // 2. Hold Logo for 2 seconds
+                    .to({}, { duration: 1.5 })
+                    // 3. Flip back to Home Icon
+                    .to(inner, {
+                        rotateY: 0,
+                        duration: 0.6,
+                        ease: "back.inOut(1.7)"
+                    });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                gsap.registerPlugin(ScrollTrigger);
+
+                const container = document.querySelector('.detection-blueprint-container');
+                const centerpiece = document.querySelector('.centerpiece-area');
+                const liquid = document.querySelector('.liquid-fill');
+                const nodes = gsap.utils.toArray('.node');
+                const cards = gsap.utils.toArray('.flank-card');
+                const labels = gsap.utils.toArray('.model-label');
+                const footer = document.querySelector('.blueprint-footer');
+
+                // Master Timeline
+                const mainTl = gsap.timeline({
+                    scrollTrigger: {
+                        trigger: container,
+                        start: "top top",
+                        end: "+=100%",
+                        pin: true,
+                        scrub: 1.5
+                    }
+                });
+                // Expose for optional external state capture if needed
+                window.detectionMainTl = mainTl;
+
+                gsap.to('.blueprint-parallax-grid', {
+                    y: '-10%',
+                    ease: 'none',
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top top',
+                        end: '+=100%',
+                        scrub: 1.5
+                    }
+                });
+
+                gsap.to('.blueprint-grid-bg', {
+                    backgroundPositionY: "-=50px", // Scroll grid up
+                    duration: 14, // Faster (was 20)
+                    ease: "none",
+                    repeat: -1
+                });
+
+                gsap.to('.blueprint-parallax-grid', {
+                    backgroundPositionY: "-=100px", // Smaller Grid moves differently
+                    duration: 4, // Faster (was 35)
+                    ease: "none",
+                    repeat: -1
+                });
             });
-            // Expose for optional external state capture if needed
-            window.detectionMainTl = mainTl;
 
-            gsap.to('.blueprint-parallax-grid', {
-                y: '-10%',
-                ease: 'none',
-                scrollTrigger: {
-                    trigger: container,
-                    start: 'top top',
-                    end: '+=300%',
-                    scrub: 1.5
-                }
-            });
+            initHomeButtonFlip();
 
-            gsap.to('.blueprint-grid-bg', {
-                backgroundPositionY: "-=50px", // Scroll grid up
-                duration: 14, // Faster (was 20)
-                ease: "none",
-                repeat: -1
-            });
-
-            gsap.to('.blueprint-parallax-grid', {
-                backgroundPositionY: "-=100px", // Smaller Grid moves differently
-                duration: 4, // Faster (was 35)
-                ease: "none",
-                repeat: -1
-            });
-        });
-
-        initHomeButtonFlip();
-
-    </script>
+        </script>
 </body>
 <script src="js/dashboard.js"></script>
 

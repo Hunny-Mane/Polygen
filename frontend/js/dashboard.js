@@ -1,5 +1,6 @@
 /**
  * POLYGEN DASHBOARD CORE ENGINE - V8 (FULL SYNC)
+ * Optimized for Neumorphic UI & Real-time Data Mapping
  */
 
 const API_URL = "http://localhost:8000";
@@ -9,7 +10,7 @@ let allGenerationRecords = [];
 let logPage = 0;
 const LOGS_PER_PAGE = 20;
 
-// 1. Core Data Fetch
+// 1. CORE SYNC ENGINE
 async function refreshAll() {
     try {
         const [detRes, genRes, statsRes] = await Promise.all([
@@ -22,33 +23,108 @@ async function refreshAll() {
         allGenerationRecords = (await genRes.json()).records || [];
         const statsData = await statsRes.json();
 
-        // Update UI components
+        // Update UI Components
         renderStats(statsData);
         updateThroughputChart();
         renderActivityLog();
-
-        // Database Gallery Updates
         renderDetectionGallery();
         renderGenerationGallery();
 
+        // Trigger Database Summary Counters
+        updateDatabaseStats(allDetectionRecords, allGenerationRecords);
+
     } catch (e) {
-        console.error('Data Sync Error:', e);
+        console.error('PolyGen Sync Error:', e);
     }
 }
 
-// 2. Module Switcher (Fixes the Generation Button)
+// 2. DATABASE SUMMARY LOGIC (Neumorphic Counters)
+/**
+ * UPDATED: Robust Database Stats Logic
+ * Fixes: Video detection counting and case-sensitivity
+ */
+/**
+ * POLYGEN V8 - REPAIRED SUMMARY ENGINE
+ * Fixes: Total count ignoring videos, Case-sensitivity, and Extension matching
+ */
+function updateDatabaseStats(detections, generations) {
+    // --- 1. DETECTION MODULE STATS ---
+    // Absolute count of all objects in array
+
+    const detImages = detections.filter(item => {
+        const type = (item.media_type || '').toLowerCase();
+        const file = (item.filename || '').toLowerCase();
+        return type === 'image' || file.match(/\.(jpg|jpeg|png|webp|gif)$/i);
+    }).length;
+
+    const detVideos = detections.filter(item => {
+        const type = (item.media_type || '').toLowerCase();
+        const file = (item.filename || '').toLowerCase();
+        return type === 'video' || file.match(/\.(mp4|mov|avi|mkv|webm|ts)$/i);
+    }).length;
+
+    const detTotal = detections.length;
+
+    // --- 2. GENERATION MODULE STATS ---
+    const genTotal = generations.length; // Absolute count of all objects in array
+
+    const genImages = generations.filter(item => {
+        const type = (item.media_type || '').toLowerCase();
+        const file = (item.filename || '').toLowerCase();
+        return type === 'image' || file.match(/\.(jpg|jpeg|png|webp)$/i);
+    }).length;
+
+    const genVideos = generations.filter(item => {
+        const type = (item.media_type || '').toLowerCase();
+        const file = (item.filename || '').toLowerCase();
+        return type === 'video' || file.match(/\.(mp4|mov|webm)$/i);
+    }).length;
+
+    // --- 3. UI SYNC (GSAP ANIMATION) ---
+    // Update Detection Bars
+    animateCounter("db-det-total", (detImages + detVideos));   // Now correctly counts Images + Videos
+    animateCounter("db-det-images", detImages);
+    animateCounter("db-det-videos", detVideos);
+
+    // Update Generation Bars
+    animateCounter("db-gen-total", genTotal);   // Now correctly counts Images + Videos
+    animateCounter("db-gen-images", genImages);
+    animateCounter("db-gen-videos", genVideos);
+
+    // Debugging Log (Check console if numbers look weird)
+    console.log(`[Sync] Det: ${detTotal} (IMG:${detImages} VID:${detVideos}) | Gen: ${genTotal} (IMG:${genImages} VID:${genVideos})`);
+}
+
+// 3. GSAP COUNTER ANIMATION
+function animateCounter(id, targetValue) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // Only animate if the value has actually changed to save resources
+    const currentVal = parseInt(el.innerText) || 0;
+    if (currentVal === targetValue) return;
+
+    const obj = { value: currentVal };
+    gsap.to(obj, {
+        value: targetValue,
+        duration: 1.5,
+        ease: "power2.out",
+        onUpdate: () => {
+            el.innerText = Math.ceil(obj.value);
+        }
+    });
+}
+
+// 4. MODULE SWITCHER
 window.setDashboardModule = function (module) {
     activeModule = module;
-
-    // Toggle CSS classes for the buttons
     document.getElementById('btn-det')?.classList.toggle('active-module', module === 'detection');
     document.getElementById('btn-gen')?.classList.toggle('active-module', module === 'generation');
-
-    console.log("Switched to:", module);
-    updateThroughputChart(); // Refresh chart immediately
+    console.log("Module Context:", module);
+    updateThroughputChart();
 };
 
-// 3. Activity Logs (Fixes 20-40-60 Increments and Page Numbers)
+// 5. ACTIVITY LOG ENGINE (20-40-60 Pagination)
 function renderActivityLog() {
     const tbody = document.querySelector('tbody');
     const startEl = document.getElementById('log-start');
@@ -58,7 +134,6 @@ function renderActivityLog() {
 
     if (!tbody) return;
 
-    // Merge and Sort
     const merged = [...allDetectionRecords, ...allGenerationRecords]
         .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -66,31 +141,26 @@ function renderActivityLog() {
     const startIdx = logPage * LOGS_PER_PAGE;
     const paginated = merged.slice(startIdx, startIdx + LOGS_PER_PAGE);
 
-    // Update Counter Numbers (Increments of 20)
     if (startEl) startEl.textContent = totalLogs > 0 ? startIdx + 1 : 0;
     if (endEl) endEl.textContent = Math.min(startIdx + LOGS_PER_PAGE, totalLogs);
     if (totalEl) totalEl.textContent = totalLogs;
-
-    // Update the middle button to show Current Page (1, 2, 3...)
     if (pageNumBtn) pageNumBtn.textContent = logPage + 1;
 
-    // Render Table Rows
     tbody.innerHTML = paginated.map(r => {
         const isGen = r.prompt !== undefined;
         const d = new Date(r.timestamp);
-        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        const timeStr = d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
+        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+        const timeStr = d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
         const hash = r.filename ? `0x${r.filename.slice(0, 4).toUpperCase()}` : `#${r.id}`;
         const opName = isGen ? 'AI_GENERATION' : 'FORENSIC_DET';
         let status = isGen ? 'STABLE' : (r.fake_prob > 0.8 ? 'CRITICAL' : 'VERIFIED');
         let badgeClass = isGen ? 'text-purple-400' : (r.fake_prob > 0.8 ? 'text-red-500' : 'text-cyan-500');
 
         return `
-            <tr class="hover:bg-white/5 border-b border-white/5">
+            <tr class="hover:bg-white/5 border-b border-white/5 transition-colors">
                 <td class="px-8 py-4 text-[10px] font-mono">
-                    <span class="text-primary mr-2 text-[11px]">${dateStr}</span>
-                    <span class="text-primary font-bold text-[11px]">${timeStr}</span>
+                    <span class="text-primary mr-2">${dateStr}</span>
+                    <span class="text-primary font-bold">${timeStr}</span>
                 </td>
                 <td class="px-8 py-4 text-[13px] font-mono text-slate-400">${hash}</td>
                 <td class="px-8 py-4 text-[11px] font-bold tracking-widest">${opName}</td>
@@ -101,30 +171,61 @@ function renderActivityLog() {
     }).join('');
 }
 
-// 4. Event Listeners
+// 6. GALLERY RENDERERS
+function renderDetectionGallery() {
+    const el = document.getElementById('detection-gallery');
+    if (!el) return;
+    if (allDetectionRecords.length === 0) {
+        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No detections recorded.</div>`;
+        return;
+    }
+    el.innerHTML = allDetectionRecords.map(r => `
+        <div class="gallery-card" onclick="openDetails('detection', '${r.id}')">
+            ${r.image_b64 ? `<img src="data:image/jpeg;base64,${r.image_b64}">` : '<div class="placeholder-icon">🎭</div>'}
+            <div class="card-info">
+                <span class="badge-small badge-detect">FAKE</span>
+                <div class="prob">Prob: ${(r.fake_prob * 100).toFixed(1)}%</div>
+            </div>
+        </div>`).join('');
+}
+
+function renderGenerationGallery() {
+    const el = document.getElementById('generation-gallery');
+    if (!el) return;
+    if (allGenerationRecords.length === 0) {
+        el.innerHTML = `<div class="empty-gallery"><span>✨</span>No generations recorded.</div>`;
+        return;
+    }
+    el.innerHTML = allGenerationRecords.map(r => `
+        <div class="gallery-card" onclick="openDetails('generation', '${r.id}')">
+            ${r.image_b64 ? `<img src="data:image/png;base64,${r.image_b64}">` : '<div class="placeholder-icon">🎨</div>'}
+            <div class="card-info">
+                <span class="badge-small badge-gen">AI GEN</span>
+                <div class="prompt-text">${r.prompt || 'No Prompt'}</div>
+            </div>
+        </div>`).join('');
+}
+
+// 7. INITIALIZATION
 document.addEventListener('DOMContentLoaded', () => {
     refreshAll();
     setInterval(refreshAll, 10000);
 
-    // Chevron Next
+    // Pagination Listeners
     document.getElementById('log-next')?.addEventListener('click', () => {
         const total = allDetectionRecords.length + allGenerationRecords.length;
-        if ((logPage + 1) * LOGS_PER_PAGE < total) {
-            logPage++;
-            renderActivityLog();
-        }
+        if ((logPage + 1) * LOGS_PER_PAGE < total) { logPage++; renderActivityLog(); }
+    });
+    document.getElementById('log-prev')?.addEventListener('click', () => {
+        if (logPage > 0) { logPage--; renderActivityLog(); }
     });
 
-    // Chevron Back
-    document.getElementById('log-prev')?.addEventListener('click', () => {
-        if (logPage > 0) {
-            logPage--;
-            renderActivityLog();
-        }
-    });
+    initHomeButtonFlip();
 });
 
-// Helper for Stats and Chart
+/**
+ * CHART & MODAL LOGIC (UNCHANGED)
+ */
 function updateThroughputChart() {
     const chartContainer = document.querySelector('.throughput-bars');
     if (!chartContainer) return;
@@ -155,191 +256,48 @@ function renderStats(data) {
 function initHomeButtonFlip() {
     const inner = document.querySelector('.flip-inner');
     if (!inner) return;
-
-    const flipTl = gsap.timeline({
-        repeat: -1,         // Infinite loop
-        repeatDelay: 10     // Wait 10 seconds before starting the next flip
-    });
-
-    flipTl
-        // 1. Flip to Logo
-        .to(inner, {
-            rotateY: 180,
-            duration: 0.6,
-            ease: "back.out(1.7)"
-        })
-        // 2. Hold Logo for 2 seconds
+    gsap.timeline({ repeat: -1, repeatDelay: 10 })
+        .to(inner, { rotateY: 180, duration: 0.6, ease: "back.out(1.7)" })
         .to({}, { duration: 1.5 })
-        // 3. Flip back to Home Icon
-        .to(inner, {
-            rotateY: 0,
-            duration: 0.6,
-            ease: "back.inOut(1.7)"
-        });
+        .to(inner, { rotateY: 0, duration: 0.6, ease: "back.inOut(1.7)" });
 }
 
-/**
- * EXPORT ENGINE: CSV GENERATOR
- */
 window.exportToCSV = function () {
-    // 1. Merge all records for a full history export
-    const merged = [...allDetectionRecords, ...allGenerationRecords]
-        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-    if (merged.length === 0) {
-        alert("No data available to export.");
-        return;
-    }
-
-    // 2. Define CSV Headers
-    const headers = ["Timestamp", "ID", "Type", "Filename/Prompt", "Status", "Fake Probability"];
-
-    // 3. Map data to rows
-    const rows = merged.map(r => {
-        const isGen = r.prompt !== undefined;
-        const type = isGen ? "GENERATION" : "DETECTION";
-        const content = isGen ? r.prompt : (r.filename || "N/A");
-        const status = isGen ? "STABLE" : (r.fake_prob > 0.8 ? "CRITICAL" : "VERIFIED");
-        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(2) + "%" : "N/A";
-
-        return [
-            `"${r.timestamp}"`,
-            `"${r.id}"`,
-            `"${type}"`,
-            `"${content.replace(/"/g, '""')}"`, // Escape quotes for CSV safety
-            `"${status}"`,
-            `"${prob}"`
-        ];
-    });
-
-    // 4. Construct CSV String
-    const csvContent = [
-        headers.join(","),
-        ...rows.map(e => e.join(","))
-    ].join("\n");
-
-    // 5. Trigger Browser Download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const merged = [...allDetectionRecords, ...allGenerationRecords].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    if (merged.length === 0) return alert("No data available.");
+    const headers = ["Timestamp", "ID", "Type", "Content", "Status", "Probability"];
+    const rows = merged.map(r => [
+        `"${r.timestamp}"`, `"${r.id}"`, `"${r.prompt ? 'GEN' : 'DET'}"`,
+        `"${(r.prompt || r.filename || 'N/A').replace(/"/g, '""')}"`,
+        `"${r.prompt ? 'STABLE' : (r.fake_prob > 0.8 ? 'CRITICAL' : 'VERIFIED')}"`,
+        `"${r.fake_prob ? (r.fake_prob * 100).toFixed(2) + '%' : 'N/A'}"`
+    ]);
+    const blob = new Blob([[headers.join(","), ...rows.map(e => e.join(","))].join("\n")], { type: 'text/csv' });
     const link = document.createElement("a");
-
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        const dateTag = new Date().toISOString().split('T')[0];
-
-        link.setAttribute("href", url);
-        link.setAttribute("download", `polygen_export_${dateTag}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+    link.href = URL.createObjectURL(blob);
+    link.download = `polygen_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
 };
 
-// ─────────────────────────────────────────────────────────────
-// DATABASE GALLERY RENDERERS (V8 COMPATIBLE)
-// ─────────────────────────────────────────────────────────────
-function renderDetectionGallery() {
-    const el = document.getElementById('detection-gallery');
-    if (!el) return;
-
-    if (allDetectionRecords.length === 0) {
-        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No detections saved yet.</div>`;
-        return;
-    }
-
-    el.innerHTML = allDetectionRecords.map(r => {
-        const imgSrc = r.image_b64 ? `data:image/jpeg;base64,${r.image_b64}` : '';
-        const ts = new Date(r.timestamp).toLocaleString();
-        const prob = r.fake_prob !== undefined ? (r.fake_prob * 100).toFixed(1) + '%' : '—';
-
-        // Added onclick="openDetails('detection', '${r.id}')"
-        return `
-        <div class="gallery-card" onclick="openDetails('detection', '${r.id}')" style="cursor:pointer;">
-            ${imgSrc ? `<img src="${imgSrc}" alt="Detection">` : '<div class="placeholder-icon">🎭</div>'}
-            <div class="card-info">
-                <span class="badge-small badge-detect">FAKE</span>
-                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
-                <div class="prob">Fake Prob: ${prob}</div>
-                <div class="meta">📅 ${ts}</div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function renderGenerationGallery() {
-    const el = document.getElementById('generation-gallery');
-    if (!el) return;
-
-    if (allGenerationRecords.length === 0) {
-        el.innerHTML = `<div class="empty-gallery"><span>✨</span>No generated media saved yet.</div>`;
-        return;
-    }
-
-    el.innerHTML = allGenerationRecords.map(r => {
-        const imgSrc = r.image_b64 ? `data:image/png;base64,${r.image_b64}` : '';
-        const ts = new Date(r.timestamp).toLocaleString();
-
-        // Added onclick="openDetails('generation', '${r.id}')"
-        return `
-        <div class="gallery-card" onclick="openDetails('generation', '${r.id}')" style="cursor:pointer;">
-            ${imgSrc ? `<img src="${imgSrc}" alt="Generated">` : '<div class="placeholder-icon">🎨</div>'}
-            <div class="card-info">
-                <span class="badge-small badge-gen">AI GEN</span>
-                <span class="badge-small ${r.media_type === 'video' ? 'badge-video' : 'badge-image'}">${r.media_type.toUpperCase()}</span>
-                <div class="prompt-text">💬 ${r.prompt || 'No Prompt'}</div>
-                <div class="meta">📅 ${ts}</div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-/**
- * MODAL ENGINE: DETAILS POPUP
- */
 window.openDetails = function (type, id) {
     const modal = document.getElementById('history-modal');
     const records = type === 'detection' ? allDetectionRecords : allGenerationRecords;
     const data = records.find(r => r.id == id);
-
     if (!data || !modal) return;
-
-    // Fill Image
     const modalImg = document.getElementById('history-image');
     if (data.image_b64) {
         modalImg.src = `data:image/${type === 'detection' ? 'jpeg' : 'png'};base64,${data.image_b64}`;
         modalImg.style.display = 'block';
-    } else {
-        modalImg.style.display = 'none';
-    }
-
-    // Fill Text Data
+    } else { modalImg.style.display = 'none'; }
     document.getElementById('history-prompt').textContent = data.prompt || data.filename || "N/A";
     document.getElementById('history-type').textContent = (data.media_type || "image").toUpperCase();
     document.getElementById('history-timestamp').textContent = new Date(data.timestamp).toLocaleString();
-
-    // Detection Specifics vs Generation Specifics
     const seedEl = document.getElementById('history-seed');
     if (type === 'detection') {
-        document.querySelector('p strong').textContent = "Filename:";
-        seedEl.textContent = data.fake_prob ? `Fake Probability: ${(data.fake_prob * 100).toFixed(2)}%` : "N/A";
-    } else {
-        document.querySelector('p strong').textContent = "Prompt:";
-        seedEl.textContent = data.seed || "Random";
-    }
-
-    // Show Modal
+        seedEl.textContent = data.fake_prob ? `Fake Prob: ${(data.fake_prob * 100).toFixed(2)}%` : "N/A";
+    } else { seedEl.textContent = data.seed || "Random"; }
     modal.classList.remove('hidden');
-    gsap.fromTo(".history-modal-card", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.7)" });
+    gsap.fromTo(".history-modal-card", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out" });
 };
 
-// Close Modal Event
-document.getElementById('history-close')?.addEventListener('click', () => {
-    const modal = document.getElementById('history-modal');
-    modal.classList.add('hidden');
-});
-
-// Close on background click
-window.addEventListener('click', (e) => {
-    const modal = document.getElementById('history-modal');
-    if (e.target === modal) modal.classList.add('hidden');
-});
+document.getElementById('history-close')?.addEventListener('click', () => document.getElementById('history-modal').classList.add('hidden'));

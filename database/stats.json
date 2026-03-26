@@ -6,9 +6,9 @@
       "fake": 78
     },
     "videos": {
-      "total": 7,
+      "total": 8,
       "real": 6,
-      "fake": 1
+      "fake": 2
     }
   },
   "generation": {
