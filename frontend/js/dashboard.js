@@ -33,6 +33,13 @@ async function refreshAll() {
         // Trigger Database Summary Counters
         updateDatabaseStats(allDetectionRecords, allGenerationRecords);
 
+        // Add inside refreshAll() after getting allDetectionRecords
+        console.log("Image Check:", allDetectionRecords.map(r => ({
+            id: r.id,
+            hasImage: !!(r.image_b64 || r.image || r.heatmap),
+            length: (r.image_b64 || "").length
+        })));
+
     } catch (e) {
         console.error('PolyGen Sync Error:', e);
     }
@@ -171,23 +178,51 @@ function renderActivityLog() {
     }).join('');
 }
 
-// 6. GALLERY RENDERERS
+// 6. IMPROVED GALLERY RENDERERS
 function renderDetectionGallery() {
     const el = document.getElementById('detection-gallery');
     if (!el) return;
+
     if (allDetectionRecords.length === 0) {
-        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No detections recorded.</div>`;
+        el.innerHTML = `<div class="empty-gallery"><span>🔍</span>No records.</div>`;
         return;
     }
-    el.innerHTML = allDetectionRecords.map(r => `
-        <div class="gallery-card" onclick="openDetails('detection', '${r.id}')">
-            ${r.image_b64 ? `<img src="data:image/jpeg;base64,${r.image_b64}">` : '<div class="placeholder-icon">🎭</div>'}
-            <div class="card-info">
-                <span class="badge-small badge-detect">FAKE</span>
-                <div class="prob">Prob: ${(r.fake_prob * 100).toFixed(1)}%</div>
+
+    el.innerHTML = allDetectionRecords.map(r => {
+        // 1. Multi-source Check
+        const rawMedia = r.image_b64 || r.image || r.heatmap || r.thumbnail;
+
+        // 2. Formatting Check: Ensure it has the data URI prefix
+        let imgSrc = null;
+        if (rawMedia) {
+            imgSrc = rawMedia.startsWith('data:image')
+                ? rawMedia
+                : `data:image/jpeg;base64,${rawMedia}`;
+        }
+
+        const isFake = (r.fake_prob > 0.5);
+
+        return `
+        <div class="gallery-card neumorphic-card" onclick="openDetails('detection', '${r.id}')">
+            <div class="card-media-wrapper">
+                ${imgSrc ?
+                `<img src="${imgSrc}" 
+                          onerror="this.parentElement.innerHTML='<div class=err-media>DATA_ERR</div>'" 
+                          loading="lazy">`
+                : `<div class="placeholder-icon">🎥</div>`
+            }
             </div>
-        </div>`).join('');
+            <div class="card-info">
+                <span class="badge-small ${isFake ? 'badge-detect-fake' : 'badge-detect-real'}">
+                    ${isFake ? 'FAKE' : 'REAL'}
+                </span>
+                <div class="prob">${(r.fake_prob * 100).toFixed(1)}%</div>
+            </div>
+        </div>`;
+    }).join('');
 }
+
+
 
 function renderGenerationGallery() {
     const el = document.getElementById('generation-gallery');
@@ -279,25 +314,31 @@ window.exportToCSV = function () {
     link.click();
 };
 
+// Updated openDetails to support fallback images
 window.openDetails = function (type, id) {
     const modal = document.getElementById('history-modal');
     const records = type === 'detection' ? allDetectionRecords : allGenerationRecords;
     const data = records.find(r => r.id == id);
     if (!data || !modal) return;
+
     const modalImg = document.getElementById('history-image');
-    if (data.image_b64) {
-        modalImg.src = `data:image/${type === 'detection' ? 'jpeg' : 'png'};base64,${data.image_b64}`;
+    const rawMedia = data.image_b64 || data.image || data.heatmap;
+
+    if (rawMedia) {
+        modalImg.src = `data:image/${type === 'detection' ? 'jpeg' : 'png'};base64,${rawMedia}`;
         modalImg.style.display = 'block';
-    } else { modalImg.style.display = 'none'; }
-    document.getElementById('history-prompt').textContent = data.prompt || data.filename || "N/A";
-    document.getElementById('history-type').textContent = (data.media_type || "image").toUpperCase();
+    } else {
+        modalImg.style.display = 'none';
+    }
+
+    document.getElementById('history-prompt').textContent = data.prompt || data.filename || "System Log";
     document.getElementById('history-timestamp').textContent = new Date(data.timestamp).toLocaleString();
+
     const seedEl = document.getElementById('history-seed');
-    if (type === 'detection') {
-        seedEl.textContent = data.fake_prob ? `Fake Prob: ${(data.fake_prob * 100).toFixed(2)}%` : "N/A";
-    } else { seedEl.textContent = data.seed || "Random"; }
+    seedEl.textContent = type === 'detection' ? `Confidence: ${((data.confidence || 0) * 100).toFixed(2)}%` : `Seed: ${data.seed || 'Auto'}`;
+
     modal.classList.remove('hidden');
-    gsap.fromTo(".history-modal-card", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out" });
+    gsap.fromTo(".history-modal-card", { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4 });
 };
 
 document.getElementById('history-close')?.addEventListener('click', () => document.getElementById('history-modal').classList.add('hidden'));

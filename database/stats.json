@@ -1,19 +1,19 @@
 {
   "detection": {
     "images": {
-      "total": 151,
-      "real": 73,
-      "fake": 78
+      "total": 180,
+      "real": 99,
+      "fake": 81
     },
     "videos": {
-      "total": 8,
+      "total": 16,
       "real": 6,
-      "fake": 2
+      "fake": 10
     }
   },
   "generation": {
     "images": {
-      "total": 106
+      "total": 107
     },
     "videos": {
       "total": 2

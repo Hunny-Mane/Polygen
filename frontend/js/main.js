@@ -25,7 +25,7 @@ async function trackStat(module, mediaType, label = '') {
 }
 
 // ── Image Detection ────────────────────────────────────────────────────────
-let lastPrediction = null; // Store last prediction for feedback
+let lastPrediction = null;
 
 async function analyzeImage() {
     const input = document.getElementById('image-input');
@@ -33,21 +33,10 @@ async function analyzeImage() {
 
     const formData = new FormData();
     formData.append('file', input.files[0]);
+    const modelType = document.getElementById('img-model-select').value;
 
     document.getElementById('img-loader').style.display = 'block';
     document.getElementById('img-result').style.display = 'none';
-
-    // Reset feedback UI
-    const feedbackSection = document.getElementById('feedback-section');
-    const feedbackResult = document.getElementById('feedback-result');
-    const btnYes = document.getElementById('btn-feedback-yes');
-    const btnNo = document.getElementById('btn-feedback-no');
-    if (feedbackSection) feedbackSection.style.display = '';
-    if (feedbackResult) feedbackResult.style.display = 'none';
-    if (btnYes) { btnYes.style.display = ''; btnYes.disabled = false; }
-    if (btnNo) { btnNo.style.display = ''; btnNo.disabled = false; }
-
-    const modelType = document.getElementById('img-model-select').value;
 
     try {
         const res = await fetch(`${API_URL}/api/detection/predict/image?model_type=${modelType}`, {
@@ -56,12 +45,14 @@ async function analyzeImage() {
         });
         const data = await res.json();
 
-        // Store prediction data for feedback
+        // SYNCED: Using 'fake_prob' to match dashboard expectations
         lastPrediction = {
             label: data.label,
-            probability: data.fake_probability,
+            fake_prob: data.fake_probability || data.fake_prob,
             confidence: data.confidence,
-            file: input.files[0]
+            file: input.files[0],
+            type: 'image',
+            heatmap: data.heatmap
         };
 
         // Preview original
@@ -70,78 +61,49 @@ async function analyzeImage() {
         reader.readAsDataURL(input.files[0]);
 
         // Grad-CAM heatmap
-        const gradcamBox = document.getElementById('gradcam-box');
         const gradcamImg = document.getElementById('gradcam-img');
         if (data.heatmap) {
             gradcamImg.src = `data:image/jpeg;base64,${data.heatmap}`;
-            if (gradcamBox) gradcamBox.style.display = '';
-        } else {
-            gradcamImg.src = '';
-            if (gradcamBox) gradcamBox.style.display = 'none';
+            document.getElementById('gradcam-box').style.display = '';
         }
 
-        const labelSpan = document.getElementById('img-with-pred');
-        labelSpan.innerText = data.label;
-        labelSpan.className = data.label === 'Real' ? 'label-real' : 'label-fake';
-
+        document.getElementById('img-with-pred').innerText = data.label;
+        document.getElementById('img-with-pred').className = data.label === 'Real' ? 'label-real' : 'label-fake';
         document.getElementById('img-confidence').innerText = (data.confidence * 100).toFixed(2) + '%';
-        document.getElementById('img-fake-prob').innerText = 'Fake Probability: ' + (data.fake_probability * 100).toFixed(2) + '%';
+        document.getElementById('img-fake-prob').innerText = 'Fake Probability: ' + ((data.fake_probability || data.fake_prob) * 100).toFixed(2) + '%';
 
-        // Render Breakdown
-        console.log("Analysis Breakdown Data:", data.breakdown);
-        const breakdown = data.breakdown || {};
-        const breakdownArea = document.getElementById('analysis-breakdown');
-        if (breakdownArea) {
-            breakdownArea.style.display = 'block';
-
-            const setBar = (id, val, show = true) => {
-                const item = document.getElementById('bar-' + id)?.closest('.breakdown-item');
-                if (!item) return;
-
-                if (!show) {
-                    item.style.display = 'none';
-                    return;
-                }
-                item.style.display = 'flex';
-
-                const bar = document.getElementById('bar-' + id);
-                const text = document.getElementById('val-' + id);
-                const status = document.getElementById('status-' + id);
-
-                if (bar) bar.style.width = (val * 100) + '%';
-                if (text) text.innerText = (val * 100).toFixed(1) + '%';
-
-                if (status) {
-                    const isFake = val >= 0.5;
-                    status.innerText = isFake ? 'Fake' : 'Real';
-                    status.className = 'status-label ' + (isFake ? 'status-fake' : 'status-real');
-                }
-
-                // Color coding
-                if (bar) {
-                    if (val > 0.6) bar.style.backgroundColor = 'var(--accent-red)';
-                    else if (val > 0.4) bar.style.backgroundColor = 'var(--accent-yellow)';
-                    else bar.style.backgroundColor = 'var(--accent-green)';
-                }
-            };
-
-            setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
-            setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
-            setBar('fft', breakdown.fft_score || 0);
-            setBar('prnu', breakdown.prnu_score || 0);
-        }
+        // Render Bars
+        renderForensicBars('img', data.breakdown || {}, modelType);
 
         document.getElementById('img-result').style.display = 'flex';
-
-        // Track stats
         await trackStat('detection', 'image', data.label.toLowerCase());
 
     } catch (e) {
-        alert("Error analyzing image");
-        console.error(e);
+        console.error("Forensic Error:", e);
     } finally {
         document.getElementById('img-loader').style.display = 'none';
     }
+}
+
+function renderForensicBars(prefix, breakdown, modelType) {
+    const setBar = (id, val, show = true) => {
+        const item = document.getElementById('bar-' + id)?.closest('.breakdown-item');
+        if (!item) return;
+        item.style.display = show ? 'flex' : 'none';
+
+        const bar = document.getElementById('bar-' + id);
+        const text = document.getElementById('val-' + id);
+        if (bar) bar.style.width = (val * 100) + '%';
+        if (text) text.innerText = (val * 100).toFixed(1) + '%';
+
+        // Dynamic Color Logic
+        if (bar) {
+            bar.style.backgroundColor = val > 0.6 ? 'var(--accent-red)' : (val > 0.4 ? 'var(--accent-yellow)' : 'var(--accent-green)');
+        }
+    };
+
+    setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
+    setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
 }
 
 
@@ -206,8 +168,15 @@ async function analyzeVideo() {
     const formData = new FormData();
     formData.append('file', input.files[0]);
 
+    // UI Feedback: Show loader, hide previous results
     document.getElementById('vid-loader').style.display = 'block';
     document.getElementById('vid-result').style.display = 'none';
+
+    // Reset feedback UI for video section
+    const vidFeedbackSection = document.getElementById('vid-feedback-section');
+    const vidFeedbackResult = document.getElementById('vid-feedback-result');
+    if (vidFeedbackSection) vidFeedbackSection.style.display = '';
+    if (vidFeedbackResult) vidFeedbackResult.style.display = 'none';
 
     const modelType = document.getElementById('vid-model-select').value;
 
@@ -218,19 +187,49 @@ async function analyzeVideo() {
         });
         const data = await res.json();
 
+        // 1. Store prediction data for feedback tracking
+        lastPrediction = {
+            label: data.label,
+            probability: data.probability,
+            confidence: data.confidence || data.probability, // Fallback if confidence isn't explicit
+            file: input.files[0],
+            type: 'video'
+        };
+
+        // 2. Video Preview (Equivalent to original image preview)
+        const videoPreview = document.getElementById('preview-vid');
+        if (videoPreview) {
+            videoPreview.src = URL.createObjectURL(input.files[0]);
+            videoPreview.style.display = 'block';
+        }
+
+        // 3. Primary Results (Label and Confidence)
         const labelSpan = document.getElementById('vid-pred');
         labelSpan.innerText = data.label;
         labelSpan.className = data.label === 'Real' ? 'label-real' : 'label-fake';
 
-        document.getElementById('vid-prob').innerText = (data.probability * 100).toFixed(2) + '% Fake Probability';
+        // Display Probability/Confidence
+        const probDisplay = document.getElementById('vid-prob');
+        if (probDisplay) {
+            probDisplay.innerText = 'Fake Probability: ' + (data.probability * 100).toFixed(2) + '%';
+        }
 
-        // Render Video Breakdown
+        const confDisplay = document.getElementById('vid-confidence');
+        if (confDisplay && data.confidence) {
+            confDisplay.innerText = (data.confidence * 100).toFixed(2) + '% Confidence';
+        }
+
+        // 4. Render Video Analysis Breakdown (Progress Bars)
         const breakdown = data.breakdown || {};
         const breakdownArea = document.getElementById('video-analysis-breakdown');
+
         if (breakdownArea) {
             breakdownArea.style.display = 'block';
+
             const setBar = (id, val, show = true) => {
-                const item = document.getElementById('v-bar-' + id)?.closest('.breakdown-item');
+                // Targets IDs like v-bar-b4, v-bar-xc
+                const barElement = document.getElementById('v-bar-' + id);
+                const item = barElement?.closest('.breakdown-item');
                 if (!item) return;
 
                 if (!show) {
@@ -239,11 +238,10 @@ async function analyzeVideo() {
                 }
                 item.style.display = 'flex';
 
-                const bar = document.getElementById('v-bar-' + id);
                 const text = document.getElementById('v-val-' + id);
                 const status = document.getElementById('v-status-' + id);
 
-                if (bar) bar.style.width = (val * 100) + '%';
+                if (barElement) barElement.style.width = (val * 100) + '%';
                 if (text) text.innerText = (val * 100).toFixed(1) + '%';
 
                 if (status) {
@@ -252,26 +250,30 @@ async function analyzeVideo() {
                     status.className = 'status-label ' + (isFake ? 'status-fake' : 'status-real');
                 }
 
-                if (bar) {
-                    if (val > 0.6) bar.style.backgroundColor = 'var(--accent-red)';
-                    else if (val > 0.4) bar.style.backgroundColor = 'var(--accent-yellow)';
-                    else bar.style.backgroundColor = 'var(--accent-green)';
+                // Apply forensic color coding
+                if (barElement) {
+                    if (val > 0.6) barElement.style.backgroundColor = 'var(--accent-red)';
+                    else if (val > 0.4) barElement.style.backgroundColor = 'var(--accent-yellow)';
+                    else barElement.style.backgroundColor = 'var(--accent-green)';
                 }
             };
+
+            // Sync these IDs with your HTML (ensure they have the 'v-' prefix)
             setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
             setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
             setBar('fft', breakdown.fft_score || 0);
             setBar('prnu', breakdown.prnu_score || 0);
         }
 
+        // Show the result container
         document.getElementById('vid-result').style.display = 'flex';
 
-        // Track stats
+        // 5. Track stats globally
         await trackStat('detection', 'video', data.label.toLowerCase());
 
     } catch (e) {
-        alert("Error analyzing video");
-        console.error(e);
+        alert("Error analyzing video forensic data");
+        console.error("Video Analysis Error:", e);
     } finally {
         document.getElementById('vid-loader').style.display = 'none';
     }

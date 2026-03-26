@@ -481,7 +481,7 @@
             justify-content: space-between;
             /* Pushes items to opposite ends */
             padding: 20px 30px;
-            background: #e0e0e0;
+            background: #e0e0e05b;
             /* Match your light gray background */
             border-radius: 20px;
             margin-bottom: 30px;
@@ -683,11 +683,57 @@
             width: 100%;
             z-index: 5;
         }
+
+        .card-media-wrapper {
+            width: 100%;
+            height: 160px;
+            /* Force a height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .card-media-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Ensures the image fills the space without gaps */
+        }
+
+        .err-media {
+            font-size: 10px;
+            color: var(--accent-red);
+            font-family: monospace;
+        }
     </style>
+
 </head>
 <link rel="stylesheet" href="css/neumorphism.css">
 
-<body class="landing-page dark-theme" style="background-color: #c9c9c952;">
+<script>
+    // Simplified SwitchTab to prevent duplication
+    window.switchTab = function (tabName) {
+        activeTab = tabName;
+
+        // Panels
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+
+        // Buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.getAttribute('onclick').includes(tabName)) btn.classList.add('active');
+        });
+
+        // Trigger gallery re-render if needed
+        if (typeof refreshAll === "function") refreshAll();
+    };
+</script>
+
+<body class="landing-page dark-theme" style="background-color: #dedede86;">
 
     <div class="blueprint-grid-bg" style="z-index: 10;"></div>
 
