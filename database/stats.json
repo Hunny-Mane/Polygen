@@ -1,14 +1,14 @@
 {
   "detection": {
     "images": {
-      "total": 180,
-      "real": 99,
-      "fake": 81
+      "total": 196,
+      "real": 102,
+      "fake": 94
     },
     "videos": {
-      "total": 16,
+      "total": 21,
       "real": 6,
-      "fake": 10
+      "fake": 15
     }
   },
   "generation": {

@@ -184,32 +184,100 @@
     .analysis-controls-row {
         display: flex;
         align-items: center;
-        gap: 20px;
-        margin-top: 20px;
+        /* Align to bottom for label alignment */
+        gap: 25px;
+        margin-top: 25px;
+        padding: 15px;
+        padding-top: 25px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: inset 2px 2px 5px var(--neu-dark-shadow),
+            inset -2px -2px 5px var(--neu-light-shadow);
     }
 
     .analysis-controls-row .input-group {
         flex: 1;
-        /* Model select takes available space */
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .analysis-controls-row label {
+        font-family: 'Audiowide', cursive;
+        font-size: 0.75rem;
+        letter-spacing: 0.1em;
+        color: var(--neu-text-dim);
+        margin-left: 5px;
+        text-transform: uppercase;
     }
 
     /* Neumorphic shadow styling */
     .neumorphic-card {
-        background: #f0f0f0;
-        /* Or your preferred light theme bg */
-        border-radius: 30px;
-        box-shadow: 20px 20px 60px #bebebe, -20px -20px 60px #bebebe;
-        border: none;
-        color: black;
+        background: #f0f2f5;
+        border-radius: 35px;
+        box-shadow: 20px 20px 60px #cad3e0, -20px -20px 60px #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: var(--neu-text-main);
     }
 
     .neumorphic-inset {
-        background: #f0f0f0;
-        border-radius: 15px;
-        box-shadow: inset 3px 3px 6px #bebebe, inset -3px -3px 6px #ffffff;
-        border: none;
-        color: black;
+        background: #f0f2f5;
+        border-radius: 18px;
+        box-shadow: inset 4px 4px 8px #cad3e0, inset -4px -4px 8px #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: var(--neu-text-main);
+        outline: none;
     }
+
+    .model-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        padding: 12px 45px 12px 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2300b8c4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 18px top 50%;
+        background-size: 18px;
+        cursor: pointer;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        color: #444;
+    }
+
+    .model-select:hover {
+        box-shadow: inset 6px 6px 12px #cad3e0, inset -6px -6px 12px #ffffff;
+        transform: translateY(-2px);
+        background-color: #f8faff;
+    }
+
+    .model-select:focus {
+        box-shadow: inset 4px 4px 10px #afc4e7, inset -4px -4px 10px #ffffff, 0 0 15px rgba(0, 184, 196, 0.3);
+        border: 1px solid #00b8c4;
+        background-color: #ffffff;
+        color: #008fa0;
+        outline: none;
+    }
+
+    .model-desc-text {
+        font-size: 0.8rem;
+        color: #666;
+        margin-top: 8px;
+        margin-left: 5px;
+        font-style: italic;
+        transition: all 0.3s ease;
+    }
+
+    .active-selection+.model-desc-text {
+        color: var(--neu-accent-blue);
+        font-weight: 500;
+        transform: translateX(5px);
+    }
+
+
+
+
 
     .neumorphic-result-area {
         margin-top: 25px;
@@ -681,7 +749,7 @@
                         <option value="xception">Xception Only</option>
                     </select>
                 </div>
-                <button class="btn btn-primary neumorphic-btn" onclick="analyzeImage()">Scan</button>
+                <button class="btn btn-primary neumorphic-btn" onclick="analyzeImage()" style="">Scan</button>
             </div>
 
             <div class="loader" id="img-loader"></div>
@@ -689,11 +757,12 @@
             <div class="preview-container neumorphic-result-area" id="img-result" style="display:none;">
                 <div class="detection-images-row">
                     <div class="preview-box">
-                        <h4>Original</h4>
+                        <h4>Analysis Preview</h4>
                         <img id="preview-img" src="">
                     </div>
                     <div class="preview-box" id="gradcam-box">
                         <h4>Grad-CAM Heatmap</h4>
+                        <p class="gradcam-subtitle">Visualizing AI attention regions</p>
                         <img id="gradcam-img" src="" style="min-height:100px;">
                     </div>
                 </div>
@@ -706,7 +775,17 @@
                 <div class="analysis-breakdown" id="analysis-breakdown" style="display:none;">
                     <h4>Analysis Breakdown</h4>
                     <div class="breakdown-grid">
-                        <div class="breakdown-item">
+                        <div class="breakdown-item" id="item-ens">
+                            <div class="item-header">
+                                <span>Ensemble (Combined) :</span>
+                                <span id="status-ens" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="bar-ens" class="progress"></div>
+                            </div>
+                            <span id="val-ens">0%</span>
+                        </div>
+                        <div class="breakdown-item" id="item-b4">
                             <div class="item-header">
                                 <span>EfficientNet-B4 :</span>
                                 <span id="status-b4" class="status-label"></span>
@@ -716,7 +795,7 @@
                             </div>
                             <span id="val-b4">0%</span>
                         </div>
-                        <div class="breakdown-item">
+                        <div class="breakdown-item" id="item-xc">
                             <div class="item-header">
                                 <span>Xception :</span>
                                 <span id="status-xc" class="status-label"></span>
@@ -745,7 +824,7 @@
         <br><br><br><br><br>
 
         <div class="card neumorphic-card">
-            <h3>Video Forensic Analysis</h3>
+            <h3>Video Analysis</h3>
             <div class="upload-area neumorphic-inset" id="video-drop-zone"
                 onclick="document.getElementById('video-input').click()">
                 <p>Click to upload or drag & drop Video</p>
@@ -780,11 +859,20 @@
                         <p id="vid-confidence" style="font-size: 0.85rem; opacity: 0.8;"></p>
                     </div>
                 </div>
-
                 <div class="analysis-breakdown" id="video-analysis-breakdown" style="display:none;">
-                    <h4>Analysis Breakdown</h4>
+                    <h4>Forensic Analysis Breakdown</h4>
                     <div class="breakdown-grid">
-                        <div class="breakdown-item" style="display: flex; flex-direction: column;">
+                        <div class="breakdown-item" id="v-item-ens">
+                            <div class="item-header">
+                                <span>Ensemble (Combined) :</span>
+                                <span id="v-status-ens" class="status-label"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="v-bar-ens" class="progress"></div>
+                            </div>
+                            <span id="v-val-ens">0%</span>
+                        </div>
+                        <div class="breakdown-item" id="v-item-b4">
                             <div class="item-header">
                                 <span>EfficientNet-B4 :</span>
                                 <span id="v-status-b4" class="status-label"></span>
@@ -792,10 +880,9 @@
                             <div class="progress-bar">
                                 <div id="v-bar-b4" class="progress"></div>
                             </div>
-                            <span id="v-val-b4" class="val-text">0%</span>
+                            <span id="v-val-b4">0%</span>
                         </div>
-
-                        <div class="breakdown-item" style="display: flex; flex-direction: column;">
+                        <div class="breakdown-item" id="v-item-xc">
                             <div class="item-header">
                                 <span>Xception :</span>
                                 <span id="v-status-xc" class="status-label"></span>
@@ -803,7 +890,7 @@
                             <div class="progress-bar">
                                 <div id="v-bar-xc" class="progress"></div>
                             </div>
-                            <span id="v-val-xc" class="val-text">0%</span>
+                            <span id="v-val-xc">0%</span>
                         </div>
                     </div>
                 </div>

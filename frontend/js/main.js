@@ -11,6 +11,24 @@ document.querySelectorAll('.upload-area').forEach(area => {
     });
 });
 
+// Dropdown UI Interaction: Add 'active-selection' on change
+document.querySelectorAll('.model-select').forEach(sel => {
+    sel.addEventListener('change', () => {
+        sel.classList.add('active-selection');
+        
+        // Update description text
+        const descId = sel.id === 'img-model-select' ? 'img-model-desc' : 'vid-model-desc';
+        const descElem = document.getElementById(descId);
+        if (descElem) {
+            if (sel.value === 'ensemble') descElem.innerText = "Voting-based system: Best overall reliability";
+            else if (sel.value === 'efficientnet_b4') descElem.innerText = "High feature extraction precision";
+            else if (sel.value === 'xception') descElem.innerText = "Focus on detail-oriented deepfake detection";
+        }
+
+        setTimeout(() => sel.classList.remove('active-selection'), 1500); // Visual feedback pulse
+    });
+});
+
 // ── Stats helper ───────────────────────────────────────────────────────────
 async function trackStat(module, mediaType, label = '') {
     try {
@@ -60,11 +78,15 @@ async function analyzeImage() {
         reader.onload = (e) => document.getElementById('preview-img').src = e.target.result;
         reader.readAsDataURL(input.files[0]);
 
-        // Grad-CAM heatmap
+        // Restore Grad-CAM heatmap
         const gradcamImg = document.getElementById('gradcam-img');
-        if (data.heatmap) {
+        if (data.heatmap && data.heatmap.length > 0) {
+            console.log("Analysis: Grad-CAM heatmap received (B64 length: " + data.heatmap.length + ")");
             gradcamImg.src = `data:image/jpeg;base64,${data.heatmap}`;
-            document.getElementById('gradcam-box').style.display = '';
+            document.getElementById('gradcam-box').style.display = 'flex';
+        } else {
+            console.warn("Analysis: No Grad-CAM heatmap data in response.");
+            document.getElementById('gradcam-box').style.display = 'none';
         }
 
         document.getElementById('img-with-pred').innerText = data.label;
@@ -76,6 +98,7 @@ async function analyzeImage() {
         renderForensicBars('img', data.breakdown || {}, modelType);
 
         document.getElementById('img-result').style.display = 'flex';
+        document.getElementById('analysis-breakdown').style.display = 'block';
         await trackStat('detection', 'image', data.label.toLowerCase());
 
     } catch (e) {
@@ -86,24 +109,60 @@ async function analyzeImage() {
 }
 
 function renderForensicBars(prefix, breakdown, modelType) {
+    // Prefix is 'img' for images, or anything else for video (video uses 'v-' prefix IDs)
+    const p = (prefix === 'img') ? '' : 'v-';
+    
     const setBar = (id, val, show = true) => {
-        const item = document.getElementById('bar-' + id)?.closest('.breakdown-item');
+        const barElem = document.getElementById(p + 'bar-' + id);
+        const item = barElem?.closest('.breakdown-item');
         if (!item) return;
-        item.style.display = show ? 'flex' : 'none';
 
-        const bar = document.getElementById('bar-' + id);
-        const text = document.getElementById('val-' + id);
-        if (bar) bar.style.width = (val * 100) + '%';
+        // Use 'grid' to match style.css layout expectations
+        item.style.display = show ? 'grid' : 'none';
+        
+        const text = document.getElementById(p + 'val-' + id);
+        const status = document.getElementById(p + 'status-' + id);
+
+        if (barElem) barElem.style.width = (val * 100) + '%';
         if (text) text.innerText = (val * 100).toFixed(1) + '%';
 
-        // Dynamic Color Logic
-        if (bar) {
-            bar.style.backgroundColor = val > 0.6 ? 'var(--accent-red)' : (val > 0.4 ? 'var(--accent-yellow)' : 'var(--accent-green)');
+        if (status) {
+            const isFake = val >= 0.5;
+            status.innerText = isFake ? 'Fake' : 'Real';
+            status.className = 'status-label ' + (isFake ? 'status-fake' : 'status-real');
+        }
+
+        // Apply forensic color coding
+        if (barElem) {
+            if (val > 0.6) barElem.style.backgroundColor = 'var(--accent-red)';
+            else if (val > 0.4) barElem.style.backgroundColor = 'var(--accent-yellow)';
+            else barElem.style.backgroundColor = 'var(--accent-green)';
         }
     };
 
-    setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
-    setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
+    // Selection Logic:
+    // Ensemble -> Show B4 & XC
+    // EfficientNet -> Show Ensemble & XC
+    // Xception -> Show Ensemble & B4
+    if (modelType === 'ensemble') {
+        setBar('ens', breakdown.neural_ensemble || 0, false);
+        setBar('b4', breakdown.neural_b4 || 0, true);
+        setBar('xc', breakdown.neural_xc || 0, true);
+    } else if (modelType === 'efficientnet_b4') {
+        setBar('ens', breakdown.neural_ensemble || 0, true);
+        setBar('b4', breakdown.neural_b4 || 0, false);
+        setBar('xc', breakdown.neural_xc || 0, true);
+    } else if (modelType === 'xception') {
+        setBar('ens', breakdown.neural_ensemble || 0, true);
+        setBar('b4', breakdown.neural_b4 || 0, true);
+        setBar('xc', breakdown.neural_xc || 0, false);
+    }
+    
+    // Always show FFT and PRNU (Video only usually)
+    if (prefix !== 'img') {
+        setBar('fft', breakdown.fft_score || 0, true);
+        setBar('prnu', breakdown.prnu_score || 0, true);
+    }
 }
 
 
@@ -225,44 +284,7 @@ async function analyzeVideo() {
 
         if (breakdownArea) {
             breakdownArea.style.display = 'block';
-
-            const setBar = (id, val, show = true) => {
-                // Targets IDs like v-bar-b4, v-bar-xc
-                const barElement = document.getElementById('v-bar-' + id);
-                const item = barElement?.closest('.breakdown-item');
-                if (!item) return;
-
-                if (!show) {
-                    item.style.display = 'none';
-                    return;
-                }
-                item.style.display = 'flex';
-
-                const text = document.getElementById('v-val-' + id);
-                const status = document.getElementById('v-status-' + id);
-
-                if (barElement) barElement.style.width = (val * 100) + '%';
-                if (text) text.innerText = (val * 100).toFixed(1) + '%';
-
-                if (status) {
-                    const isFake = val >= 0.5;
-                    status.innerText = isFake ? 'Fake' : 'Real';
-                    status.className = 'status-label ' + (isFake ? 'status-fake' : 'status-real');
-                }
-
-                // Apply forensic color coding
-                if (barElement) {
-                    if (val > 0.6) barElement.style.backgroundColor = 'var(--accent-red)';
-                    else if (val > 0.4) barElement.style.backgroundColor = 'var(--accent-yellow)';
-                    else barElement.style.backgroundColor = 'var(--accent-green)';
-                }
-            };
-
-            // Sync these IDs with your HTML (ensure they have the 'v-' prefix)
-            setBar('b4', breakdown.neural_b4 || 0, modelType === 'ensemble' || modelType === 'efficientnet_b4');
-            setBar('xc', breakdown.neural_xc || 0, modelType === 'ensemble' || modelType === 'xception');
-            setBar('fft', breakdown.fft_score || 0);
-            setBar('prnu', breakdown.prnu_score || 0);
+            renderForensicBars('video', breakdown, modelType);
         }
 
         // Show the result container
