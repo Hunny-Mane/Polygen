@@ -1,22 +1,22 @@
 {
   "detection": {
     "images": {
-      "total": 196,
-      "real": 102,
+      "total": 197,
+      "real": 103,
       "fake": 94
     },
     "videos": {
-      "total": 21,
+      "total": 22,
       "real": 6,
-      "fake": 15
+      "fake": 16
     }
   },
   "generation": {
     "images": {
-      "total": 107
+      "total": 110
     },
     "videos": {
-      "total": 2
+      "total": 3
     }
   }
 }
