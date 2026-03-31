@@ -1,4 +1,11 @@
-const API_URL = ""; // Use relative paths for same-origin robustness
+const API_URL = ""; 
+
+// Error reporting for easier debugging
+window.onerror = function(msg, url, line, col, error) {
+   console.error("Global Error Caught:", msg, "at", url, ":", line, ":", col, error);
+   alert("JavaScript Error: " + msg + "\nLine: " + line);
+   return false;
+};
 
 // ── File input drop zones (REFINED for Redesign) ───────────────────────────
 document.querySelectorAll('.upload-area').forEach(area => {
@@ -801,14 +808,14 @@ async function generateImage() {
     const btnGen = document.getElementById('btn-generate');
     const btnStop = document.getElementById('btn-stop');
     const stepCounter = document.getElementById('step-counter');
+    const stagePh = document.getElementById('stage-placeholder');
 
     if (loader) loader.style.display = 'block';
     if (resultBox) resultBox.style.display = 'none';
-    const stagePh = document.getElementById('stage-placeholder');
     if (stagePh) stagePh.style.display = 'none';
 
     // Handle existing single-gen box
-    const singleGenBox = container?.querySelector('.preview-box');
+    const singleGenBox = document.getElementById('single-gen-box');
     const defaultImg = document.getElementById('generated-img');
 
     if (container) {
@@ -837,70 +844,34 @@ async function generateImage() {
                 box.style.width = '380px';
                 box.style.height = '380px';
                 box.style.boxShadow = '10px 10px 30px var(--neu-dark-shadow)';
+                box.style.margin = '0 auto';
                 
                 const img = document.createElement('img');
                 img.id = `img-preview-${i}`;
                 img.className = 'preview-img';
-                img.style.maxWidth = "100%";
-                img.style.maxHeight = "100%";
+                img.style.maxHeight = '100%';
+                img.style.borderRadius = '8px';
                 box.appendChild(img);
-                
-                if (modelKey === 'quality') {
-                    const base = document.createElement('canvas');
-                    base.className = 'preview-canvas base-layer';
-                    base.id = `base-canvas-${i}`;
-                    base.width = 640; base.height = 640;
-                    box.appendChild(base);
-                    
-                    const mask = document.createElement('canvas');
-                    mask.className = 'preview-canvas mask-overlay';
-                    mask.id = `mask-canvas-${i}`;
-                    mask.width = 640; mask.height = 640;
-                    box.appendChild(mask);
-                    
-                    const it = document.createElement('canvas');
-                    it.className = 'preview-canvas interaction-layer';
-                    it.id = `interaction-canvas-${i}`;
-                    it.width = 640; it.height = 640;
-                    box.appendChild(it);
-                    
-                    inpaintManager.attachToCanvas(box);
-                }
                 container.appendChild(box);
             }
         } else {
-            // Single Gen: Keep the user's HTML box visible
-            if (singleGenBox) singleGenBox.style.display = 'flex';
-            container.style.display = 'flex';
-            container.style.justifyContent = 'center';
-            
-            // If SD 1.5, we need to inject canvases if they don't exist
-            if (modelKey === 'quality' && singleGenBox && !singleGenBox.querySelector('canvas')) {
-                const base = document.createElement('canvas');
-                base.className = 'preview-canvas base-layer';
-                base.id = `base-canvas-0`;
-                base.width = 640; base.height = 640;
-                base.style.position = 'absolute';
-                singleGenBox.appendChild(base);
-                
-                const mask = document.createElement('canvas');
-                mask.className = 'preview-canvas mask-overlay';
-                mask.id = `mask-canvas-0`;
-                mask.width = 640; mask.height = 640;
-                mask.style.position = 'absolute';
-                singleGenBox.appendChild(mask);
-                
-                const it = document.createElement('canvas');
-                it.className = 'preview-canvas interaction-layer';
-                it.id = `interaction-canvas-0`;
-                it.width = 640; it.height = 640;
-                it.style.position = 'absolute';
-                singleGenBox.appendChild(it);
-                
-                inpaintManager.attachToCanvas(singleGenBox);
+            // SINGLE GEN: Show box immediately
+            if (container) container.style.display = 'none';
+            if (singleGenBox) {
+                singleGenBox.style.display = 'flex';
+                singleGenBox.style.justifyContent = 'center';
+                if (defaultImg) defaultImg.src = ''; // Clear old preview
             }
         }
     }
+
+    if (resultBox) resultBox.style.display = 'flex';
+    if (stagePh) stagePh.style.display = 'none';
+    
+    // Status Bar initialization
+    const statusContainer = document.getElementById('gen-status-container');
+    if (statusContainer) statusContainer.style.display = 'flex';
+
     if (btnGen) {
         btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
         btnGen.classList.add('btn-stop-active');
@@ -936,26 +907,43 @@ async function generateImage() {
                     const event = JSON.parse(line);
                     const idx = event.index !== undefined ? event.index : 0;
                     const total = event.total || (multiGen ? 3 : 1);
+                    const statusContainer = document.getElementById('gen-status-container');
+                    const statusBarFill = document.getElementById('gen-status-bar-fill');
+                    const statusLabel = document.getElementById('gen-status-label');
+                    const statusSteps = document.getElementById('gen-status-steps');
 
                     if (event.type === 'image_start') {
-                        updateGenStatus(`Starting Inference ${idx + 1}/${total}...`);
-                        if (stepCounter) stepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
+                        if (statusContainer) statusContainer.style.display = 'flex';
                         if (resultBox) resultBox.style.display = 'flex';
+                        if (stagePh) stagePh.style.display = 'none';
+                        const singleBox = document.getElementById('single-gen-box');
+                        if (!multiGen && singleBox) singleBox.style.display = 'flex';
+                        if (statusLabel) statusLabel.innerText = total > 1 ? `Image ${idx + 1}/${total}` : "Generating...";
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
 
-                        if (stepCounter && event.type === 'preview_step') {
-                            stepCounter.innerText = `Generating Image ${idx + 1}/${total} — Step ${step}/${total_steps}`;
+                        if (loader) loader.style.display = 'none';
+
+                        if (event.type === 'preview_step' && statusLabel && statusSteps) {
+                            statusLabel.innerText = total > 1 ? `Image ${idx + 1}/${total}` : "Generating...";
+                            statusSteps.innerText = `${step}/${total_steps}`;
+                            if (statusBarFill) {
+                                const percent = (step / total_steps) * 100;
+                                statusBarFill.style.width = `${percent}%`;
+                            }
                         }
 
                         if (b64) {
-                            const dataUrl = `data:image/png;base64,${b64}`;
+                            const dataUrl = `data:image/jpeg;base64,${b64}`;
                             
                             // TARGETING: Find the best image tag to update
                             const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
                             const imgTag = document.getElementById(imgId);
-                            if (imgTag) imgTag.src = dataUrl;
+                            if (imgTag) {
+                                imgTag.onerror = () => console.error("Failed to load preview image:", imgId, b64.substring(0, 50) + "...");
+                                imgTag.src = dataUrl;
+                            }
 
                             if (modelKey === 'quality') {
                                 const canvas = document.getElementById(`base-canvas-${idx}`);
@@ -1108,34 +1096,61 @@ async function generateImageFromImage() {
     if (seed !== null) formData.append('seed', seed);
 
     const loader = document.getElementById('gen-loader');
-    const result = document.getElementById('gen-result');
-    const container = document.getElementById('i2i-images-container');
-    const btnGen = document.getElementById('btn-i2i-generate');
-    const btnStop = document.getElementById('btn-i2i-stop');
+    const resultBox = document.getElementById('gen-result');
+    const container = document.getElementById('gen-images-container');
+    const btnGen = document.getElementById('btn-generate');
+    const btnStop = document.getElementById('btn-stop');
     const timerEl = document.getElementById('i2i-timer');
+    const stagePh = document.getElementById('stage-placeholder');
+    const stepCounter = document.getElementById('step-counter');
 
-    // UI: loading state
+    // UI: Show loader and prepare result box
     if (loader) loader.style.display = 'block';
-    if (result) result.style.display = 'none';
+    if (resultBox) resultBox.style.display = 'flex';
+    if (stagePh) stagePh.style.display = 'none';
+    if (stepCounter) {
+        stepCounter.style.display = 'block';
+        stepCounter.innerText = 'Initializing...';
+    }
+
+    const count = multiGen ? 3 : 1;
     if (container) {
         container.innerHTML = '';
-        const count = multiGen ? 3 : 1;
-        for (let i = 0; i < count; i++) {
-            const box = document.createElement('div');
-            box.className = 'preview-box';
-            box.id = `i2i-preview-slot-${i}`;
-            const img = document.createElement('img');
-            img.id = `i2i-img-preview-${i}`;
-            box.appendChild(img);
-            container.appendChild(box);
+        if (multiGen) {
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+            container.style.gap = '1.5rem';
+            for (let i = 0; i < 3; i++) {
+                const box = document.createElement('div');
+                box.className = 'preview-box stage-content';
+                box.id = `preview-slot-${i}`;
+                box.style.width = '380px';
+                box.style.height = '380px';
+                const img = document.createElement('img');
+                img.id = `img-preview-${i}`;
+                img.className = 'preview-img';
+                img.style.maxHeight = '100%';
+                img.style.borderRadius = '8px';
+                box.appendChild(img);
+                container.appendChild(box);
+            }
+        } else {
+            // Single Gen: Hide grid, show single box
+            if (container) container.style.display = 'none';
+            const singleGenBox = document.getElementById('single-gen-box');
+            if (singleGenBox) {
+                singleGenBox.style.display = 'flex';
+                singleGenBox.style.justifyContent = 'center';
+                const mainImg = document.getElementById('generated-img');
+                if (mainImg) mainImg.src = ''; // Clear stale image
+            }
         }
     }
-    const btnGenActual = document.getElementById('btn-generate');
-    if (btnGenActual) {
-        btnGenActual.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
-        btnGenActual.classList.add('btn-stop-active');
+    
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
+        btnGen.classList.add('btn-stop-active');
     }
-    if (btnGen) btnGen.style.display = 'none';
     if (btnStop) { btnStop.style.display = 'inline-block'; btnStop.innerText = 'Stop'; btnStop.disabled = false; }
 
 
@@ -1168,10 +1183,28 @@ async function generateImageFromImage() {
                     const total = event.total || (multiGen ? 3 : 1);
 
                     if (event.type === 'image_start') {
-                        if (i2iStepCounter) i2iStepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
-                        if (result) result.style.display = 'flex';
-                        const stagePh = document.getElementById('stage-placeholder');
+                        if (stepCounter) stepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
+                        if (resultBox) resultBox.style.display = 'flex';
                         if (stagePh) stagePh.style.display = 'none';
+
+                        // NEW: Ensure the correct container is visible immediately
+                        if (multiGen) {
+                            if (container) {
+                                container.style.display = 'grid';
+                                const previewSlot = document.getElementById(`preview-slot-${idx}`);
+                                if (previewSlot) previewSlot.style.display = 'flex';
+                            }
+                            const singleBox = document.getElementById('single-gen-box');
+                            if (singleBox) singleBox.style.display = 'none';
+                        } else {
+                            if (container) container.style.display = 'none';
+                            const singleBox = document.getElementById('single-gen-box');
+                            if (singleBox) {
+                                singleBox.style.display = 'flex';
+                                const mainImg = document.getElementById('generated-img');
+                                if (mainImg) mainImg.src = ''; // Clear stale image
+                            }
+                        }
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
@@ -1181,13 +1214,12 @@ async function generateImageFromImage() {
                         }
 
                         if (b64) {
-                            // I2I currently uses simple IMG tags in all cases for simplicity,
-                            // but if high-quality SD 1.5 is selected we might want layered canvases too?
-                            // The user said "in image to image it should appear immediately"
-                            // For now let's assume I2I results stay images unless they need inpainting too.
-                            // If they need inpainting, they should be in the T2I area or we should unify.
-                            const img = document.getElementById(`i2i-img-preview-${idx}`);
-                            if (img) img.src = `data:image/png;base64,${b64}`;
+                            const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
+                            const img = document.getElementById(imgId);
+                            if (img) {
+                                img.onerror = () => console.error("Failed to load I2I preview:", imgId);
+                                img.src = `data:image/jpeg;base64,${b64}`;
+                            }
                         }
                     } else if (event.type === 'upscale_progress') {
                         lastI2ISeeds = event.seeds || [];

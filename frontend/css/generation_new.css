@@ -41,13 +41,14 @@ body.generation-redesign {
     box-shadow: inset -2px 0 5px rgba(0, 0, 0, 0.02);
     height: 100vh;
     overflow: hidden;
-    /* Sidebars do not scroll */
+    min-width: 0; /* Prevents grid blowout */
 }
 
 .right-sidebar {
     border-right: none;
     border-left: 1px solid var(--border-color);
     box-shadow: inset 2px 0 5px rgba(0, 0, 0, 0.02);
+    display: flex !important; /* Ensure visibility */
 }
 
 /* Middle Stage */
@@ -256,7 +257,7 @@ body.generation-redesign {
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 20px 20px 60px var(--neu-dark-shadow),
-                -20px -20px 60px var(--neu-light-shadow);
+        -20px -20px 60px var(--neu-dark-shadow);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -302,4 +303,115 @@ body.generation-redesign {
     flex: 1;
     overflow-y: auto;
     padding-right: 4px;
+}
+
+/* --- Progress Overlay & Real-time Previews --- */
+
+.progress-overlay {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    padding: 0.75rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 280px;
+    z-index: 20;
+    transition: all 0.3s ease;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+#step-counter-steps {
+    color: #6366f1;
+    font-family: 'Audiowide', cursive;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-gradient);
+    transition: width 0.3s ease-out;
+}
+
+.neu-loader-small {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #6366f1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    position: absolute;
+    right: 1.25rem;
+    top: 0.75rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Smooth Image Updates */
+.stage-content {
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.stage-content.updating {
+    filter: blur(2px);
+}
+
+.preview-box.stage-content {
+    background: white;
+    border: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+#generated-img {
+    display: block;
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    transition: opacity 0.2s ease;
+}
+
+/* Multi-gen Slot Adjustments for Previews */
+.gen-images-container.multi-gen {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 2rem;
+    width: 100%;
+    height: 100%;
+}
+
+.gen-images-container.multi-gen .preview-box {
+    width: 100% !important;
+    aspect-ratio: 1;
+    max-height: none;
 }
