@@ -372,10 +372,15 @@
             const stagePlaceholder = document.getElementById('stage-placeholder');
 
             // Sync switches
-            document.getElementById('t2i-upscale').onclick = (e) => document.getElementById('i2i-upscale').checked = e.target.checked;
-            document.getElementById('t2i-enhance').onclick = (e) => document.getElementById('i2i-enhance').checked = e.target.checked;
-            document.getElementById('t2i-multi-gen').onclick = (e) => document.getElementById('i2i-multi-gen').checked = e.target.checked;
-            document.getElementById('t2i-seed').oninput = (e) => document.getElementById('i2i-seed').value = e.target.value;
+            const upBtn = document.getElementById('t2i-upscale');
+            const enhBtn = document.getElementById('t2i-enhance');
+            const mulBtn = document.getElementById('t2i-multi-gen');
+            const seedBtn = document.getElementById('t2i-seed');
+
+            if (upBtn) upBtn.onclick = (e) => { const i2i = document.getElementById('i2i-upscale'); if (i2i) i2i.checked = e.target.checked; };
+            if (enhBtn) enhBtn.onclick = (e) => { const i2i = document.getElementById('i2i-enhance'); if (i2i) i2i.checked = e.target.checked; };
+            if (mulBtn) mulBtn.onclick = (e) => { const i2i = document.getElementById('i2i-multi-gen'); if (i2i) i2i.checked = e.target.checked; };
+            if (seedBtn) seedBtn.oninput = (e) => { const i2i = document.getElementById('i2i-seed'); if (i2i) i2i.value = e.target.value; };
 
             // Model logic
             setInterval(() => {

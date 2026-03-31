@@ -655,6 +655,11 @@ async function populateModels() {
         console.error('Failed to load models:', e);
     }
 }
+// ── Update Generation Status ──────────────────────────────────────────────
+function updateGenStatus(text) {
+    const stepCounter = document.getElementById('step-counter');
+    if (stepCounter) stepCounter.innerText = text;
+}
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
