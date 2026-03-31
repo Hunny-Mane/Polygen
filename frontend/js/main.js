@@ -49,6 +49,281 @@ document.querySelectorAll('.model-select').forEach(sel => {
     });
 });
 
+
+// ── Inpainting Manager (Moved to top to prevent ReferenceError) ──────────────
+class InpaintingManager {
+    constructor() {
+        this.active = false;
+        this.toolbar = document.getElementById('inpainting-toolbar');
+        this.promptPanel = document.getElementById('inpaint-prompt-panel');
+        this.currentTool = 'hand';
+        this.isDraggingToolbar = false;
+        this.isDrawing = false;
+        this.startPos = { x: 0, y: 0 };
+        this.endPos = { x: 0, y: 0 };
+        this.toolbarPos = { x: 50, y: 100 };
+
+        // Active canvas context
+        this.activeMaskCtx = null;
+        this.activeInteractionCtx = null;
+        this.activeBaseCanvas = null;
+
+        this.init();
+    }
+
+    init() {
+        const header = document.getElementById('toolbar-drag-handle');
+        if (header) {
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.id === 'toolbar-close') return;
+                this.isDraggingToolbar = true;
+                this.dragStart = { x: e.clientX, y: e.clientY };
+                document.body.style.userSelect = 'none';
+            });
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            if (this.isDraggingToolbar) {
+                const dx = e.clientX - this.dragStart.x;
+                const dy = e.clientY - this.dragStart.y;
+                this.dragStart = { x: e.clientX, y: e.clientY };
+                const rect = this.toolbar.getBoundingClientRect();
+                this.toolbar.style.right = (window.innerWidth - rect.right - dx) + 'px';
+                this.toolbar.style.top = (rect.top + dy) + 'px';
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.isDraggingToolbar = false;
+            document.body.style.userSelect = '';
+        });
+
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.currentTool = btn.id.replace('tool-', '');
+                this.updateInteractionCursor();
+            });
+        });
+
+        const tbClose = document.getElementById('toolbar-close');
+        if (tbClose) tbClose.addEventListener('click', () => this.hideToolbar());
+
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect) {
+            modelSelect.addEventListener('change', () => {
+                if (modelSelect.value !== 'quality') {
+                    this.hideToolbar();
+                    const i2iOuter = document.getElementById('i2i-upload-container');
+                    if (i2iOuter) i2iOuter.style.display = 'none';
+                }
+            });
+        }
+
+        const i2iInput = document.getElementById('i2i-image-input');
+        if (i2iInput) {
+            i2iInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const model = modelSelect?.value;
+                const container = document.getElementById('i2i-upload-preview');
+                const outer = document.getElementById('i2i-upload-container');
+
+                if (model === 'quality' && container && outer) {
+                    outer.style.display = 'block';
+                    container.innerHTML = '';
+
+                    const base = document.createElement('canvas');
+                    base.className = 'preview-canvas base-layer';
+                    base.width = 512; base.height = 512;
+
+                    const mask = document.createElement('canvas');
+                    mask.className = 'preview-canvas mask-overlay';
+                    mask.width = 512; mask.height = 512;
+
+                    const it = document.createElement('canvas');
+                    it.className = 'preview-canvas interaction-layer';
+                    it.width = 512; it.height = 512;
+
+                    container.appendChild(base); container.appendChild(mask); container.appendChild(it);
+
+                    const ctx = base.getContext('2d');
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, 512, 512);
+                        ctx.drawImage(img, 0, 0, 512, 512);
+                        this.showToolbar();
+                    };
+                    img.src = URL.createObjectURL(file);
+                    this.attachToCanvas(container);
+                } else if (outer) {
+                    outer.style.display = 'none';
+                }
+            });
+        }
+    }
+
+    showToolbar() {
+        if (!this.toolbar) return;
+        this.active = true;
+        this.toolbar.classList.remove('hidden');
+    }
+
+    hideToolbar() {
+        if (!this.toolbar) return;
+        this.active = false;
+        this.toolbar.classList.add('hidden');
+        if (this.promptPanel) this.promptPanel.classList.add('collapsed');
+        this.clearAllMasks();
+    }
+
+    updateInteractionCursor() {
+        document.querySelectorAll('.interaction-layer').forEach(l => {
+            l.style.cursor = this.currentTool === 'hand' ? 'grab' : 'crosshair';
+        });
+    }
+
+    attachToCanvas(container) {
+        const interactionLayer = container.querySelector('.interaction-layer');
+        const maskCanvas = container.querySelector('.mask-overlay');
+        if (!interactionLayer || !maskCanvas) return;
+        
+        const baseCanvas = container.querySelector('.base-layer');
+        const maskCtx = maskCanvas.getContext('2d');
+        const itCtx = interactionLayer.getContext('2d');
+
+        const getCoords = (e) => {
+            const rect = interactionLayer.getBoundingClientRect();
+            return {
+                x: (e.clientX - rect.left) * (interactionLayer.width / rect.width),
+                y: (e.clientY - rect.top) * (interactionLayer.height / rect.height)
+            };
+        };
+
+        interactionLayer.addEventListener('mousedown', (e) => {
+            if (!this.active) return;
+            const coords = getCoords(e);
+
+            if (this.currentTool === 'hand') {
+                this.isPanning = true;
+                this.dragStart = { x: e.clientX, y: e.clientY };
+                this.initialTransform = this.getTransform(container);
+                return;
+            }
+
+            this.isDrawing = true;
+            this.startPos = coords;
+            this.endPos = coords;
+            itCtx.clearRect(0, 0, interactionLayer.width, interactionLayer.height);
+            if (this.currentTool === 'free') { itCtx.beginPath(); itCtx.moveTo(coords.x, coords.y); }
+            this.activeMaskCtx = maskCtx;
+            this.activeInteractionCtx = itCtx;
+            this.activeBaseCanvas = baseCanvas;
+        });
+
+        interactionLayer.addEventListener('mousemove', (e) => {
+            if (this.isPanning) {
+                const dx = e.clientX - this.dragStart.x;
+                const dy = e.clientY - this.dragStart.y;
+                container.style.transform = `translate(${this.initialTransform.x + dx}px, ${this.initialTransform.y + dy}px)`;
+                return;
+            }
+
+            if (!this.isDrawing) return;
+            const coords = getCoords(e);
+            this.endPos = coords;
+            itCtx.clearRect(0, 0, interactionLayer.width, interactionLayer.height);
+            itCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            itCtx.setLineDash([5, 5]);
+            itCtx.lineWidth = 2;
+
+            if (this.currentTool === 'rect') {
+                itCtx.strokeRect(this.startPos.x, this.startPos.y, coords.x - this.startPos.x, coords.y - this.startPos.y);
+            } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
+                const rx = Math.abs(coords.x - this.startPos.x);
+                const ry = this.currentTool === 'circle' ? rx : Math.abs(coords.y - this.startPos.y);
+                itCtx.beginPath(); itCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); itCtx.stroke();
+            } else if (this.currentTool === 'free') {
+                itCtx.setLineDash([]); itCtx.lineTo(coords.x, coords.y); itCtx.stroke();
+            }
+        });
+
+        const handleMouseUp = () => {
+            if (this.isPanning) {
+                this.isPanning = false;
+            }
+            if (this.isDrawing) {
+                this.isDrawing = false;
+                this.applySelectionToMask(this.endPos);
+                if (this.promptPanel) this.promptPanel.classList.remove('collapsed');
+            }
+        };
+        window.removeEventListener('mouseup', handleMouseUp);
+        window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    getTransform(el) {
+        const style = window.getComputedStyle(el);
+        const transform = style.transform || style.webkitTransform;
+        if (!transform || transform === 'none') return { x: 0, y: 0 };
+        const matrix = transform.match(/matrix.*\((.+)\)/);
+        if (matrix) {
+            const values = matrix[1].split(', ');
+            return { x: parseFloat(values[4]), y: parseFloat(values[5]) };
+        }
+        return { x: 0, y: 0 };
+    }
+
+    applySelectionToMask(endPos) {
+        if (!this.activeMaskCtx) return;
+        const ctx = this.activeMaskCtx;
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        if (this.currentTool === 'rect') {
+            ctx.fillRect(this.startPos.x, this.startPos.y, endPos.x - this.startPos.x, endPos.y - this.startPos.y);
+        } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
+            const rx = Math.abs(endPos.x - this.startPos.x);
+            const ry = this.currentTool === 'circle' ? rx : Math.abs(endPos.y - this.startPos.y);
+            ctx.beginPath(); ctx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+        } else if (this.currentTool === 'free') {
+            ctx.drawImage(this.activeInteractionCtx.canvas, 0, 0);
+        }
+        this.activeInteractionCtx.clearRect(0, 0, this.activeInteractionCtx.canvas.width, this.activeInteractionCtx.canvas.height);
+    }
+
+    clearAllMasks() {
+        document.querySelectorAll('.mask-overlay').forEach(c => {
+            const ctx = c.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+        });
+    }
+
+    getMaskData() {
+        if (!this.activeMaskCtx) return null;
+        const canvas = this.activeMaskCtx.canvas;
+        const offscreen = document.createElement('canvas');
+        offscreen.width = canvas.width; offscreen.height = canvas.height;
+        const osCtx = offscreen.getContext('2d');
+        osCtx.fillStyle = 'black'; osCtx.fillRect(0, 0, offscreen.width, offscreen.height);
+        const imgData = this.activeMaskCtx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] > 0) { data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255; }
+            else { data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = 255; }
+        }
+        osCtx.putImageData(imgData, 0, 0);
+        return offscreen.toDataURL('image/png');
+    }
+
+    getBaseImageData() {
+        if (!this.activeBaseCanvas) return null;
+        return this.activeBaseCanvas.toDataURL('image/png');
+    }
+}
+
+const inpaintManager = new InpaintingManager();
+
 // ── Timer helpers ──────────────────────────────────────────────────────────
 let startTime = null;
 let timerInterval = null;
@@ -526,42 +801,99 @@ async function generateImage() {
     if (resultBox) resultBox.style.display = 'none';
     const stagePh = document.getElementById('stage-placeholder');
     if (stagePh) stagePh.style.display = 'none';
+
+    // Handle existing single-gen box
+    const singleGenBox = container?.querySelector('.preview-box');
+    const defaultImg = document.getElementById('generated-img');
+
     if (container) {
-        container.innerHTML = ''; // Clear old results
-        // Create persistent slots if multi-gen
-        const count = multiGen ? 3 : 1;
-        for (let i = 0; i < count; i++) {
-            const box = document.createElement('div');
-            box.className = (modelKey === 'quality') ? 'preview-box-container' : 'preview-box';
-            box.id = `preview-slot-${i}`;
+        if (multiGen) {
+            container.innerHTML = ''; // Only clear for multi-gen grid
+            container.style.display = 'grid';
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
+            container.style.gap = '1.5rem';
+            container.style.width = '100%';
+            container.style.maxHeight = '85vh';
+            container.style.overflowY = 'auto';
+            container.style.padding = '1rem';
+            container.style.alignContent = 'center';
+            container.style.justifyItems = 'center';
 
-            if (modelKey === 'quality') {
-                const base = document.createElement('canvas');
-                base.className = 'preview-canvas base-layer';
-                base.id = `base-canvas-${i}`;
-                base.width = 512; base.height = 512; // Standard SD 1.5 size
-
-                const mask = document.createElement('canvas');
-                mask.className = 'preview-canvas mask-overlay';
-                mask.id = `mask-canvas-${i}`;
-                mask.width = 512; mask.height = 512;
-
-                const interaction = document.createElement('canvas');
-                interaction.className = 'preview-canvas interaction-layer';
-                interaction.id = `interaction-canvas-${i}`;
-                interaction.width = 512; interaction.height = 512;
-
-                box.appendChild(base);
-                box.appendChild(mask);
-                box.appendChild(interaction);
-
-                inpaintManager.attachToCanvas(box);
-            } else {
+            for (let i = 0; i < 3; i++) {
+                const box = document.createElement('div');
+                box.className = 'video-preview-box stage-content'; 
+                box.id = `preview-slot-${i}`;
+                box.style.position = 'relative';
+                box.style.display = 'flex';
+                box.style.alignItems = 'center';
+                box.style.justifyContent = 'center';
+                box.style.background = '#ffffff';
+                box.style.borderRadius = '20px';
+                box.style.width = '380px';
+                box.style.height = '380px';
+                box.style.boxShadow = '10px 10px 30px var(--neu-dark-shadow)';
+                
                 const img = document.createElement('img');
                 img.id = `img-preview-${i}`;
+                img.className = 'preview-img';
+                img.style.maxWidth = "100%";
+                img.style.maxHeight = "100%";
                 box.appendChild(img);
+                
+                if (modelKey === 'quality') {
+                    const base = document.createElement('canvas');
+                    base.className = 'preview-canvas base-layer';
+                    base.id = `base-canvas-${i}`;
+                    base.width = 640; base.height = 640;
+                    box.appendChild(base);
+                    
+                    const mask = document.createElement('canvas');
+                    mask.className = 'preview-canvas mask-overlay';
+                    mask.id = `mask-canvas-${i}`;
+                    mask.width = 640; mask.height = 640;
+                    box.appendChild(mask);
+                    
+                    const it = document.createElement('canvas');
+                    it.className = 'preview-canvas interaction-layer';
+                    it.id = `interaction-canvas-${i}`;
+                    it.width = 640; it.height = 640;
+                    box.appendChild(it);
+                    
+                    inpaintManager.attachToCanvas(box);
+                }
+                container.appendChild(box);
             }
-            container.appendChild(box);
+        } else {
+            // Single Gen: Keep the user's HTML box visible
+            if (singleGenBox) singleGenBox.style.display = 'flex';
+            container.style.display = 'flex';
+            container.style.justifyContent = 'center';
+            
+            // If SD 1.5, we need to inject canvases if they don't exist
+            if (modelKey === 'quality' && singleGenBox && !singleGenBox.querySelector('canvas')) {
+                const base = document.createElement('canvas');
+                base.className = 'preview-canvas base-layer';
+                base.id = `base-canvas-0`;
+                base.width = 640; base.height = 640;
+                base.style.position = 'absolute';
+                singleGenBox.appendChild(base);
+                
+                const mask = document.createElement('canvas');
+                mask.className = 'preview-canvas mask-overlay';
+                mask.id = `mask-canvas-0`;
+                mask.width = 640; mask.height = 640;
+                mask.style.position = 'absolute';
+                singleGenBox.appendChild(mask);
+                
+                const it = document.createElement('canvas');
+                it.className = 'preview-canvas interaction-layer';
+                it.id = `interaction-canvas-0`;
+                it.width = 640; it.height = 640;
+                it.style.position = 'absolute';
+                singleGenBox.appendChild(it);
+                
+                inpaintManager.attachToCanvas(singleGenBox);
+            }
         }
     }
     if (btnGen) {
@@ -601,6 +933,7 @@ async function generateImage() {
                     const total = event.total || (multiGen ? 3 : 1);
 
                     if (event.type === 'image_start') {
+                        updateGenStatus(`Starting Inference ${idx + 1}/${total}...`);
                         if (stepCounter) stepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
                         if (resultBox) resultBox.style.display = 'flex';
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
@@ -612,24 +945,28 @@ async function generateImage() {
                         }
 
                         if (b64) {
+                            const dataUrl = `data:image/png;base64,${b64}`;
+                            
+                            // TARGETING: Find the best image tag to update
+                            const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
+                            const imgTag = document.getElementById(imgId);
+                            if (imgTag) imgTag.src = dataUrl;
+
                             if (modelKey === 'quality') {
                                 const canvas = document.getElementById(`base-canvas-${idx}`);
                                 if (canvas) {
                                     const ctx = canvas.getContext('2d');
-                                    const img = new Image();
-                                    img.onload = () => {
+                                    const imgLoader = new Image();
+                                    imgLoader.onload = () => {
                                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                                        ctx.drawImage(imgLoader, 0, 0, canvas.width, canvas.height);
                                         // Once first image is complete, show the toolbar if SD 1.5
                                         if (event.type === 'image_complete' && idx === 0) {
                                             inpaintManager.showToolbar();
                                         }
                                     };
-                                    img.src = `data:image/png;base64,${b64}`;
+                                    imgLoader.src = dataUrl;
                                 }
-                            } else {
-                                const img = document.getElementById(`img-preview-${idx}`);
-                                if (img) img.src = `data:image/png;base64,${b64}`;
                             }
                         }
                     } else if (event.type === 'upscale_progress') {
@@ -655,8 +992,17 @@ async function generateImage() {
         await trackStat('generation', 'image');
 
         // Mirror to asset sidebar
-        const finalImg = document.getElementById('img-preview-0')?.src || document.getElementById('generated-img')?.src;
-        if (finalImg) {
+        let finalImg = null;
+        if (modelKey === 'quality') {
+            const cvs = document.getElementById('base-canvas-0');
+            if (cvs) finalImg = cvs.toDataURL('image/png');
+        } else {
+            finalImg = document.getElementById('img-preview-0')?.src;
+        }
+
+        if (!finalImg) finalImg = document.getElementById('generated-img')?.src;
+
+        if (finalImg && finalImg.startsWith('data:')) {
             window.dispatchEvent(new CustomEvent('generation_complete', {
                 detail: { url: finalImg, type: 'image' }
             }));
@@ -950,269 +1296,6 @@ async function applyFilter() {
 }
 
 // ── Generation History Modal ────────────────────────────────────────────────
-// ── Inpainting Manager ──────────────────────────────────────────────────────
-class InpaintingManager {
-    constructor() {
-        this.active = false;
-        this.toolbar = document.getElementById('inpainting-toolbar');
-        this.promptPanel = document.getElementById('inpaint-prompt-panel');
-        this.currentTool = 'hand';
-        this.isDraggingToolbar = false;
-        this.isDrawing = false;
-        this.startPos = { x: 0, y: 0 };
-        this.endPos = { x: 0, y: 0 };
-        this.toolbarPos = { x: 50, y: 100 };
-
-        // Active canvas context
-        this.activeMaskCtx = null;
-        this.activeInteractionCtx = null;
-        this.activeBaseCanvas = null;
-
-        this.init();
-    }
-
-    init() {
-        const header = document.getElementById('toolbar-drag-handle');
-        if (header) {
-            header.addEventListener('mousedown', (e) => {
-                if (e.target.id === 'toolbar-close') return;
-                this.isDraggingToolbar = true;
-                this.dragStart = { x: e.clientX, y: e.clientY };
-                document.body.style.userSelect = 'none';
-            });
-        }
-
-        window.addEventListener('mousemove', (e) => {
-            if (this.isDraggingToolbar) {
-                const dx = e.clientX - this.dragStart.x;
-                const dy = e.clientY - this.dragStart.y;
-                this.dragStart = { x: e.clientX, y: e.clientY };
-                const rect = this.toolbar.getBoundingClientRect();
-                this.toolbar.style.right = (window.innerWidth - rect.right - dx) + 'px';
-                this.toolbar.style.top = (rect.top + dy) + 'px';
-            }
-        });
-
-        window.addEventListener('mouseup', () => {
-            this.isDraggingToolbar = false;
-            document.body.style.userSelect = '';
-        });
-
-        document.querySelectorAll('.tool-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentTool = btn.id.replace('tool-', '');
-                this.updateInteractionCursor();
-            });
-        });
-
-        document.getElementById('toolbar-close').addEventListener('click', () => this.hideToolbar());
-
-        const modelSelect = document.getElementById('model-select');
-        if (modelSelect) {
-            modelSelect.addEventListener('change', () => {
-                if (modelSelect.value !== 'quality') {
-                    this.hideToolbar();
-                    document.getElementById('i2i-upload-container').style.display = 'none';
-                }
-            });
-        }
-
-        const i2iInput = document.getElementById('i2i-image-input');
-        if (i2iInput) {
-            i2iInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const model = modelSelect?.value;
-                const container = document.getElementById('i2i-upload-preview');
-                const outer = document.getElementById('i2i-upload-container');
-
-                if (model === 'quality') {
-                    outer.style.display = 'block';
-                    container.innerHTML = '';
-
-                    const base = document.createElement('canvas');
-                    base.className = 'preview-canvas base-layer';
-                    base.width = 512; base.height = 512;
-
-                    const mask = document.createElement('canvas');
-                    mask.className = 'preview-canvas mask-overlay';
-                    mask.width = 512; mask.height = 512;
-
-                    const it = document.createElement('canvas');
-                    it.className = 'preview-canvas interaction-layer';
-                    it.width = 512; it.height = 512;
-
-                    container.appendChild(base); container.appendChild(mask); container.appendChild(it);
-
-                    const ctx = base.getContext('2d');
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.clearRect(0, 0, 512, 512);
-                        ctx.drawImage(img, 0, 0, 512, 512);
-                        this.showToolbar();
-                    };
-                    img.src = URL.createObjectURL(file);
-                    this.attachToCanvas(container);
-                } else {
-                    outer.style.display = 'none';
-                }
-            });
-        }
-    }
-
-    showToolbar() {
-        this.active = true;
-        this.toolbar.classList.remove('hidden');
-    }
-
-    hideToolbar() {
-        this.active = false;
-        this.toolbar.classList.add('hidden');
-        this.promptPanel.classList.add('collapsed');
-        this.clearAllMasks();
-    }
-
-    updateInteractionCursor() {
-        document.querySelectorAll('.interaction-layer').forEach(l => {
-            l.style.cursor = this.currentTool === 'hand' ? 'grab' : 'crosshair';
-        });
-    }
-
-    attachToCanvas(container) {
-        const interactionLayer = container.querySelector('.interaction-layer');
-        const maskCanvas = container.querySelector('.mask-overlay');
-        const baseCanvas = container.querySelector('.base-layer');
-        const maskCtx = maskCanvas.getContext('2d');
-        const itCtx = interactionLayer.getContext('2d');
-
-        const getCoords = (e) => {
-            const rect = interactionLayer.getBoundingClientRect();
-            return {
-                x: (e.clientX - rect.left) * (interactionLayer.width / rect.width),
-                y: (e.clientY - rect.top) * (interactionLayer.height / rect.height)
-            };
-        };
-
-        interactionLayer.addEventListener('mousedown', (e) => {
-            if (!this.active) return;
-            const rect = interactionLayer.getBoundingClientRect();
-            const coords = getCoords(e);
-
-            if (this.currentTool === 'hand') {
-                this.isPanning = true;
-                this.dragStart = { x: e.clientX, y: e.clientY };
-                this.initialTransform = this.getTransform(container);
-                return;
-            }
-
-            this.isDrawing = true;
-            this.startPos = coords;
-            this.endPos = coords;
-            itCtx.clearRect(0, 0, interactionLayer.width, interactionLayer.height);
-            if (this.currentTool === 'free') { itCtx.beginPath(); itCtx.moveTo(coords.x, coords.y); }
-            this.activeMaskCtx = maskCtx;
-            this.activeInteractionCtx = itCtx;
-            this.activeBaseCanvas = baseCanvas;
-        });
-
-        interactionLayer.addEventListener('mousemove', (e) => {
-            if (this.isPanning) {
-                const dx = e.clientX - this.dragStart.x;
-                const dy = e.clientY - this.dragStart.y;
-                container.style.transform = `translate(${this.initialTransform.x + dx}px, ${this.initialTransform.y + dy}px)`;
-                return;
-            }
-
-            if (!this.isDrawing) return;
-            const coords = getCoords(e);
-            this.endPos = coords;
-            itCtx.clearRect(0, 0, interactionLayer.width, interactionLayer.height);
-            itCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-            itCtx.setLineDash([5, 5]);
-            itCtx.lineWidth = 2;
-
-            if (this.currentTool === 'rect') {
-                itCtx.strokeRect(this.startPos.x, this.startPos.y, coords.x - this.startPos.x, coords.y - this.startPos.y);
-            } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
-                const rx = Math.abs(coords.x - this.startPos.x);
-                const ry = this.currentTool === 'circle' ? rx : Math.abs(coords.y - this.startPos.y);
-                itCtx.beginPath(); itCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); itCtx.stroke();
-            } else if (this.currentTool === 'free') {
-                itCtx.setLineDash([]); itCtx.lineTo(coords.x, coords.y); itCtx.stroke();
-            }
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (this.isPanning) {
-                this.isPanning = false;
-            }
-            if (this.isDrawing) {
-                this.isDrawing = false;
-                this.applySelectionToMask(this.endPos);
-                this.promptPanel.classList.remove('collapsed');
-            }
-        });
-    }
-
-    getTransform(el) {
-        const style = window.getComputedStyle(el);
-        const transform = style.transform || style.webkitTransform;
-        if (!transform || transform === 'none') return { x: 0, y: 0 };
-        const matrix = transform.match(/matrix.*\((.+)\)/);
-        if (matrix) {
-            const values = matrix[1].split(', ');
-            return { x: parseFloat(values[4]), y: parseFloat(values[5]) };
-        }
-        return { x: 0, y: 0 };
-    }
-
-    applySelectionToMask(endPos) {
-        if (!this.activeMaskCtx) return;
-        const ctx = this.activeMaskCtx;
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        if (this.currentTool === 'rect') {
-            ctx.fillRect(this.startPos.x, this.startPos.y, endPos.x - this.startPos.x, endPos.y - this.startPos.y);
-        } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
-            const rx = Math.abs(endPos.x - this.startPos.x);
-            const ry = this.currentTool === 'circle' ? rx : Math.abs(endPos.y - this.startPos.y);
-            ctx.beginPath(); ctx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-        } else if (this.currentTool === 'free') {
-            ctx.drawImage(this.activeInteractionCtx.canvas, 0, 0);
-        }
-        this.activeInteractionCtx.clearRect(0, 0, this.activeInteractionCtx.canvas.width, this.activeInteractionCtx.canvas.height);
-    }
-
-    clearAllMasks() {
-        document.querySelectorAll('.mask-overlay').forEach(c => c.getContext('2d').clearRect(0, 0, c.width, c.height));
-    }
-
-    getMaskData() {
-        if (!this.activeMaskCtx) return null;
-        const canvas = this.activeMaskCtx.canvas;
-        const offscreen = document.createElement('canvas');
-        offscreen.width = canvas.width; offscreen.height = canvas.height;
-        const osCtx = offscreen.getContext('2d');
-        osCtx.fillStyle = 'black'; osCtx.fillRect(0, 0, offscreen.width, offscreen.height);
-        const imgData = this.activeMaskCtx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imgData.data;
-        for (let i = 0; i < data.length; i += 4) {
-            if (data[i + 3] > 0) { data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = 255; }
-            else { data[i] = 0; data[i + 1] = 0; data[i + 2] = 0; data[i + 3] = 255; }
-        }
-        osCtx.putImageData(imgData, 0, 0);
-        return offscreen.toDataURL('image/png');
-    }
-
-    getBaseImageData() {
-        if (!this.activeBaseCanvas) return null;
-        return this.activeBaseCanvas.toDataURL('image/png');
-    }
-}
-
-const inpaintManager = new InpaintingManager();
 
 async function sendInpaintRequest() {
     const prompt = document.getElementById('inpaint-prompt').value;

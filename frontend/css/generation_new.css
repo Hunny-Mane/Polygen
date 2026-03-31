@@ -243,6 +243,46 @@ body.generation-redesign {
     box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+
+/* Middle Stage Generation Results */
+.preview-box-container,
+.preview-box.stage-content {
+    position: relative;
+    width: 640px;
+    height: 640px;
+    max-width: 95vw;
+    max-height: 80vh;
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 20px 20px 60px var(--neu-dark-shadow),
+                -20px -20px 60px var(--neu-light-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.preview-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.mask-overlay {
+    z-index: 5;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.interaction-layer {
+    z-index: 10;
+    cursor: crosshair;
+}
+
 /* Specific Layout Helpers */
 .sidebar-fill {
     flex: 1;
