@@ -777,117 +777,70 @@ async function handleGenerateClick() {
 // Update HTML button to use this if needed, but for now we'll just refine generateImage
 
 async function generateImage() {
-    const prompt = document.getElementById('prompt-input').value;
-    if (!prompt) return alert("Enter a prompt");
-
-    const modelKey = document.getElementById('model-select')?.value || 'quality';
-
-    const multiGen = document.getElementById('t2i-multi-gen')?.checked || false;
-    const upscale = document.getElementById('t2i-upscale')?.checked || false;
-    const enhancePrompt = document.getElementById('t2i-enhance')?.checked || false;
+    const promptEl = document.getElementById('prompt-input');
+    const prompt = promptEl ? promptEl.value : "";
+    
+    const modelSelect = document.getElementById('model-select');
+    const modelKey = modelSelect ? modelSelect.value : 'quality';
+    
+    const multiGenEl = document.getElementById('multi-gen');
+    const multiGen = multiGenEl ? multiGenEl.checked : false;
+    
+    const upscaleEl = document.getElementById('upscale-gen');
+    const upscale = upscaleEl ? upscaleEl.checked : false;
+    
+    const enhanceEl = document.getElementById('enhance-prompt');
+    const enhancePrompt = enhanceEl ? enhanceEl.checked : false;
+    
     const seedInput = document.getElementById('t2i-seed');
-    const negativePromptInput = document.getElementById('negative-prompt');
-    const stepsInput = document.getElementById('t2i-steps');
-    const seed = seedInput?.value ? parseInt(seedInput.value) : null;
-    const negativePrompt = negativePromptInput?.value || "";
-    const steps = stepsInput?.value ? parseInt(stepsInput.value) : 25;
+    const seed = (seedInput && seedInput.value) ? parseInt(seedInput.value) : null;
+    
+    const negInput = document.getElementById('negative-prompt');
+    const negative_prompt = negInput ? negInput.value : "";
 
-    const formData = new FormData(); // Initialize formData
-    formData.append('prompt', prompt);
-    formData.append('model_key', modelKey);
-    formData.append('multi_gen', multiGen);
-    formData.append('upscale', upscale);
-    formData.append('enhance_prompt', enhancePrompt);
-    formData.append('steps', steps);
-    if (seed !== null) formData.append('seed', seed);
-    if (negativePrompt) formData.append('negative_prompt', negativePrompt);
+    if (!prompt) return alert("Please enter a prompt.");
+
 
     const loader = document.getElementById('gen-loader');
     const resultBox = document.getElementById('gen-result');
     const container = document.getElementById('gen-images-container');
     const btnGen = document.getElementById('btn-generate');
     const btnStop = document.getElementById('btn-stop');
-    const stepCounter = document.getElementById('step-counter');
     const stagePh = document.getElementById('stage-placeholder');
+    const stepCounter = document.getElementById('step-counter');
+    const debugOverlay = document.getElementById('gen-debug-overlay');
+    
+    const statusContainer = document.getElementById('gen-status-container');
+    const statusBarFill = document.getElementById('gen-status-bar-fill');
+    const statusLabel = document.getElementById('gen-status-label');
+    const statusSteps = document.getElementById('gen-status-steps');
 
     if (loader) loader.style.display = 'block';
-    if (resultBox) resultBox.style.display = 'none';
-    if (stagePh) stagePh.style.display = 'none';
-
-    // Handle existing single-gen box
-    const singleGenBox = document.getElementById('single-gen-box');
-    const defaultImg = document.getElementById('generated-img');
-
-    if (container) {
-        if (multiGen) {
-            container.innerHTML = ''; // Only clear for multi-gen grid
-            container.style.display = 'grid';
-            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
-            container.style.gap = '1.5rem';
-            container.style.width = '100%';
-            container.style.maxHeight = '85vh';
-            container.style.overflowY = 'auto';
-            container.style.padding = '1rem';
-            container.style.alignContent = 'center';
-            container.style.justifyItems = 'center';
-
-            for (let i = 0; i < 3; i++) {
-                const box = document.createElement('div');
-                box.className = 'video-preview-box stage-content'; 
-                box.id = `preview-slot-${i}`;
-                box.style.position = 'relative';
-                box.style.display = 'flex';
-                box.style.alignItems = 'center';
-                box.style.justifyContent = 'center';
-                box.style.background = '#ffffff';
-                box.style.borderRadius = '20px';
-                box.style.width = '380px';
-                box.style.height = '380px';
-                box.style.boxShadow = '10px 10px 30px var(--neu-dark-shadow)';
-                box.style.margin = '0 auto';
-                
-                const img = document.createElement('img');
-                img.id = `img-preview-${i}`;
-                img.className = 'preview-img';
-                img.style.maxHeight = '100%';
-                img.style.borderRadius = '8px';
-                box.appendChild(img);
-                container.appendChild(box);
-            }
-        } else {
-            // SINGLE GEN: Show box immediately
-            if (container) container.style.display = 'none';
-            if (singleGenBox) {
-                singleGenBox.style.display = 'flex';
-                singleGenBox.style.justifyContent = 'center';
-                if (defaultImg) defaultImg.src = ''; // Clear old preview
-            }
-        }
-    }
-
-    if (resultBox) resultBox.style.display = 'flex';
-    if (stagePh) stagePh.style.display = 'none';
-    
-    // Status Bar initialization
-    const statusContainer = document.getElementById('gen-status-container');
-    if (statusContainer) statusContainer.style.display = 'flex';
-
     if (btnGen) {
         btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
         btnGen.classList.add('btn-stop-active');
     }
-    if (stepCounter) { stepCounter.style.display = 'block'; stepCounter.innerText = 'Initializing...'; }
-
-
-    startTimer();
+    if (btnStop) { btnStop.style.display = 'inline-block'; btnStop.disabled = false; }
+    if (debugOverlay) debugOverlay.innerText = "DEBUG: Requesting...";
 
     try {
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('model_key', modelKey);
+        formData.append('multi_gen', multiGen);
+        formData.append('upscale', upscale);
+        formData.append('enhance_prompt', enhancePrompt);
+        formData.append('negative_prompt', negative_prompt);
+        if (seed !== null) formData.append('seed', seed);
+
+        startTimer();
+
         const response = await fetch(`${API_URL}/api/generation/generate/image`, {
             method: 'POST',
             body: formData
         });
 
-        if (!response.ok) throw new Error("Server responded with " + response.status);
+        if (!response.ok) throw new Error("Server error: " + response.status);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -898,19 +851,17 @@ async function generateImage() {
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop(); // Keep the last incomplete line
+            const p_lines = buffer.split('\n');
+            buffer = p_lines.pop();
 
-            for (const line of lines) {
+            for (const line of p_lines) {
                 if (!line.trim()) continue;
                 try {
                     const event = JSON.parse(line);
                     const idx = event.index !== undefined ? event.index : 0;
                     const total = event.total || (multiGen ? 3 : 1);
-                    const statusContainer = document.getElementById('gen-status-container');
-                    const statusBarFill = document.getElementById('gen-status-bar-fill');
-                    const statusLabel = document.getElementById('gen-status-label');
-                    const statusSteps = document.getElementById('gen-status-steps');
+
+                    if (debugOverlay) debugOverlay.innerText = `DEBUG: Event ${event.type} [${idx}]`;
 
                     if (event.type === 'image_start') {
                         if (statusContainer) statusContainer.style.display = 'flex';
@@ -918,31 +869,34 @@ async function generateImage() {
                         if (stagePh) stagePh.style.display = 'none';
                         const singleBox = document.getElementById('single-gen-box');
                         if (!multiGen && singleBox) singleBox.style.display = 'flex';
-                        if (statusLabel) statusLabel.innerText = total > 1 ? `Image ${idx + 1}/${total}` : "Generating...";
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
-                        const b64 = event.type === 'image_complete' ? event.image : preview;
+                        const b64 = (event.type === 'image_complete') ? event.image : preview;
+
+                        if (debugOverlay) debugOverlay.innerText = `DEBUG: Received ${event.type} step=${step} size=${b64?.length || 0}`;
 
                         if (loader) loader.style.display = 'none';
-
-                        if (event.type === 'preview_step' && statusLabel && statusSteps) {
-                            statusLabel.innerText = total > 1 ? `Image ${idx + 1}/${total}` : "Generating...";
+                        if (event.type === 'preview_step' && statusSteps) {
                             statusSteps.innerText = `${step}/${total_steps}`;
-                            if (statusBarFill) {
-                                const percent = (step / total_steps) * 100;
-                                statusBarFill.style.width = `${percent}%`;
-                            }
+                            if (statusBarFill) statusBarFill.style.width = `${(step/total_steps)*100}%`;
                         }
 
                         if (b64) {
-                            const dataUrl = `data:image/jpeg;base64,${b64}`;
-                            
-                            // TARGETING: Find the best image tag to update
+                            // Previews are JPEG (from backend), Final is often PNG
+                            const mime = (event.type === 'preview_step') ? 'image/jpeg' : 'image/png';
+                            const dataUrl = `data:${mime};base64,${b64}`;
                             const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
                             const imgTag = document.getElementById(imgId);
+                            
                             if (imgTag) {
-                                imgTag.onerror = () => console.error("Failed to load preview image:", imgId, b64.substring(0, 50) + "...");
+                                imgTag.onerror = () => {
+                                    console.error("Image load failed", imgId);
+                                    if (debugOverlay) debugOverlay.innerHTML += `<br><span style="color:red">ERR: #${imgId} failed to load B64</span>`;
+                                };
                                 imgTag.src = dataUrl;
+                                imgTag.style.display = 'block';
+                            } else {
+                                if (debugOverlay) debugOverlay.innerText += `\nERR: #${imgId} not found`;
                             }
 
                             if (modelKey === 'quality') {
@@ -953,73 +907,47 @@ async function generateImage() {
                                     imgLoader.onload = () => {
                                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                                         ctx.drawImage(imgLoader, 0, 0, canvas.width, canvas.height);
-                                        // Once first image is complete, show the toolbar if SD 1.5
-                                        if (event.type === 'image_complete' && idx === 0) {
-                                            inpaintManager.showToolbar();
-                                        }
+                                        if (event.type === 'image_complete' && idx === 0) inpaintManager.showToolbar();
                                     };
                                     imgLoader.src = dataUrl;
                                 }
                             }
                         }
-                    } else if (event.type === 'upscale_progress') {
-                        // Final summary
-                        lastT2ISeeds = event.seeds || [];
-                        if (lastT2ISeeds.length > 0 && seedInput) {
-                            seedInput.value = lastT2ISeeds[0];
-                        }
-                        // Images are already updated via image_complete events
                     } else if (event.type === 'error') {
                         throw new Error(event.message);
-                    } else if (event.type === 'interrupted') {
-                        alert("Generation stopped.");
-                        return;
                     }
                 } catch (pe) {
-                    console.warn("Failed to parse event line:", line, pe);
+                    console.warn("JSON Parse Error:", pe);
                 }
             }
         }
 
-        // Track stats
         await trackStat('generation', 'image');
 
         // Mirror to asset sidebar
-        let finalImg = null;
-        if (modelKey === 'quality') {
-            const cvs = document.getElementById('base-canvas-0');
-            if (cvs) finalImg = cvs.toDataURL('image/png');
-        } else {
-            finalImg = document.getElementById('img-preview-0')?.src;
-        }
-
-        if (!finalImg) finalImg = document.getElementById('generated-img')?.src;
-
-        if (finalImg && finalImg.startsWith('data:')) {
+        let finalSrc = document.getElementById('generated-img')?.src;
+        if (multiGen) finalSrc = document.getElementById('img-preview-0')?.src;
+        
+        if (finalSrc && finalSrc.startsWith('data:')) {
             window.dispatchEvent(new CustomEvent('generation_complete', {
-                detail: { url: finalImg, type: 'image' }
+                detail: { url: finalSrc, type: 'image' }
             }));
         }
 
     } catch (e) {
-        alert("Error generating image: " + e.message);
+        console.error("Generation Error:", e);
+        alert("Generation Error: " + e.message);
     } finally {
+        stopTimer();
         if (loader) loader.style.display = 'none';
         if (btnGen) {
             btnGen.innerHTML = 'GENERATE';
             btnGen.classList.remove('btn-stop-active');
         }
-        stopTimer();
-        if (stepCounter) stepCounter.style.display = 'none';
-        if (btnStop) {
-            btnStop.style.display = 'none';
-            btnStop.innerText = 'Stop'; // Reset text for next time
-            btnStop.disabled = false;
-        }
+        if (btnStop) btnStop.style.display = 'none';
     }
 }
 
-// ── Seed Control Helpers ───────────────────────────────────────────────────
 function regenerateSameSeed() {
     // Current seed in input will be used
     generateImage();
@@ -1074,8 +1002,10 @@ async function stopI2IGeneration() {
 
 async function generateImageFromImage() {
     const fileInput = document.getElementById('i2i-image-input');
-    const prompt = document.getElementById('prompt-input').value;
-    const strength = parseFloat(document.getElementById('i2i-strength').value);
+    const promptEl = document.getElementById('prompt-input');
+    const prompt = promptEl ? promptEl.value : "";
+    const strengthEl = document.getElementById('i2i-strength');
+    const strength = strengthEl ? parseFloat(strengthEl.value) : 0.75;
 
     if (!fileInput.files[0]) return alert('Please upload an image first.');
     if (!prompt) return alert('Please select a style card first.');
@@ -1160,7 +1090,7 @@ async function generateImageFromImage() {
     startTimer();
 
     try {
-        const response = await fetch(`${API_URL}/api/generation/img2img`, { method: 'POST', body: formData });
+        const response = await fetch(`${API_URL}/api/generation/generate/img2img`, { method: 'POST', body: formData });
         if (!response.ok) throw new Error("Server responded with " + response.status);
 
         const reader = response.body.getReader();
