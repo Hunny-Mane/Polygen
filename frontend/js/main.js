@@ -1,12 +1,32 @@
 const API_URL = ""; // Use relative paths for same-origin robustness
 
-// ── File input drop zones ──────────────────────────────────────────────────
+// ── File input drop zones (REFINED for Redesign) ───────────────────────────
 document.querySelectorAll('.upload-area').forEach(area => {
     const input = area.querySelector('input');
+    if (!area || !input) return;
     area.addEventListener('click', () => input.click());
     input.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
-            area.querySelector('p').innerText = `Selected: ${e.target.files[0].name}`;
+            const file = e.target.files[0];
+            const isVideo = file.type.startsWith('video/');
+            const statusEl = document.getElementById('upload-status');
+            if (statusEl) statusEl.innerText = file.name;
+
+            // Redesign Sync: If video, enable video filter logic
+            const btnGen = document.getElementById('btn-generate');
+            if (btnGen) {
+                btnGen.innerText = isVideo ? 'APPLY VIDEO FILTER' : 'GENERATE';
+            }
+
+            // Sync hidden inputs if any
+            if (isVideo) {
+                const vidInput = document.getElementById('filter-video-input');
+                if (vidInput) {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    vidInput.files = dt.files;
+                }
+            }
         }
     });
 });
@@ -15,7 +35,7 @@ document.querySelectorAll('.upload-area').forEach(area => {
 document.querySelectorAll('.model-select').forEach(sel => {
     sel.addEventListener('change', () => {
         sel.classList.add('active-selection');
-        
+
         // Update description text
         const descId = sel.id === 'img-model-select' ? 'img-model-desc' : 'vid-model-desc';
         const descElem = document.getElementById(descId);
@@ -28,6 +48,27 @@ document.querySelectorAll('.model-select').forEach(sel => {
         setTimeout(() => sel.classList.remove('active-selection'), 1500); // Visual feedback pulse
     });
 });
+
+// ── Timer helpers ──────────────────────────────────────────────────────────
+let startTime = null;
+let timerInterval = null;
+
+function startTimer() {
+    const timerEl = document.getElementById('gen-timer') || document.getElementById('i2i-timer');
+    if (!timerEl) return;
+    startTime = performance.now();
+    timerEl.style.display = 'inline';
+    timerEl.classList.remove('finished');
+    timerInterval = setInterval(() => {
+        timerEl.innerText = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+    }, 100);
+}
+
+function stopTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    const timerEl = document.getElementById('gen-timer') || document.getElementById('i2i-timer');
+    if (timerEl) timerEl.classList.add('finished');
+}
 
 // ── Stats helper ───────────────────────────────────────────────────────────
 async function trackStat(module, mediaType, label = '') {
@@ -111,7 +152,7 @@ async function analyzeImage() {
 function renderForensicBars(prefix, breakdown, modelType) {
     // Prefix is 'img' for images, or anything else for video (video uses 'v-' prefix IDs)
     const p = (prefix === 'img') ? '' : 'v-';
-    
+
     const setBar = (id, val, show = true) => {
         const barElem = document.getElementById(p + 'bar-' + id);
         const item = barElem?.closest('.breakdown-item');
@@ -119,7 +160,7 @@ function renderForensicBars(prefix, breakdown, modelType) {
 
         // Use 'grid' to match style.css layout expectations
         item.style.display = show ? 'grid' : 'none';
-        
+
         const text = document.getElementById(p + 'val-' + id);
         const status = document.getElementById(p + 'status-' + id);
 
@@ -157,7 +198,7 @@ function renderForensicBars(prefix, breakdown, modelType) {
         setBar('b4', breakdown.neural_b4 || 0, true);
         setBar('xc', breakdown.neural_xc || 0, false);
     }
-    
+
     // Always show FFT and PRNU (Video only usually)
     if (prefix !== 'img') {
         setBar('fft', breakdown.fft_score || 0, true);
@@ -301,37 +342,14 @@ async function analyzeVideo() {
     }
 }
 
-// ── Image Generation ───────────────────────────────────────────────────────
-let timerInterval = null;
-let startTime = 0;
 let lastT2ISeeds = [];
 let lastI2ISeeds = [];
 
-function startTimer() {
-    const timerEl = document.getElementById('gen-timer');
-    if (timerEl) {
-        timerEl.style.display = 'inline';
-        startTime = performance.now();
-        timerInterval = setInterval(() => {
-            const elapsed = (performance.now() - startTime) / 1000;
-            timerEl.innerText = elapsed.toFixed(1) + 's';
-        }, 100);
-    }
-}
-
-function stopTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    const timerEl = document.getElementById('gen-timer');
-    if (timerEl) {
-        timerEl.classList.add('finished');
-    }
-}
-
 async function stopGeneration() {
-    const btnStop = document.getElementById('btn-stop');
-    if (btnStop) {
-        btnStop.innerText = 'Stopping...';
-        btnStop.disabled = true;
+    const btnGen = document.getElementById('btn-generate');
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="neu-loader" style="width:1rem;height:1rem;border-width:2px;display:inline-block;vertical-align:middle;"></span> STOPPING...';
+        btnGen.disabled = true;
     }
     try {
         await fetch(`${API_URL}/api/generation/stop`, { method: 'POST' });
@@ -367,7 +385,109 @@ async function populateModels() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOM Content Loaded - Initializing...");
     populateModels();
+
+    // Asset Management: Listen for generation completions
+    window.addEventListener('generation_complete', (e) => {
+        addAssetToSidebar(e.detail);
+    });
+
+    // Real-time slider updates
+    const syncSliderValue = (sliderId, valId, isFloat = true) => {
+        const slider = document.getElementById(sliderId);
+        const valDisplay = document.getElementById(valId);
+        if (slider && valDisplay) {
+            slider.addEventListener('input', (e) => {
+                valDisplay.innerText = isFloat ? parseFloat(e.target.value).toFixed(2) : e.target.value;
+            });
+        }
+    };
+
+    syncSliderValue('i2i-strength', 'i2i-strength-val', true);
+    syncSliderValue('inpaint-strength', 'inpaint-strength-val', true);
+    syncSliderValue('inpaint-blur', 'inpaint-blur-val', false);
+
+    // Model-based steps update
+    const modelSelect = document.getElementById('model-select');
+    const stepsInput = document.getElementById('t2i-steps');
+    if (modelSelect && stepsInput) {
+        modelSelect.addEventListener('change', () => {
+            const model = modelSelect.value;
+            if (model === 'quality') stepsInput.value = 25;
+            else if (model === 'balanced') stepsInput.value = 17;
+            else if (model === 'fast') stepsInput.value = 13;
+        });
+    }
 });
+
+function addAssetToSidebar(asset) {
+    const grid = document.getElementById('assets-grid');
+    if (!grid) return;
+
+    const item = document.createElement('div');
+    item.className = 'asset-item';
+
+    if (asset.type === 'video') {
+        const vid = document.createElement('video');
+        vid.src = asset.url;
+        vid.muted = true;
+        vid.loop = true;
+        item.appendChild(vid);
+        item.onmouseenter = () => vid.play();
+        item.onmouseleave = () => vid.pause();
+    } else {
+        const img = document.createElement('img');
+        img.src = asset.url;
+        item.appendChild(img);
+    }
+
+    item.onclick = () => {
+        // Promote to stage
+        if (asset.type === 'video') {
+            document.getElementById('gen-result').style.display = 'none';
+            const res = document.getElementById('filter-result');
+            res.style.display = 'flex';
+            document.getElementById('filter-video-preview').src = asset.url;
+        } else {
+            document.getElementById('filter-result').style.display = 'none';
+            document.getElementById('gen-result').style.display = 'flex';
+            document.getElementById('generated-img').src = asset.url;
+
+            // If it's an image and model is quality, we might want to enable inpainting
+            const modelSelect = document.getElementById('model-select');
+            if (modelSelect.value === 'quality') {
+                // Logic to swap canvas content...
+            }
+        }
+    };
+
+    grid.prepend(item);
+}
+
+// Unified Generate Wrapper
+async function handleGenerateClick() {
+    const btnGen = document.getElementById('btn-generate');
+    // If already generating, act as a stop button
+    if (btnGen && btnGen.classList.contains('btn-stop-active')) {
+        return stopGeneration();
+    }
+
+    const input = document.getElementById('i2i-image-input');
+    const file = input.files[0];
+    if (!file) {
+        // Fallback to text-to-image
+        return generateImage();
+    }
+
+    if (file.type.startsWith('video/')) {
+        document.getElementById('video-filter-group').style.display = 'block';
+        return applyFilter();
+    } else {
+        document.getElementById('video-filter-group').style.display = 'none';
+        return generateImageFromImage();
+    }
+}
+
+// Update HTML button to use this if needed, but for now we'll just refine generateImage
 
 async function generateImage() {
     const prompt = document.getElementById('prompt-input').value;
@@ -380,8 +500,10 @@ async function generateImage() {
     const enhancePrompt = document.getElementById('t2i-enhance')?.checked || false;
     const seedInput = document.getElementById('t2i-seed');
     const negativePromptInput = document.getElementById('negative-prompt');
+    const stepsInput = document.getElementById('t2i-steps');
     const seed = seedInput?.value ? parseInt(seedInput.value) : null;
     const negativePrompt = negativePromptInput?.value || "";
+    const steps = stepsInput?.value ? parseInt(stepsInput.value) : 25;
 
     const formData = new FormData(); // Initialize formData
     formData.append('prompt', prompt);
@@ -389,6 +511,7 @@ async function generateImage() {
     formData.append('multi_gen', multiGen);
     formData.append('upscale', upscale);
     formData.append('enhance_prompt', enhancePrompt);
+    formData.append('steps', steps);
     if (seed !== null) formData.append('seed', seed);
     if (negativePrompt) formData.append('negative_prompt', negativePrompt);
 
@@ -401,6 +524,8 @@ async function generateImage() {
 
     if (loader) loader.style.display = 'block';
     if (resultBox) resultBox.style.display = 'none';
+    const stagePh = document.getElementById('stage-placeholder');
+    if (stagePh) stagePh.style.display = 'none';
     if (container) {
         container.innerHTML = ''; // Clear old results
         // Create persistent slots if multi-gen
@@ -439,9 +564,12 @@ async function generateImage() {
             container.appendChild(box);
         }
     }
-    if (btnGen) btnGen.style.display = 'none';
-    if (btnStop) btnStop.style.display = 'inline-block';
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
+        btnGen.classList.add('btn-stop-active');
+    }
     if (stepCounter) { stepCounter.style.display = 'block'; stepCounter.innerText = 'Initializing...'; }
+
 
     startTimer();
 
@@ -526,12 +654,23 @@ async function generateImage() {
         // Track stats
         await trackStat('generation', 'image');
 
+        // Mirror to asset sidebar
+        const finalImg = document.getElementById('img-preview-0')?.src || document.getElementById('generated-img')?.src;
+        if (finalImg) {
+            window.dispatchEvent(new CustomEvent('generation_complete', {
+                detail: { url: finalImg, type: 'image' }
+            }));
+        }
+
     } catch (e) {
         alert("Error generating image: " + e.message);
     } finally {
-        stopTimer();
         if (loader) loader.style.display = 'none';
-        if (btnGen) btnGen.style.display = 'inline-block';
+        if (btnGen) {
+            btnGen.innerHTML = 'GENERATE';
+            btnGen.classList.remove('btn-stop-active');
+        }
+        stopTimer();
         if (stepCounter) stepCounter.style.display = 'none';
         if (btnStop) {
             btnStop.style.display = 'none';
@@ -563,11 +702,15 @@ let i2iTimerInterval = null;
 
 function selectStyle(card) {
     // Deselect all, then mark clicked
-    document.querySelectorAll('.i2i-style-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.i2i-style-card').forEach(c => {
+        c.classList.remove('selected');
+        c.classList.remove('active'); // Redesign sync
+    });
     card.classList.add('selected');
+    card.classList.add('active'); // Redesign sync
 
     const prompt = card.getAttribute('data-prompt');
-    document.getElementById('i2i-prompt').value = prompt;
+    document.getElementById('prompt-input').value = prompt;
 
     // Update default strength based on selected style
     const strength = card.getAttribute('data-strength');
@@ -575,17 +718,13 @@ function selectStyle(card) {
         document.getElementById('i2i-strength').value = strength;
         document.getElementById('i2i-strength-val').innerText = parseFloat(strength).toFixed(2);
     }
-
-    const display = document.getElementById('i2i-selected-prompt');
-    // Hide the prompt text as requested by the user, only keep it in the hidden input
-    display.style.display = 'none';
 }
 
 async function stopI2IGeneration() {
-    const btnStop = document.getElementById('btn-i2i-stop');
-    if (btnStop) {
-        btnStop.innerText = 'Stopping…';
-        btnStop.disabled = true;
+    const btnGen = document.getElementById('btn-generate');
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="neu-loader" style="width:1rem;height:1rem;border-width:2px;display:inline-block;vertical-align:middle;"></span> STOPPING...';
+        btnGen.disabled = true;
     }
     try {
         await fetch(`${API_URL}/api/generation/stop`, { method: 'POST' });
@@ -596,16 +735,16 @@ async function stopI2IGeneration() {
 
 async function generateImageFromImage() {
     const fileInput = document.getElementById('i2i-image-input');
-    const prompt = document.getElementById('i2i-prompt').value;
+    const prompt = document.getElementById('prompt-input').value;
     const strength = parseFloat(document.getElementById('i2i-strength').value);
 
     if (!fileInput.files[0]) return alert('Please upload an image first.');
     if (!prompt) return alert('Please select a style card first.');
 
     const multiGen = document.getElementById('i2i-multi-gen')?.checked || false;
-    const upscale = document.getElementById('i2i-upscale')?.checked || false;
-    const enhancePrompt = document.getElementById('i2i-enhance')?.checked || false;
-    const seedInput = document.getElementById('i2i-seed');
+    const upscale = document.getElementById('t2i-upscale')?.checked || false;
+    const enhancePrompt = document.getElementById('t2i-enhance')?.checked || false;
+    const seedInput = document.getElementById('t2i-seed');
     const seed = seedInput?.value ? parseInt(seedInput.value) : null;
 
     const formData = new FormData(); // Initialize formData
@@ -617,8 +756,8 @@ async function generateImageFromImage() {
     formData.append('enhance_prompt', enhancePrompt);
     if (seed !== null) formData.append('seed', seed);
 
-    const loader = document.getElementById('i2i-loader');
-    const result = document.getElementById('i2i-result');
+    const loader = document.getElementById('gen-loader');
+    const result = document.getElementById('gen-result');
     const container = document.getElementById('i2i-images-container');
     const btnGen = document.getElementById('btn-i2i-generate');
     const btnStop = document.getElementById('btn-i2i-stop');
@@ -640,20 +779,19 @@ async function generateImageFromImage() {
             container.appendChild(box);
         }
     }
+    const btnGenActual = document.getElementById('btn-generate');
+    if (btnGenActual) {
+        btnGenActual.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
+        btnGenActual.classList.add('btn-stop-active');
+    }
     if (btnGen) btnGen.style.display = 'none';
     if (btnStop) { btnStop.style.display = 'inline-block'; btnStop.innerText = 'Stop'; btnStop.disabled = false; }
+
 
     const i2iStepCounter = document.getElementById('i2i-step-counter');
     if (i2iStepCounter) { i2iStepCounter.style.display = 'block'; i2iStepCounter.innerText = 'Initializing...'; }
 
-    if (timerEl) {
-        timerEl.style.display = 'inline';
-        timerEl.classList.remove('finished');
-        const t0 = performance.now();
-        i2iTimerInterval = setInterval(() => {
-            timerEl.innerText = ((performance.now() - t0) / 1000).toFixed(1) + 's';
-        }, 100);
-    }
+    startTimer();
 
     try {
         const response = await fetch(`${API_URL}/api/generation/img2img`, { method: 'POST', body: formData });
@@ -681,6 +819,8 @@ async function generateImageFromImage() {
                     if (event.type === 'image_start') {
                         if (i2iStepCounter) i2iStepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
                         if (result) result.style.display = 'flex';
+                        const stagePh = document.getElementById('stage-placeholder');
+                        if (stagePh) stagePh.style.display = 'none';
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
@@ -717,12 +857,18 @@ async function generateImageFromImage() {
 
         await trackStat('generation', 'image');
 
+        // Mirror to asset sidebar
+        const finalImg = document.getElementById('i2i-img-preview-0')?.src || document.getElementById('generated-img')?.src;
+        if (finalImg) {
+            window.dispatchEvent(new CustomEvent('generation_complete', {
+                detail: { url: finalImg, type: 'image' }
+            }));
+        }
     } catch (e) {
         alert('Error generating image: ' + e.message);
         console.error(e);
     } finally {
-        clearInterval(i2iTimerInterval);
-        if (timerEl) timerEl.classList.add('finished');
+        stopTimer();
         if (loader) loader.style.display = 'none';
         if (btnGen) btnGen.style.display = 'inline-block';
         if (i2iStepCounter) i2iStepCounter.style.display = 'none';
@@ -753,8 +899,17 @@ async function applyFilter() {
     formData.append('file', input.files[0]);
     formData.append('filter_type', type);
 
+    const btnGen = document.getElementById('btn-generate');
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
+        btnGen.classList.add('btn-stop-active');
+    }
+
     document.getElementById('filter-loader').style.display = 'block';
     document.getElementById('filter-result').style.display = 'none';
+    const stagePh = document.getElementById('stage-placeholder');
+    if (stagePh) stagePh.style.display = 'none';
+
 
     try {
         const res = await fetch(`${API_URL}/api/generation/filter/video`, {
@@ -776,11 +931,22 @@ async function applyFilter() {
         // Track stats
         await trackStat('generation', 'video');
 
+        // Mirror to asset sidebar
+        window.dispatchEvent(new CustomEvent('generation_complete', {
+            detail: { url: `${API_URL}${data.video_url}`, type: 'video' }
+        }));
+
     } catch (e) {
         alert("Error processing video: " + e.message);
     } finally {
         document.getElementById('filter-loader').style.display = 'none';
+        const btnGen = document.getElementById('btn-generate');
+        if (btnGen) {
+            btnGen.innerHTML = 'GENERATE';
+            btnGen.classList.remove('btn-stop-active');
+        }
     }
+
 }
 
 // ── Generation History Modal ────────────────────────────────────────────────
@@ -807,12 +973,14 @@ class InpaintingManager {
 
     init() {
         const header = document.getElementById('toolbar-drag-handle');
-        header.addEventListener('mousedown', (e) => {
-            if (e.target.id === 'toolbar-close') return;
-            this.isDraggingToolbar = true;
-            this.dragStart = { x: e.clientX, y: e.clientY };
-            document.body.style.userSelect = 'none';
-        });
+        if (header) {
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.id === 'toolbar-close') return;
+                this.isDraggingToolbar = true;
+                this.dragStart = { x: e.clientX, y: e.clientY };
+                document.body.style.userSelect = 'none';
+            });
+        }
 
         window.addEventListener('mousemove', (e) => {
             if (this.isDraggingToolbar) {
@@ -1128,3 +1296,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById("history-modal");
     if (modal) modal.onclick = (e) => { if (e.target === modal) modal.classList.add("hidden"); };
 });
+
+// Navigation Home Button Flip (Synced with landing page)
+function initHomeButtonFlip() {
+    const inner = document.querySelector('.flip-inner');
+    if (!inner || !window.gsap) return;
+
+    gsap.timeline({
+        repeat: -1,         
+        repeatDelay: 10     
+    
+    })
+    .to(inner, { rotateY: 180, duration: 0.6, ease: 'back.out(1.7)'  })
+    .to({ }, { duration: 1.5  })
+    .to(inner, { rotateY: 0, duration: 0.6, ease: 'back.inOut(1.7)'  });
+
+}
+document.addEventListener('DOMContentLoaded', initHomeButtonFlip);
+
+

@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Polygen</title>
+    <title>Polygen </title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/neumorphism.css">
+    <link rel="stylesheet" href="css/generation_new.css">
     <link rel="icon" href="assets/gemini1.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap"
@@ -20,516 +22,384 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 </head>
 
-<style>
-    .nav-wrapper {
-        display: flex;
-        justify-content: center;
-        top: 0.01rem;
-        z-index: 1000;
-        /* Higher z-index for safety */
-        position: sticky;
-        pointer-events: none;
-        /* Container itself shouldn't block */
-    }
-
-    .neu-nav {
-        display: flex;
-        padding: 0.6rem 1.2rem;
-        /* Reduced padding from 1rem 1.5rem */
-        border-bottom-left-radius: 35px;
-        /* Slightly reduced radius for smaller size */
-        border-bottom-right-radius: 35px;
-        box-shadow: 6px 6px 15px #afc4e7,
-            -6px -6px 15px #afc4e7;
-        /* Scaled down shadows */
-        transition: all 0.3s ease;
-        pointer-events: auto;
-        /* Buttons inside are clickable */
-    }
-
-    .neu-nav-links {
-        display: flex;
-        margin-left: 0.5rem;
-        margin-right: 0.5rem;
-        gap: 1rem;
-        /* Reduced gap from 1.5rem */
-    }
-
-    .neu-nav-links a {
-        color: var(--neu-text-dim);
-        text-decoration: none;
-        padding: 0.5rem 1.4rem;
-        /* Reduced padding from 0.8rem 1.8rem */
-        border-radius: 30px;
-        /* Adjusted radius */
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        font-weight: 600;
-        font-size: 0.9rem;
-        /* Slightly smaller font */
-        background: #ffffff;
-        box-shadow: 4px 4px 10px var(--neu-dark-shadow),
-            -4px -4px 10px var(--neu-light-shadow);
-        /* Scaled shadows */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .neu-nav-links a.home-btn {
-        padding: 0.6rem;
-        width: 38px;
-        /* Reduced from 45px */
-        height: 38px;
-        /* Reduced from 45px */
-        border-radius: 50%;
-    }
+<body class="landing-page generation-redesign">
 
 
-    .home-btn.flip-container {
-        perspective: 1000px;
-        background: transparent !important;
-        /* The inner faces handle background */
-        box-shadow: none !important;
-        padding: 0 !important;
-        border: none;
-    }
-
-    .flip-inner {
-        position: relative;
-        width: 38px;
-        height: 38px;
-        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        transform-style: preserve-3d;
-    }
-
-    .flip-front,
-    .flip-back {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        backface-visibility: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        /* Re-applying your Neumorphic styling here */
-        background: #ffffff;
-        box-shadow: 4px 4px 10px #d1d9e6, -4px -4px 10px #ffffff;
-    }
-
-    .flip-back {
-        transform: rotateY(180deg);
-        background-image: url("../frontend/assets/gemini1.png");
-        background-size: cover;
-        background-position: center;
-    }
-
-    .flip-front:hover {
-        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
-            inset -4px -4px 10px var(--neu-light-shadow);
-        transform: translateY(1px);
-    }
-
-
-    .neu-nav-links a:hover,
-    .neu-nav-links a:active {
-        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
-            inset -4px -4px 10px var(--neu-light-shadow);
-        transform: translateY(1px);
-        color: var(--neu-accent-blue);
-    }
-
-    .neu-nav-links a.active {
-        background: #ffffff;
-        color: var(--neu-accent-blue);
-        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
-            inset -4px -4px 10px var(--neu-light-shadow);
-        /* Outward when current page */
-        transform: translateY(0);
-    }
-
-    .neu-nav-links a.active:hover,
-    .neu-nav-links a.active:active {
-        box-shadow: inset 4px 4px 10px var(--neu-dark-shadow),
-            inset -4px -4px 10px var(--neu-light-shadow);
-        transform: translateY(1px);
-    }
-</style>
-
-<script>
-    window.addEventListener('DOMContentLoaded', initHomeButtonFlip);
-    function initHomeButtonFlip() {
-        const inner = document.querySelector('.flip-inner');
-        if (!inner) return;
-
-        const flipTl = gsap.timeline({
-            repeat: -1,         // Infinite loop
-            repeatDelay: 10     // Wait 10 seconds before starting the next flip
-        });
-
-        flipTl
-            // 1. Flip to Logo
-            .to(inner, {
-                rotateY: 180,
-                duration: 0.6,
-                ease: "back.out(1.7)"
-            })
-            // 2. Hold Logo for 2 seconds
-            .to({}, { duration: 1.5 })
-            // 3. Flip back to Home Icon
-            .to(inner, {
-                rotateY: 0,
-                duration: 0.6,
-                ease: "back.inOut(1.7)"
-            });
-    }
-
-
-    initHomeButtonFlip();
-</script>
-
-<link rel="stylesheet" href="css/neumorphism.css">
-
-<body class="landing-page dark-theme">
-
-    <div class="nav-wrapper" style="backdrop-filter: blur(10px); max-width: fit-content; left: 29.9%;">
-        <nav class="neu-nav animate-in" style="padding-bottom: 11.5px;">
-            <div class="neu-nav-links">
-                <a href="dashboard.html" class="nav-item" style="padding-top: 10px; padding-bottom: 10px;">Dashboard</a>
+    <div class="app-layout">
+        <!-- LEFT SIDEBAR: Controls -->
+        <aside class="sidebar left-sidebar">
+            <div class="control-group">
+                <div class="compact-upload upload-area" id="i2i-drop-zone"
+                    style="padding: 0.5rem;padding-top: 9px; margin-bottom: 0; height: 70px;">
+                    <span class="material-symbols-outlined"
+                        style="font-size: 1.5rem; color: #6366f1;">cloud_upload</span>
+                    <p id="upload-status" style="font-size: 0.7rem; margin-top: 0.25rem; color: var(--text-secondary);">
+                        Upload an Image or Video</p>
+                    <input type="file" id="i2i-image-input" accept="image/*,video/*" hidden>
+                    <input type="file" id="filter-video-input" accept="video/*" hidden>
+                    <!-- Hidden shadow input for video main.js compatibility -->
+                </div>
             </div>
-            <div class="neu-nav-links">
-                <a href="detection.html" class="nav-item">Detection</a>
-                <a href="index.html" class="nav-item home-btn flip-container">
-                    <div class="flip-inner">
-                        <div class="flip-front">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                            </svg>
+
+            <div class="control-group">
+                <h4 class="group-title" style="padding-left: 5px;">Prompts</h4>
+                <textarea id="prompt-input" class="input-field" rows="3"
+                    placeholder="Describe your vision..."></textarea>
+                <div style="margin-top: 0.5rem;">
+                    <h4 class="group-title" style="padding-left: 5px;">Negative Prompt</h4>
+                    <textarea id="negative-prompt" class="input-field" rows="1"
+                        placeholder="What to exclude..."></textarea>
+                </div>
+                <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 5px;">
+                    <button class="btn-action" id="btn-generate" onclick="handleGenerateClick()"
+                        style="display: flex; align-items: center; justify-content: center; height: 42px; width: 60%; padding: 0 1rem; font-size: 0.75rem; color: #6366f1; border-radius: 12px;">
+                        GENERATE
+                    </button>
+
+                    <button class="btn-action" onclick="generateThreeImages()" title="Generate 3 Images"
+                        style="display: flex; align-items: center; justify-content: center; height: 42px; width: 42px; background: #F0F0F0; color: #475569; border-radius: 12px;">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">filter_3</span>
+                    </button>
+
+                    <button class="btn-action" onclick="regenerateSameSeed()" title="Re-Generate"
+                        style="display: flex; align-items: center; justify-content: center; height: 42px; width: 42px; background: #F0F0F0; color: #475569; border-radius: 12px;">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">replay</span>
+                    </button>
+
+                    <button class="btn-action" onclick="variationGeneration()" title="Randomize"
+                        style="display: flex; align-items: center; justify-content: center; height: 42px; width: 42px; background: #F0F0F0; color: #475569; border-radius: 12px;">
+                        <span class="material-symbols-outlined" style="font-size: 1.2rem;">shuffle</span>
+                    </button>
+                </div>
+            </div>
+            <style>
+                input::-webkit-outer-spin-button,
+                input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+            </style>
+            <div class="sidebar-fill">
+                <div class="control-group">
+                    <div style="display: flex; gap: 0.5rem; align-items: start;">
+                        <div style="flex: 1;">
+                            <h4 class="group-title" style="padding-left: 5px;">Model</h4>
+                            <select id="model-select" class="input-field model-select" style="font-size: 0.7rem;">
+                                <option value="quality">Quality (SD 1.5)</option>
+                                <option value="balanced">Balanced (SDXL)</option>
+                                <option value="fast">Fast (Turbo)</option>
+                            </select>
                         </div>
-                        <div class="flip-back">
+                        <div style="flex: 1;">
+                            <h4 class="group-title" style="padding-left: 7px;">Seed</h4>
+                            <div style="flex: 1;">
+                                <input type="number" id="t2i-seed" class="input-field" placeholder="Random"
+                                    style="padding: 7px; font-size: 0.7rem; ">
+                            </div>
                         </div>
                     </div>
-                </a>
-                <a href="generation.html" class="nav-item" style="color: var(--neu-accent-blue);">Generation</a>
-            </div>
-            <div class="neu-nav-links">
-                <a href="database.html" class="nav-item" style="padding-top: 10px; padding-bottom: 10px;">Database</a>
-            </div>
-        </nav>
-    </div>
 
-    <div class="container">
-        <div class="hero">
-            <h1>Media Generation</h1>
-            <p>Create and transform media with AI.</p>
-        </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: start;">
+                        <div style="flex: 1;">
+                            <h4 class="group-title" style="padding-left: 5px; padding-top: 10px;">Strength</h4>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.6rem;">
+                                <span id="i2i-strength-val"
+                                    style="padding-left: 5px;padding-bottom: 3px; font-weight: bold;">0.75</span>
+                                <span id="i2i-timer" class="nav-status-timer" style="color: var(--text-secondary); font-size: 0.6rem; display: none;">0.0s</span>
+                            </div>
+                             <input type="range" id="i2i-strength" min="0.1" max="1.0" step="0.05" value="0.75"
+                                 style="width: 100%; scale: 0.95;">
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 class="group-title" style="padding-left: 5px; padding-top: 10px;">Steps</h4>
+                            <input type="number" id="t2i-steps" class="input-field" placeholder="25" value="25"
+                                style="padding: 7px; font-size: 0.7rem;">
+                        </div>
+                    </div>
 
-        <div class="card">
-            <h3>Text-to-Image Generation</h3>
-            <textarea id="prompt-input" rows="2" placeholder="A futuristic city with flying cars, cyberpunk style..."
-                oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 200)+'px'"
-                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: white; margin-bottom: 1rem; resize: none; font-family: inherit; font-size: inherit; line-height: 1.5; overflow-y: auto; max-height: 200px;"></textarea>
+                    <!-- Video Filter Settings (Conditional) -->
+                    <div id="video-filter-group" style="display: none; margin-top: 0.5rem; border-top: 1px solid var(--border-color); padding-top: 0.5rem;">
+                        <h4 class="group-title" style="padding-left: 5px; padding-top: 5px;">Video Filter</h4>
+                        <select id="filter-type" class="input-field" style="font-size: 0.7rem; width: 100%; border-radius: 8px;">
+                            <option value="cartoon">Cartoon Style</option>
+                            <option value="anime">Anime Style</option>
+                            <option value="cinematic">Cinematic Look</option>
+                            <option value="sketch">Pencil Sketch</option>
+                        </select>
+                    </div>
 
-            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                <div style="flex: 1;">
-                    <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Select AI
-                        Model</label>
-                    <select id="model-select"
-                        style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: #1e293b; color: white;">
-                        <option value="">Loading models...</option>
-                    </select>
+                    <h4 class="group-title" style="margin-top: 0.5rem; padding-left: 5px;">Styles</h4>
+                    <div class="style-selector-grid">
+                        <div class="style-chip i2i-style-card" data-prompt="cartoon" data-strength="0.7"
+                            onclick="selectStyle(this)">Cartoon</div>
+                        <div class="style-chip i2i-style-card" data-prompt="vintage" data-strength="0.6"
+                            onclick="selectStyle(this)">Vintage</div>
+                        <div class="style-chip i2i-style-card" data-prompt="monochrome" data-strength="0.65"
+                            onclick="selectStyle(this)">B&W</div>
+                        <div class="style-chip i2i-style-card" data-prompt="anime" data-strength="0.5"
+                            onclick="selectStyle(this)">Anime</div>
+                        <div class="style-chip i2i-style-card" data-prompt="neon" data-strength="0.75"
+                            onclick="selectStyle(this)">Cyber</div>
+                        <div class="style-chip i2i-style-card" data-prompt="oil paint" data-strength="0.8"
+                            onclick="selectStyle(this)">Oil</div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="switch-container">
-                <span class="switch-label">Multi Generation (3 Images)</span>
-                <label class="switch">
-                    <input type="checkbox" id="t2i-multi-gen">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="switch-container">
-                <span class="switch-label">AI Upscale (4x)</span>
-                <label class="switch">
-                    <input type="checkbox" id="t2i-upscale">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-
-            <div class="switch-container">
-                <span class="switch-label">Auto Prompt Enhancement</span>
-                <label class="switch">
-                    <input type="checkbox" id="t2i-enhance">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div style="margin-bottom: 1rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Negative Prompt
-                    (Optional)</label>
-                <textarea id="negative-prompt" rows="1" placeholder="low quality, blurry, distorted..."
-                    oninput="this.style.height='auto'; this.style.height=Math.min(this.scrollHeight, 100)+'px'"
-                    style="width: 100%; padding: 0.8rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; resize: none; font-family: inherit; font-size: 0.9rem;"></textarea>
-            </div>
-
-            <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
-                <button class="btn btn-primary" id="btn-generate" onclick="generateImage()">Generate</button>
-                <button class="btn" id="btn-regenerate" onclick="regenerateSameSeed()"
-                    style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
-                <button class="btn" id="btn-variation" onclick="variationGeneration()"
-                    style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
-                <button class="btn" id="btn-stop" style="display: none; background: #ef4444; color: white;"
-                    onclick="stopGeneration()">Stop</button>
-                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                    <span id="gen-timer" style="display: none; color: #94a3b8; font-family: monospace;">0.0s</span>
-                    <span id="step-counter"
-                        style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed
-                    (Optional)</label>
-                <input type="number" id="t2i-seed" placeholder="Random"
-                    style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
-            </div>
-
-            <div class="loader" id="gen-loader"></div>
-
-            <div class="preview-container" id="gen-result" style="display:none;">
-                <div id="gen-images-container" class="multi-gen-grid">
-                    <!-- Images will be injected here -->
-                    <div class="preview-box">
-                        <img id="generated-img" src="">
+                <div class="control-group" style="padding-bottom: 0;">
+                    <h4 class="group-title">Settings</h4>
+                    <div style="display: grid; grid-template-columns: 1fr; ">
+                        <div class="switch-container" style="background-color: #F0F0F0">
+                            <span class="switch-label" style="padding-left: 10px; font-weight: 800;">Prompt
+                                Enhancement</span>
+                            <label class="switch" style="background-color: #4755694a; border-radius: 14px;"><input
+                                    type="checkbox" id="t2i-enhance"><span class="slider"></span></label>
+                        </div>
+                        <div class="switch-container" style="background-color: #F0F0F0">
+                            <span class="switch-label" style="padding-left: 10px; font-weight: 800;">AI Upscaling
+                            </span>
+                            <label class="switch" style="background-color: #4755694a; border-radius: 14px;"><input
+                                    type="checkbox" id="t2i-upscale"><span class="slider"></span></label>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </aside>
 
-        <br><br>
-
-        <!-- ── Image-to-Image (ControlNet) ───────────────────────────────── -->
-        <div class="card">
-            <h3>Image Generation (Image-to-Image)</h3>
-            <p style="color:#94a3b8; margin-bottom:1.2rem; font-size:0.9rem;">
-                Upload a photo, pick a style, and let ControlNet transform it using Stable Diffusion.
-            </p>
-
-            <!-- Upload area -->
-            <div class="upload-area" id="i2i-drop-zone" style="margin-bottom:1.2rem;">
-                <p>Click to upload Image</p>
-                <input type="file" id="i2i-image-input" accept="image/*" hidden>
+        <!-- MIDDLE STAGE -->
+        <main class="main-stage">
+            <!-- Redirected Navigation Bar (Identical to landing) -->
+            <div class="nav-wrapper"
+                style="backdrop-filter: blur(10px); max-width: fit-content; margin-left: -1.7%; margin-top: -2.7%;">
+                <nav class="neu-nav animate-in" style="padding-bottom: 11.5px;">
+                    <div class="neu-nav-links">
+                        <a href="dashboard.html" class="nav-item"
+                            style="padding-top: 10px; padding-bottom: 10px;">Dashboard</a>
+                    </div>
+                    <div class="neu-nav-links">
+                        <a href="detection.html" class="nav-item">Detection</a>
+                        <a href="index.html" class="nav-item home-btn flip-container">
+                            <div class="flip-inner">
+                                <div class="flip-front">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                                    </svg>
+                                </div>
+                                <div class="flip-back">
+                                </div>
+                            </div>
+                        </a>
+                        <a href="generation.html" class="nav-item" style="color: var(--neu-accent-blue);">Generation</a>
+                    </div>
+                    <div class="neu-nav-links">
+                        <a href="database.html" class="nav-item"
+                            style="padding-top: 10px; padding-bottom: 10px;">Database</a>
+                    </div>
+                </nav>
             </div>
 
-            <!-- Upload preview (for inpainting) -->
-            <div id="i2i-upload-container" style="display:none; margin-bottom:1.5rem;">
-                <p style="color:#94a3b8; font-size:0.8rem; margin-bottom:0.5rem;">Upload Preview (Selection Enabled)</p>
-                <div id="i2i-upload-preview" class="preview-box-container">
-                    <!-- Layered canvases will be injected here -->
-                </div>
-            </div>
-
-            <!-- Style prompt cards -->
-            <p style="color:#94a3b8; font-size:0.85rem; margin-bottom:0.6rem;">Choose a Style</p>
-            <div id="i2i-style-grid"
-                style="display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.75rem; margin-bottom:1.2rem;">
-                <div class="i2i-style-card style-vintage"
-                    data-prompt="1920s vintage photograph, sepia tone, film grain, aged photo" data-strength="0.6"
-                    onclick="selectStyle(this)">Vintage Photo</div>
-                <div class="i2i-style-card style-bw"
-                    data-prompt="old black and white portrait photo, high contrast monochrome" data-strength="0.65"
-                    onclick="selectStyle(this)">Black &amp; White</div>
-                <div class="i2i-style-card style-anime"
-                    data-prompt="anime style illustration, vibrant colors, clean linework" data-strength="0.5"
-                    onclick="selectStyle(this)">Anime Style</div>
-                <div class="i2i-style-card style-cyberpunk"
-                    data-prompt="cyberpunk futuristic neon city style, dark atmosphere, neon lights"
-                    data-strength="0.75" onclick="selectStyle(this)">Cyberpunk</div>
-                <div class="i2i-style-card style-oil"
-                    data-prompt="classical oil painting portrait, textured brushstrokes, renaissance style"
-                    data-strength="0.8" onclick="selectStyle(this)">Oil Painting</div>
-                <div class="i2i-style-card style-cartoon"
-                    data-prompt="pixar style cartoon character, bright colors, 3d animated look" data-strength="0.7"
-                    onclick="selectStyle(this)">Cartoon Style</div>
-            </div>
-
-            <!-- Hidden prompt + strength -->
-            <input type="hidden" id="i2i-prompt" value="">
-            <div id="i2i-selected-prompt"
-                style="display:none; background:rgba(255,255,255,0.07); border:1px solid var(--glass-border); border-radius:8px; padding:0.6rem 0.9rem; font-size:0.85rem; color:#cbd5e1; margin-bottom:1rem;">
-            </div>
-
-            <div style="margin-bottom:1rem;">
-                <label style="display:block; font-size:0.8rem; margin-bottom:0.4rem; color:#94a3b8;">
-                    Strength: <span id="i2i-strength-val">0.75</span>
-                    <span style="font-size:0.75rem; color:#64748b;"> (higher = more transformation)</span>
-                </label>
-                <input type="range" id="i2i-strength" min="0.1" max="1.0" step="0.05" value="0.75"
-                    oninput="document.getElementById('i2i-strength-val').innerText=parseFloat(this.value).toFixed(2)"
-                    style="width:100%; accent-color:#6366f1;">
-            </div>
-
-            <div class="switch-container">
-                <span class="switch-label">Multi Generation (3 Images)</span>
-                <label class="switch">
-                    <input type="checkbox" id="i2i-multi-gen">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="switch-container">
-                <span class="switch-label">AI Upscale (4x)</span>
-                <label class="switch">
-                    <input type="checkbox" id="i2i-upscale">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="switch-container">
-                <span class="switch-label">Auto Prompt Enhancement</span>
-                <label class="switch">
-                    <input type="checkbox" id="i2i-enhance">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <!-- Buttons -->
-            <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-                <button class="btn btn-primary" id="btn-i2i-generate"
-                    onclick="generateImageFromImage()">Generate</button>
-                <button class="btn" id="btn-i2i-regenerate" onclick="regenerateSameSeedI2I()"
-                    style="background: rgba(255,255,255,0.1); color: white;">Re-generate</button>
-                <button class="btn" id="btn-i2i-variation" onclick="variationGenerationI2I()"
-                    style="background: rgba(255,255,255,0.1); color: white;">Variation</button>
-                <button class="btn" id="btn-i2i-stop" style="display:none; background:#ef4444; color:white;"
-                    onclick="stopI2IGeneration()">Stop</button>
-                <div style="display: flex; flex-direction: column; gap: 0.2rem;">
-                    <span id="i2i-timer" style="display:none; color:#94a3b8; font-family:monospace;">0.0s</span>
-                    <span id="i2i-step-counter"
-                        style="display: none; color: #6366f1; font-size: 0.8rem; font-weight: 500;"></span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Manual Seed
-                    (Optional)</label>
-                <input type="number" id="i2i-seed" placeholder="Random"
-                    style="width: 100%; padding: 0.8rem 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: white; outline: none;">
-            </div>
-
-            <div class="loader" id="i2i-loader"></div>
-
-            <div class="preview-container" id="i2i-result" style="display:none;">
-                <div id="i2i-images-container" class="multi-gen-grid">
-                    <!-- Images will be injected here -->
-                    <div class="preview-box">
-                        <img id="i2i-generated-img" src="">
+            <div id="gen-result"
+                style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; margin-top: 40px;">
+                <div id="gen-images-container"
+                    style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                    <!-- Active result will be here -->
+                    <div class="preview-box stage-content" style="background: none; border: none; padding: 0;">
+                        <img id="generated-img" src="" style="max-width: 100%; max-height: 80vh; object-fit: contain;">
                     </div>
                 </div>
             </div>
-        </div>
 
-        <br><br>
-
-        <div class="card">
-            <h3>Video Filters</h3>
-            <div class="upload-area" id="filter-drop-zone">
-                <p>Click to upload Video</p>
-                <input type="file" id="filter-video-input" accept="video/*" hidden>
+            <!-- Video Preview Stage -->
+            <div id="filter-result"
+                style="display:none; width: 100%; height: 100%; align-items: center; justify-content: center; flex-direction: column;">
+                <video id="filter-video-preview" controls class="stage-content"
+                    style="max-width: 100%; max-height: 75vh;"></video>
+                <a id="filter-download" href="#" class="btn-action" style="max-width: 200px; margin-top: 1rem;"
+                    download>Download Result</a>
             </div>
 
-            <select id="filter-type"
-                style="width: 100%; padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border); background: #1e293b; color: white; margin-bottom: 1rem;">
-                <option value="cartoon">Cartoon Effect</option>
-                <option value="sketch">Pencil Sketch</option>
-            </select>
+            <!-- Image Generation loader placeholder -->
+            <div id="gen-loader" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="neu-loader" style="margin: 0 auto;"></div>
+                <p id="step-counter" style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.8rem;">Initializing...</p>
+            </div>
 
-            <button class="btn btn-primary" onclick="applyFilter()">Apply Filter</button>
-            <div class="loader" id="filter-loader"></div>
+            <div id="filter-loader" style="display: none; text-align: center; margin-top: 2rem;">
+                <div class="neu-loader" style="margin: 0 auto;"></div>
+                <p style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.8rem;">Processing Video...</p>
+            </div>
 
-            <div class="preview-container" id="filter-result" style="display:none;">
-                <div class="preview-box" style="width: 100%;">
-                    <p>Processed Video:</p>
-                    <video id="filter-video-preview" controls
-                        style="width: 100%; border-radius: 10px; margin-bottom: 1rem; display: none;"></video>
-                    <a id="filter-download" href="#" class="btn btn-primary" target="_blank" download>Download Video</a>
+            <!-- Image Generation loader placeholder -->
+            <div id="stage-placeholder" style="color: var(--text-secondary); text-align: center;">
+                <span class="material-symbols-outlined" style="font-size: 4rem; opacity: 0.2;">image</span>
+                <p style="margin-top: 1rem; opacity: 0.5;">Your generation will appear here</p>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR: Assets & Tools -->
+        <aside class="sidebar right-sidebar">
+            <div id="painting-tool-section" class="control-group active" style="margin-top: 0;">
+                <h4 class="group-title">Inpainting Tools</h4>
+                <div class="painting-tools"
+                    style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.25rem; width: 100%;">
+                    <div class="tool-icon tool-btn active" id="tool-brush" title="Brush">🖌️</div>
+                    <div class="tool-icon tool-btn" id="tool-eraser" title="Eraser">🧹</div>
+                    <div class="tool-icon tool-btn" id="tool-clear" title="Clear">🗑️</div>
+                    <div class="tool-icon tool-btn" id="tool-rect" title="Rectangle">📊</div>
+                    <div class="tool-icon tool-btn" id="tool-circle" title="Circle">⭕</div>
+                    <div class="tool-icon tool-btn" id="tool-ellipse" title="Ellipse">💠</div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Generation History Modal -->
-    <div id="history-modal" class="history-modal hidden">
-        <div class="history-modal-card">
-            <button id="history-close">✕</button>
-            <h2>Generation Details</h2>
-            <div class="history-content">
-                <img id="history-image" style="display:none;" />
-                <div class="history-fields">
-                    <p><strong>Prompt:</strong></p>
-                    <div class="history-prompt-container">
-                        <span id="history-prompt"></span>
+            <div class="horizontal-row" style="margin-top: 0.25rem;">
+                <div class="control-group" style="flex: 1; overflow: hidden;">
+                    <h4 class="group-title">Selection</h4>
+                    <div id="i2i-upload-container"
+                        style="display:none; width: 100%; aspect-ratio: 1; background: var(--card-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <div id="i2i-upload-preview" class="preview-box-container"
+                            style="width: 100%; height: 100%; position: relative;"></div>
                     </div>
-                    <p><strong>Type:</strong> <span id="history-type"></span></p>
-                    <p><strong>Generation Time:</strong> <span id="history-time"></span></p>
-                    <p><strong>Timestamp:</strong> <span id="history-timestamp"></span></p>
-                    <p><strong>Seed:</strong> <span id="history-seed"></span></p>
+                    <div id="selection-placeholder"
+                        style="width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px dashed var(--border-color); color: var(--text-secondary); font-size: 0.6rem;">
+                        No media
+                    </div>
+                </div>
+
+                <div id="inpaint-prompt-panel" class="control-group"
+                    style="flex: 1.2; display: flex; flex-direction: column; gap: 0.3rem;">
+                    <textarea id="inpaint-prompt" class="input-field" rows="1" placeholder="Describe change..."
+                        style="font-size: 0.65rem;"></textarea>
+
+                    <div class="inpaint-slider-mini">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.55rem;">
+                            <span>Denoise</span> <span id="inpaint-strength-val" style="font-weight: 800;">0.65</span>
+                        </div>
+                        <input type="range" id="inpaint-strength" min="0.5" max="0.8" step="0.05" value="0.65"
+                            style="width: 100%; scale: 0.8; margin: -5px 0;">
+                    </div>
+                    <div class="inpaint-slider-mini">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.55rem;">
+                            <span>Blur</span> <span id="inpaint-blur-val" style="font-weight: 800;">5</span>
+                        </div>
+                        <input type="range" id="inpaint-blur" min="0" max="20" step="1" value="5"
+                            style="width: 100%; scale: 0.8; margin: -5px 0;">
+                    </div>
+
+                    <button class="btn-action" id="btn-inpaint-send" style="padding: 0.25rem; font-size: 0.65rem;"
+                        onclick="sendInpaintRequest()">APPLY</button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Inpainting Floating Toolbar -->
-    <div id="inpainting-toolbar" class="floating-toolbar hidden">
-        <div class="toolbar-header" id="toolbar-drag-handle">
-            <span>Inpainting Tools</span>
-            <button id="toolbar-close">✕</button>
-        </div>
-        <div class="toolbar-body">
-            <button class="tool-btn active" id="tool-hand" title="Hand (Move)">✋</button>
-            <button class="tool-btn" id="tool-free" title="Free Selection">🖌️</button>
-            <button class="tool-btn" id="tool-rect" title="Rectangle Selection">⬜</button>
-            <button class="tool-btn" id="tool-circle" title="Circle Selection">⭕</button>
-            <button class="tool-btn" id="tool-ellipse" title="Ellipse Selection">💠</button>
-        </div>
-
-        <!-- Sliding Prompt Panel -->
-        <div id="inpaint-prompt-panel" class="prompt-panel collapsed">
-            <div style="padding: 1rem;">
-                <label style="display: block; font-size: 0.8rem; margin-bottom: 0.5rem; color: #94a3b8;">Inpainting
-                    Prompt</label>
-                <textarea id="inpaint-prompt" rows="3" placeholder="Describe what to add/change in the selection..."
-                    style="width: 100%; min-height: 80px; max-height: 160px; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; resize: none; overflow-y: auto;"></textarea>
-
-                <div style="margin: 1rem 0;">
-                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Denoise
-                        Strength: <span id="inpaint-strength-val">0.65</span></label>
-                    <input type="range" id="inpaint-strength" min="0.5" max="0.8" step="0.05" value="0.65"
-                        oninput="document.getElementById('inpaint-strength-val').innerText=this.value"
-                        style="width: 100%; accent-color: var(--primary);">
+            <div class="control-group sidebar-fill" style="margin-top: 0.25rem;">
+                <h4 class="group-title">History & Assets</h4>
+                <div class="assets-grid-container">
+                    <div id="assets-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;">
+                        <!-- Thumbnails will auto-fill here -->
+                    </div>
                 </div>
-
-                <div style="margin: 1rem 0;">
-                    <label style="display: block; font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.4rem;">Mask Blur:
-                        <span id="inpaint-blur-val">5</span>px</label>
-                    <input type="range" id="inpaint-blur" min="0" max="20" step="1" value="5"
-                        oninput="document.getElementById('inpaint-blur-val').innerText=this.value"
-                        style="width: 100%; accent-color: var(--primary);">
-                </div>
-
-                <button class="btn btn-primary" id="btn-inpaint-send" style="width: 100%; padding: 0.6rem;"
-                    onclick="sendInpaintRequest()">Send Inpainting</button>
             </div>
-        </div>
+        </aside>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <!-- Hidden elements for main.js compatibility -->
+    <div id="i2i-result" style="display:none;">
+        <div id="i2i-images-container"></div>
+    </div>
+    <div id="history-modal" class="hidden"></div>
+    <div id="inpainting-toolbar-drag-handle" style="display:none;"></div>
+
     <script src="js/generation_scrolly.js"></script>
-    <script src="js/main.js?v=2.1"></script>
+    <script src="js/main.js?v=2.2"></script>
+
+    <script>
+
+        window.addEventListener('DOMContentLoaded', initHomeButtonFlip);
+
+        function initHomeButtonFlip() {
+            const inner = document.querySelector('.flip-inner');
+            if (!inner) return;
+
+            const flipTl = gsap.timeline({
+                repeat: -1,         // Infinite loop
+                repeatDelay: 10     // Wait 10 seconds before starting the next flip
+            });
+
+            flipTl
+                // 1. Flip to Logo
+                .to(inner, {
+                    rotateY: 180,
+                    duration: 0.6,
+                    ease: "back.out(1.7)"
+                })
+                // 2. Hold Logo for 2 seconds
+                .to({}, { duration: 1.5 })
+                // 3. Flip back to Home Icon
+                .to(inner, {
+                    rotateY: 0,
+                    duration: 0.6,
+                    ease: "back.inOut(1.7)"
+                });
+        }
+
+
+        initHomeButtonFlip();
+        // UI Logic for Redesign
+        async function loadModels() {
+            try {
+                const res = await fetch('/api/generation/models');
+                const models = await res.json();
+                const sel = document.getElementById('model-select');
+                if (sel && models) {
+                    sel.innerHTML = '';
+                    Object.entries(models).forEach(([key, info]) => {
+                        const opt = document.createElement('option');
+                        opt.value = key;
+                        opt.innerText = info.label;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.warn("Dynamic model loading failed, using static fallback.");
+            }
+        }
+        loadModels();
+        document.addEventListener('DOMContentLoaded', () => {
+            const modelSelect = document.getElementById('model-select');
+            const paintSection = document.getElementById('painting-tool-section');
+            const dropZone = document.getElementById('i2i-drop-zone');
+            const stagePlaceholder = document.getElementById('stage-placeholder');
+
+            // Sync switches
+            document.getElementById('t2i-upscale').onclick = (e) => document.getElementById('i2i-upscale').checked = e.target.checked;
+            document.getElementById('t2i-enhance').onclick = (e) => document.getElementById('i2i-enhance').checked = e.target.checked;
+            document.getElementById('t2i-multi-gen').onclick = (e) => document.getElementById('i2i-multi-gen').checked = e.target.checked;
+            document.getElementById('t2i-seed').oninput = (e) => document.getElementById('i2i-seed').value = e.target.value;
+
+            // Model logic
+            setInterval(() => {
+                const isSD15 = modelSelect.value === 'quality';
+                paintSection.style.opacity = isSD15 ? '1' : '0.5';
+                paintSection.style.pointerEvents = isSD15 ? 'auto' : 'none';
+            }, 500);
+
+            // Handle asset selection display
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    const resultBox = document.getElementById('gen-result');
+                    const videoBox = document.getElementById('filter-result');
+                    if (resultBox.style.display !== 'none' || videoBox.style.display !== 'none') {
+                        stagePlaceholder.style.display = 'none';
+                    } else {
+                        stagePlaceholder.style.display = 'block';
+                    }
+                });
+            });
+            observer.observe(document.getElementById('gen-result'), { attributes: true, attributeFilter: ['style'] });
+            observer.observe(document.getElementById('filter-result'), { attributes: true, attributeFilter: ['style'] });
+        });
+    </script>
 </body>
 
 </html>
