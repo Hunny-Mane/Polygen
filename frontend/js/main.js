@@ -1033,8 +1033,10 @@ async function generateImage(forceMultiGen = false) {
         if (btnGen) {
             btnGen.innerHTML = 'GENERATE';
             btnGen.classList.remove('btn-stop-active');
+            btnGen.disabled = false;
         }
         if (btnStop) btnStop.style.display = 'none';
+        if (statusContainer) statusContainer.style.display = 'none';
     }
 }
 
@@ -1110,7 +1112,7 @@ async function generateImageFromImage(forceMultiGen = false) {
     const strength = strengthEl ? parseFloat(strengthEl.value) : 0.75;
 
     if (!fileInput.files[0]) return alert('Please upload an image first.');
-    if (!prompt) return alert('Please select a style card first.');
+    if (!prompt && !currentSelectedStylePrompt) return alert('Please enter a prompt or select a style.');
 
     const multiGen = forceMultiGen;
     const upscaleEl = document.getElementById('t2i-upscale');
@@ -1160,8 +1162,9 @@ async function generateImageFromImage(forceMultiGen = false) {
 
     // UI: Show loader and prepare result box
     if (loader) loader.style.display = 'block';
-    if (resultBox) resultBox.style.display = 'flex';
-    if (stagePh) stagePh.style.display = 'none';
+    
+    // T2I wait until 'image_start' event to show single-gen-box and hide stagePh.
+    // Doing the same here prevents layout overlapping before generation starts.
     if (stepCounter) {
         stepCounter.style.display = 'block';
         stepCounter.innerText = 'Initializing...';
@@ -1174,16 +1177,6 @@ async function generateImageFromImage(forceMultiGen = false) {
     updateMultiGenUI();
 
     const count = multiGen ? 3 : 1;
-    
-    // Single Gen: Hide grid, show single box
-    if (container) container.style.display = 'none';
-    const singleGenBox = document.getElementById('single-gen-box');
-    if (singleGenBox) {
-        singleGenBox.style.display = 'flex';
-        singleGenBox.style.justifyContent = 'center';
-        const mainImg = document.getElementById('generated-img');
-        if (mainImg) mainImg.src = ''; // Clear stale image
-    }
     
     if (btnGen) {
         btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
@@ -1198,7 +1191,7 @@ async function generateImageFromImage(forceMultiGen = false) {
     startTimer();
 
     try {
-        const response = await fetch(`${API_URL}/api/generation/generate/img2img`, { method: 'POST', body: formData });
+        const response = await fetch(`${API_URL}/api/generation/img2img`, { method: 'POST', body: formData });
         if (!response.ok) throw new Error("Server responded with " + response.status);
 
         const reader = response.body.getReader();
@@ -1304,9 +1297,14 @@ async function generateImageFromImage(forceMultiGen = false) {
     } finally {
         stopTimer();
         if (loader) loader.style.display = 'none';
-        if (btnGen) btnGen.style.display = 'inline-block';
+        if (btnGen) {
+            btnGen.innerHTML = 'GENERATE';
+            btnGen.classList.remove('btn-stop-active');
+            btnGen.disabled = false;
+        }
         if (i2iStepCounter) i2iStepCounter.style.display = 'none';
         if (btnStop) { btnStop.style.display = 'none'; btnStop.innerText = 'Stop'; btnStop.disabled = false; }
+        if (statusContainer) statusContainer.style.display = 'none';
     }
 }
 function regenerateSameSeedI2I() {

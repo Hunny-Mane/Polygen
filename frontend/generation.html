@@ -122,18 +122,23 @@
 
                     <h4 class="group-title" style="margin-top: 0.5rem; padding-left: 5px;">Styles</h4>
                     <div class="style-selector-grid">
-                        <div class="style-chip" data-prompt="high quality cartoon style, simplified shapes, bold lines" data-strength="0.75"
-                            onclick="selectStyle(this)">Cartoon</div>
-                        <div class="style-chip" data-prompt="vintage old photograph, 1970s aesthetics, grainy, warm tones" data-strength="0.65"
-                            onclick="selectStyle(this)">Vintage</div>
-                        <div class="style-chip" data-prompt="monochrome, cinematic black and white, high contrast, detailed shadows" data-strength="0.7"
-                            onclick="selectStyle(this)">B&W</div>
-                        <div class="style-chip" data-prompt="premium anime style, vivid colors, detailed line art, aesthetic lighting" data-strength="0.6"
-                            onclick="selectStyle(this)">Anime</div>
-                        <div class="style-chip" data-prompt="cyberpunk aesthetic, neon lighting, futuristic city, glow effect, dark contrast" data-strength="0.8"
-                            onclick="selectStyle(this)">Cyber</div>
-                        <div class="style-chip" data-prompt="textured oil painting, thick brushstrokes, artistic masterpiece, rich colors" data-strength="0.85"
-                            onclick="selectStyle(this)">Oil</div>
+                        <div class="style-chip" data-prompt="high quality cartoon style, simplified shapes, bold lines"
+                            data-strength="0.75" onclick="selectStyle(this)">Cartoon</div>
+                        <div class="style-chip"
+                            data-prompt="vintage old photograph, 1970s aesthetics, grainy, warm tones"
+                            data-strength="0.65" onclick="selectStyle(this)">Vintage</div>
+                        <div class="style-chip"
+                            data-prompt="monochrome, cinematic black and white, high contrast, detailed shadows"
+                            data-strength="0.7" onclick="selectStyle(this)">B&W</div>
+                        <div class="style-chip"
+                            data-prompt="premium anime style, vivid colors, detailed line art, aesthetic lighting"
+                            data-strength="0.6" onclick="selectStyle(this)">Anime</div>
+                        <div class="style-chip"
+                            data-prompt="cyberpunk aesthetic, neon lighting, futuristic city, glow effect, dark contrast"
+                            data-strength="0.8" onclick="selectStyle(this)">Cyber</div>
+                        <div class="style-chip"
+                            data-prompt="textured oil painting, thick brushstrokes, artistic masterpiece, rich colors"
+                            data-strength="0.85" onclick="selectStyle(this)">Oil</div>
                     </div>
                 </div>
 
@@ -215,7 +220,7 @@
                     </button>
 
                     <img id="generated-img" src="" class="preview-img"
-                        style="width: 100%; height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                        style="margin-top: 20px; width: 100%; height: 100%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
 
                     <button id="btn-next-gen" class="nav-arrow-btn" onclick="changeSelectedGen(1)"
                         style="display: none; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); z-index: 1000; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; color: white; align-items: center; justify-content: center; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
@@ -231,7 +236,7 @@
 
                 <!-- Minimal Real-Time Status Bar (Non-blocking) -->
                 <div id="gen-status-container"
-                    style="display: none; position: absolute; top: 36px; left: 50%; transform: translateX(-50%); width: 300px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 100; align-items: center; gap: 10px;">
+                    style="display: none; position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); width: 300px; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); z-index: 9999; align-items: center; gap: 10px;">
 
                     <div style="flex: 1;">
                         <div
