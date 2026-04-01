@@ -143,20 +143,36 @@ body.generation-redesign {
 }
 
 .style-chip {
-    padding: 0.4rem;
-    border-radius: 8px;
-    background: #f1f5f9;
+    padding: 0.5rem 0.25rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.6);
     border: 1px solid var(--border-color);
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.style-chip:hover {
+    background: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    color: var(--text-primary);
 }
 
 .style-chip.active {
-    border-color: #6366f1;
-    background: white;
+    background: #ffffff;
+    border: 2.5px solid #6366f1;
     color: #6366f1;
-    box-shadow: inset 2px 2px 5px var(--neu-dark-shadow),
-        inset -2px -2px 5px var(--neu-light-shadow);
+    font-weight: 900;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.15);
 }
 
 /* Control Elements */

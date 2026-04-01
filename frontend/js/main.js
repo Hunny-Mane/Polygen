@@ -627,6 +627,7 @@ async function analyzeVideo() {
 let multiGenResults = [null, null, null];
 let currentViewIndex = 0;
 let isMultiGenActive = false;
+let currentSelectedStylePrompt = null; // Store style keywords internally
 let lastT2ISeeds = [];
 let lastI2ISeeds = [];
 
@@ -828,6 +829,9 @@ async function generateImage(forceMultiGen = false) {
     const upscaleEl = document.getElementById('t2i-upscale');
     const upscale = upscaleEl ? upscaleEl.checked : false;
     
+    const stepsEl = document.getElementById('t2i-steps');
+    const steps = stepsEl ? parseInt(stepsEl.value) : 25;
+    
     const enhanceEl = document.getElementById('t2i-enhance');
     const enhancePrompt = enhanceEl ? enhanceEl.checked : false;
     
@@ -836,9 +840,22 @@ async function generateImage(forceMultiGen = false) {
     
     const negInput = document.getElementById('negative-prompt');
     const negative_prompt = negInput ? negInput.value : "";
+    
+    // NEW: Strength control for T2I (maps to CFG/Guidance)
+    const strengthEl = document.getElementById('i2i-strength');
+    const strength = strengthEl ? strengthEl.value : 0.75;
 
     if (!prompt) return alert("Please enter a prompt.");
 
+    // Invisible style appending (Backend only)
+    let finalPrompt = prompt;
+    if (currentSelectedStylePrompt) {
+        if (!finalPrompt.toLowerCase().includes(currentSelectedStylePrompt.toLowerCase())) {
+            if (finalPrompt && !finalPrompt.endsWith(',')) finalPrompt += ', ';
+            else if (finalPrompt) finalPrompt += ' ';
+            finalPrompt += currentSelectedStylePrompt;
+        }
+    }
 
     const loader = document.getElementById('gen-loader');
     const resultBox = document.getElementById('gen-result');
@@ -864,12 +881,14 @@ async function generateImage(forceMultiGen = false) {
 
     try {
         const formData = new FormData();
-        formData.append('prompt', prompt);
+        formData.append('prompt', finalPrompt);
         formData.append('model_key', modelKey);
         formData.append('multi_gen', multiGen);
         formData.append('upscale', upscale);
         formData.append('enhance_prompt', enhancePrompt);
         formData.append('negative_prompt', negative_prompt);
+        formData.append('strength', strength);
+        formData.append('steps', steps);
         if (seed !== null) formData.append('seed', seed);
 
         startTimer();
@@ -910,6 +929,8 @@ async function generateImage(forceMultiGen = false) {
 
                     if (event.type === 'image_start') {
                         if (statusContainer) statusContainer.style.display = 'flex';
+                        if (statusLabel) statusLabel.innerText = 'Generating';
+                        if (statusBarFill) statusBarFill.style.width = '0%';
                         if (resultBox) resultBox.style.display = 'flex';
                         if (stagePh) stagePh.style.display = 'none';
                         // Always use the single-gen-box as the carousel (handles both single & multi)
@@ -974,6 +995,14 @@ async function generateImage(forceMultiGen = false) {
                                 }
                             }
                         }
+                    } else if (event.type === 'upscale_progress') {
+                        const { tile, total_tiles, label } = event.data || {};
+                        if (statusLabel) statusLabel.innerText = label || 'Upscaling';
+                        if (statusSteps) statusSteps.innerText = `Tile ${tile}/${total_tiles}`;
+                        if (statusBarFill) {
+                            const pct = total_tiles > 0 ? (tile / total_tiles) * 100 : 0;
+                            statusBarFill.style.width = `${pct}%`;
+                        }
                     } else if (event.type === 'error') {
                         throw new Error(event.message);
                     }
@@ -1029,23 +1058,35 @@ function variationGeneration() {
 let i2iTimerInterval = null;
 
 function selectStyle(card) {
-    // Deselect all, then mark clicked
-    document.querySelectorAll('.i2i-style-card').forEach(c => {
-        c.classList.remove('selected');
-        c.classList.remove('active'); // Redesign sync
-    });
-    card.classList.add('selected');
-    card.classList.add('active'); // Redesign sync
-
-    const prompt = card.getAttribute('data-prompt');
-    document.getElementById('prompt-input').value = prompt;
-
-    // Update default strength based on selected style
-    const strength = card.getAttribute('data-strength');
-    if (strength) {
-        document.getElementById('i2i-strength').value = strength;
-        document.getElementById('i2i-strength-val').innerText = parseFloat(strength).toFixed(2);
+    const stylePrompt = card.getAttribute('data-prompt');
+    const styleStrength = card.getAttribute('data-strength') || 0.75;
+    
+    // Toggle Logic: If already active, deselect it
+    if (card.classList.contains('active')) {
+        card.classList.remove('selected', 'active');
+        currentSelectedStylePrompt = null;
+        console.log(`[STYLE] Deselected style.`);
+        return;
     }
+
+    // Visual feedback: Deselect others, select this one
+    document.querySelectorAll('.i2i-style-card, .style-chip').forEach(c => {
+        c.classList.remove('selected', 'active');
+    });
+    card.classList.add('selected', 'active');
+    currentSelectedStylePrompt = stylePrompt;
+
+    // Update Strength Slider automatically (optional, but keep for usability)
+    const strengthSlider = document.getElementById('i2i-strength');
+    if (strengthSlider) {
+        strengthSlider.value = styleStrength;
+        const strengthVal = document.getElementById('i2i-strength-val');
+        if (strengthVal) {
+            strengthVal.innerText = parseFloat(styleStrength).toFixed(2);
+        }
+    }
+    
+    console.log(`[STYLE] Stored style: ${stylePrompt}, for backend-only appending.`);
 }
 
 async function stopI2IGeneration() {
@@ -1076,13 +1117,26 @@ async function generateImageFromImage(forceMultiGen = false) {
     const upscale = upscaleEl ? upscaleEl.checked : false;
     const enhancePromptEl = document.getElementById('t2i-enhance');
     const enhancePrompt = enhancePromptEl ? enhancePromptEl.checked : false;
+    const stepsEl = document.getElementById('t2i-steps');
+    const steps = stepsEl ? parseInt(stepsEl.value) : 25;
     const seedInput = document.getElementById('t2i-seed');
     const seed = seedInput?.value ? parseInt(seedInput.value) : null;
 
+    // Invisible style appending (Backend only)
+    let finalPrompt = prompt;
+    if (currentSelectedStylePrompt) {
+        if (!finalPrompt.toLowerCase().includes(currentSelectedStylePrompt.toLowerCase())) {
+            if (finalPrompt && !finalPrompt.endsWith(',')) finalPrompt += ', ';
+            else if (finalPrompt) finalPrompt += ' ';
+            finalPrompt += currentSelectedStylePrompt;
+        }
+    }
+
     const formData = new FormData(); // Initialize formData
     formData.append('image', fileInput.files[0]);
-    formData.append('prompt', prompt);
+    formData.append('prompt', finalPrompt);
     formData.append('strength', strength);
+    formData.append('steps', steps);
     formData.append('multi_gen', multiGen);
     formData.append('upscale', upscale);
     formData.append('enhance_prompt', enhancePrompt);
@@ -1099,6 +1153,10 @@ async function generateImageFromImage(forceMultiGen = false) {
     const timerEl = document.getElementById('i2i-timer');
     const stagePh = document.getElementById('stage-placeholder');
     const stepCounter = document.getElementById('step-counter');
+    const statusContainer = document.getElementById('gen-status-container');
+    const statusBarFill = document.getElementById('gen-status-bar-fill');
+    const statusLabel = document.getElementById('gen-status-label');
+    const statusSteps = document.getElementById('gen-status-steps');
 
     // UI: Show loader and prepare result box
     if (loader) loader.style.display = 'block';
@@ -1163,6 +1221,9 @@ async function generateImageFromImage(forceMultiGen = false) {
                     const total = event.total || (multiGen ? 3 : 1);
 
                     if (event.type === 'image_start') {
+                        if (statusContainer) statusContainer.style.display = 'flex';
+                        if (statusLabel) statusLabel.innerText = 'Generating';
+                        if (statusBarFill) statusBarFill.style.width = '0%';
                         if (stepCounter) stepCounter.innerText = `Generating Image ${idx + 1}/${total}...`;
                         if (resultBox) resultBox.style.display = 'flex';
                         if (stagePh) stagePh.style.display = 'none';
@@ -1176,6 +1237,13 @@ async function generateImageFromImage(forceMultiGen = false) {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
 
+                        // Update status bar for generation steps
+                        if (statusContainer) statusContainer.style.display = 'flex';
+                        if (event.type === 'preview_step' && statusSteps) {
+                            if (statusLabel) statusLabel.innerText = 'Generating';
+                            statusSteps.innerText = `${step}/${total_steps}`;
+                            if (statusBarFill) statusBarFill.style.width = `${(step/total_steps)*100}%`;
+                        }
                         if (i2iStepCounter && event.type === 'preview_step') {
                             i2iStepCounter.innerText = `Generating Image ${idx + 1}/${total} — Step ${step}/${total_steps}`;
                         }
@@ -1202,9 +1270,12 @@ async function generateImageFromImage(forceMultiGen = false) {
                             }
                         }
                     } else if (event.type === 'upscale_progress') {
-                        lastI2ISeeds = event.seeds || [];
-                        if (lastI2ISeeds.length > 0 && seedInput) {
-                            seedInput.value = lastI2ISeeds[0];
+                        const { tile, total_tiles, label } = event.data || {};
+                        if (statusLabel) statusLabel.innerText = label || 'Upscaling';
+                        if (statusSteps) statusSteps.innerText = `Tile ${tile}/${total_tiles}`;
+                        if (statusBarFill) {
+                            const pct = total_tiles > 0 ? (tile / total_tiles) * 100 : 0;
+                            statusBarFill.style.width = `${pct}%`;
                         }
                     } else if (event.type === 'error') {
                         throw new Error(event.message);
