@@ -624,8 +624,48 @@ async function analyzeVideo() {
     }
 }
 
+let multiGenResults = [null, null, null];
+let currentViewIndex = 0;
+let isMultiGenActive = false;
 let lastT2ISeeds = [];
 let lastI2ISeeds = [];
+
+function changeSelectedGen(delta) {
+    if (!isMultiGenActive) return;
+    const newIdx = currentViewIndex + delta;
+    if (newIdx >= 0 && newIdx < 3 && multiGenResults[newIdx] !== null) {
+        currentViewIndex = newIdx;
+        updateMultiGenUI();
+    }
+}
+
+function updateMultiGenUI() {
+    const mainImg = document.getElementById('generated-img');
+    const counter = document.getElementById('gen-multi-counter');
+    const btnPrev = document.getElementById('btn-prev-gen');
+    const btnNext = document.getElementById('btn-next-gen');
+
+    if (mainImg && multiGenResults[currentViewIndex]) {
+        mainImg.src = multiGenResults[currentViewIndex];
+    }
+
+    if (isMultiGenActive) {
+        if (counter) {
+            counter.innerText = `${currentViewIndex + 1} / 3`;
+            counter.style.display = 'block';
+        }
+        if (btnPrev) btnPrev.style.display = currentViewIndex > 0 ? 'flex' : 'none';
+        if (btnNext) btnNext.style.display = (currentViewIndex < 2 && multiGenResults[currentViewIndex + 1] !== null) ? 'flex' : 'none';
+    } else {
+        if (counter) counter.style.display = 'none';
+        if (btnPrev) btnPrev.style.display = 'none';
+        if (btnNext) btnNext.style.display = 'none';
+    }
+}
+
+function generateThreeImages() {
+    handleGenerateClick(true);
+}
 
 async function stopGeneration() {
     const btnGen = document.getElementById('btn-generate');
@@ -751,7 +791,7 @@ function addAssetToSidebar(asset) {
 }
 
 // Unified Generate Wrapper
-async function handleGenerateClick() {
+async function handleGenerateClick(forceMultiGen = false) {
     const btnGen = document.getElementById('btn-generate');
     // If already generating, act as a stop button
     if (btnGen && btnGen.classList.contains('btn-stop-active')) {
@@ -762,7 +802,7 @@ async function handleGenerateClick() {
     const file = input.files[0];
     if (!file) {
         // Fallback to text-to-image
-        return generateImage();
+        return generateImage(forceMultiGen);
     }
 
     if (file.type.startsWith('video/')) {
@@ -770,26 +810,25 @@ async function handleGenerateClick() {
         return applyFilter();
     } else {
         document.getElementById('video-filter-group').style.display = 'none';
-        return generateImageFromImage();
+        return generateImageFromImage(forceMultiGen);
     }
 }
 
 // Update HTML button to use this if needed, but for now we'll just refine generateImage
 
-async function generateImage() {
+async function generateImage(forceMultiGen = false) {
     const promptEl = document.getElementById('prompt-input');
     const prompt = promptEl ? promptEl.value : "";
     
     const modelSelect = document.getElementById('model-select');
     const modelKey = modelSelect ? modelSelect.value : 'quality';
     
-    const multiGenEl = document.getElementById('multi-gen');
-    const multiGen = multiGenEl ? multiGenEl.checked : false;
+    const multiGen = forceMultiGen;  // Driven by button, not a toggle
     
-    const upscaleEl = document.getElementById('upscale-gen');
+    const upscaleEl = document.getElementById('t2i-upscale');
     const upscale = upscaleEl ? upscaleEl.checked : false;
     
-    const enhanceEl = document.getElementById('enhance-prompt');
+    const enhanceEl = document.getElementById('t2i-enhance');
     const enhancePrompt = enhanceEl ? enhanceEl.checked : false;
     
     const seedInput = document.getElementById('t2i-seed');
@@ -835,6 +874,12 @@ async function generateImage() {
 
         startTimer();
 
+        // Multi-gen state reset
+        isMultiGenActive = multiGen;
+        multiGenResults = [null, null, null];
+        currentViewIndex = 0;
+        updateMultiGenUI();
+
         const response = await fetch(`${API_URL}/api/generation/generate/image`, {
             method: 'POST',
             body: formData
@@ -867,8 +912,17 @@ async function generateImage() {
                         if (statusContainer) statusContainer.style.display = 'flex';
                         if (resultBox) resultBox.style.display = 'flex';
                         if (stagePh) stagePh.style.display = 'none';
+                        // Always use the single-gen-box as the carousel (handles both single & multi)
                         const singleBox = document.getElementById('single-gen-box');
-                        if (!multiGen && singleBox) singleBox.style.display = 'flex';
+                        if (singleBox) singleBox.style.display = 'flex';
+                        // Reset progress bar for new image in sequence
+                        if (statusBarFill) statusBarFill.style.width = '0%';
+                        if (statusSteps) statusSteps.innerText = multiGen ? `Image ${idx + 1} of ${total}` : '';
+                        // When a new image starts generating in multi-gen, auto-advance view to it
+                        if (multiGen) {
+                            currentViewIndex = idx;
+                            updateMultiGenUI();
+                        }
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = (event.type === 'image_complete') ? event.image : preview;
@@ -885,18 +939,25 @@ async function generateImage() {
                             // Previews are JPEG (from backend), Final is often PNG
                             const mime = (event.type === 'preview_step') ? 'image/jpeg' : 'image/png';
                             const dataUrl = `data:${mime};base64,${b64}`;
-                            const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
+                            
+                            // Store in results for carousel
+                            multiGenResults[idx] = dataUrl;
+
+                            const imgId = 'generated-img';
                             const imgTag = document.getElementById(imgId);
                             
-                            if (imgTag) {
-                                imgTag.onerror = () => {
-                                    console.error("Image load failed", imgId);
-                                    if (debugOverlay) debugOverlay.innerHTML += `<br><span style="color:red">ERR: #${imgId} failed to load B64</span>`;
-                                };
+                            if (imgTag && (currentViewIndex === idx || !multiGen)) {
                                 imgTag.src = dataUrl;
                                 imgTag.style.display = 'block';
-                            } else {
-                                if (debugOverlay) debugOverlay.innerText += `\nERR: #${imgId} not found`;
+                            }
+                            
+                            // Update UI if we just got a new image or final result
+                            if (multiGen) {
+                                if (event.type === 'image_complete' && currentViewIndex < idx) {
+                                     // Optionally auto-advance if user hasn't moved? 
+                                     // For now, just ensure UI buttons are updated
+                                }
+                                updateMultiGenUI();
                             }
 
                             if (modelKey === 'quality') {
@@ -1000,7 +1061,7 @@ async function stopI2IGeneration() {
     }
 }
 
-async function generateImageFromImage() {
+async function generateImageFromImage(forceMultiGen = false) {
     const fileInput = document.getElementById('i2i-image-input');
     const promptEl = document.getElementById('prompt-input');
     const prompt = promptEl ? promptEl.value : "";
@@ -1010,9 +1071,11 @@ async function generateImageFromImage() {
     if (!fileInput.files[0]) return alert('Please upload an image first.');
     if (!prompt) return alert('Please select a style card first.');
 
-    const multiGen = document.getElementById('i2i-multi-gen')?.checked || false;
-    const upscale = document.getElementById('t2i-upscale')?.checked || false;
-    const enhancePrompt = document.getElementById('t2i-enhance')?.checked || false;
+    const multiGen = forceMultiGen;
+    const upscaleEl = document.getElementById('t2i-upscale');
+    const upscale = upscaleEl ? upscaleEl.checked : false;
+    const enhancePromptEl = document.getElementById('t2i-enhance');
+    const enhancePrompt = enhancePromptEl ? enhancePromptEl.checked : false;
     const seedInput = document.getElementById('t2i-seed');
     const seed = seedInput?.value ? parseInt(seedInput.value) : null;
 
@@ -1023,6 +1086,9 @@ async function generateImageFromImage() {
     formData.append('multi_gen', multiGen);
     formData.append('upscale', upscale);
     formData.append('enhance_prompt', enhancePrompt);
+    const negInput = document.getElementById('negative-prompt');
+    const negative_prompt = negInput ? negInput.value : "";
+    formData.append('negative_prompt', negative_prompt);
     if (seed !== null) formData.append('seed', seed);
 
     const loader = document.getElementById('gen-loader');
@@ -1043,38 +1109,22 @@ async function generateImageFromImage() {
         stepCounter.innerText = 'Initializing...';
     }
 
+    // Multi-gen state reset
+    isMultiGenActive = multiGen;
+    multiGenResults = [null, null, null];
+    currentViewIndex = 0;
+    updateMultiGenUI();
+
     const count = multiGen ? 3 : 1;
-    if (container) {
-        container.innerHTML = '';
-        if (multiGen) {
-            container.style.display = 'grid';
-            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(300px, 1fr))';
-            container.style.gap = '1.5rem';
-            for (let i = 0; i < 3; i++) {
-                const box = document.createElement('div');
-                box.className = 'preview-box stage-content';
-                box.id = `preview-slot-${i}`;
-                box.style.width = '380px';
-                box.style.height = '380px';
-                const img = document.createElement('img');
-                img.id = `img-preview-${i}`;
-                img.className = 'preview-img';
-                img.style.maxHeight = '100%';
-                img.style.borderRadius = '8px';
-                box.appendChild(img);
-                container.appendChild(box);
-            }
-        } else {
-            // Single Gen: Hide grid, show single box
-            if (container) container.style.display = 'none';
-            const singleGenBox = document.getElementById('single-gen-box');
-            if (singleGenBox) {
-                singleGenBox.style.display = 'flex';
-                singleGenBox.style.justifyContent = 'center';
-                const mainImg = document.getElementById('generated-img');
-                if (mainImg) mainImg.src = ''; // Clear stale image
-            }
-        }
+    
+    // Single Gen: Hide grid, show single box
+    if (container) container.style.display = 'none';
+    const singleGenBox = document.getElementById('single-gen-box');
+    if (singleGenBox) {
+        singleGenBox.style.display = 'flex';
+        singleGenBox.style.justifyContent = 'center';
+        const mainImg = document.getElementById('generated-img');
+        if (mainImg) mainImg.src = ''; // Clear stale image
     }
     
     if (btnGen) {
@@ -1117,24 +1167,11 @@ async function generateImageFromImage() {
                         if (resultBox) resultBox.style.display = 'flex';
                         if (stagePh) stagePh.style.display = 'none';
 
-                        // NEW: Ensure the correct container is visible immediately
-                        if (multiGen) {
-                            if (container) {
-                                container.style.display = 'grid';
-                                const previewSlot = document.getElementById(`preview-slot-${idx}`);
-                                if (previewSlot) previewSlot.style.display = 'flex';
-                            }
-                            const singleBox = document.getElementById('single-gen-box');
-                            if (singleBox) singleBox.style.display = 'none';
-                        } else {
-                            if (container) container.style.display = 'none';
-                            const singleBox = document.getElementById('single-gen-box');
-                            if (singleBox) {
-                                singleBox.style.display = 'flex';
-                                const mainImg = document.getElementById('generated-img');
-                                if (mainImg) mainImg.src = ''; // Clear stale image
-                            }
-                        }
+                        // Ensure single-box is visible for carousel
+                        if (container) container.style.display = 'none';
+                        const singleBox = document.getElementById('single-gen-box');
+                        if (singleBox) singleBox.style.display = 'flex';
+
                     } else if (event.type === 'preview_step' || event.type === 'image_complete') {
                         const { step, total_steps, preview } = event.data || {};
                         const b64 = event.type === 'image_complete' ? event.image : preview;
@@ -1144,11 +1181,24 @@ async function generateImageFromImage() {
                         }
 
                         if (b64) {
-                            const imgId = multiGen ? `img-preview-${idx}` : 'generated-img';
-                            const img = document.getElementById(imgId);
-                            if (img) {
-                                img.onerror = () => console.error("Failed to load I2I preview:", imgId);
-                                img.src = `data:image/jpeg;base64,${b64}`;
+                            const mime = (event.type === 'preview_step') ? 'image/jpeg' : 'image/png';
+                            const dataUrl = `data:${mime};base64,${b64}`;
+                            
+                            // Store in results for carousel
+                            multiGenResults[idx] = dataUrl;
+
+                            const imgId = 'generated-img';
+                            const imgTag = document.getElementById(imgId);
+                            
+                            // Update if it's the current view
+                            if (imgTag && (currentViewIndex === idx || !multiGen)) {
+                                imgTag.src = dataUrl;
+                                imgTag.style.display = 'block';
+                            }
+
+                            // Update UI if we just got a new image or final result
+                            if (multiGen) {
+                                updateMultiGenUI();
                             }
                         }
                     } else if (event.type === 'upscale_progress') {
