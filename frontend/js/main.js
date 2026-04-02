@@ -870,7 +870,9 @@ async function generateImage(forceMultiGen = false) {
     const statusBarFill = document.getElementById('gen-status-bar-fill');
     const statusLabel = document.getElementById('gen-status-label');
     const statusSteps = document.getElementById('gen-status-steps');
+    const filterRes = document.getElementById('filter-result');
 
+    if (filterRes) filterRes.style.display = 'none';
     if (loader) loader.style.display = 'block';
     if (btnGen) {
         btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
@@ -1159,8 +1161,10 @@ async function generateImageFromImage(forceMultiGen = false) {
     const statusBarFill = document.getElementById('gen-status-bar-fill');
     const statusLabel = document.getElementById('gen-status-label');
     const statusSteps = document.getElementById('gen-status-steps');
+    const filterRes = document.getElementById('filter-result');
 
     // UI: Show loader and prepare result box
+    if (filterRes) filterRes.style.display = 'none';
     if (loader) loader.style.display = 'block';
     
     // T2I wait until 'image_start' event to show single-gen-box and hide stagePh.
@@ -1341,6 +1345,8 @@ async function applyFilter() {
     document.getElementById('filter-result').style.display = 'none';
     const stagePh = document.getElementById('stage-placeholder');
     if (stagePh) stagePh.style.display = 'none';
+    const genResult = document.getElementById('gen-result');
+    if (genResult) genResult.style.display = 'none';
 
 
     try {
