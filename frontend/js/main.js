@@ -61,9 +61,9 @@ document.querySelectorAll('.model-select').forEach(sel => {
 class InpaintingManager {
     constructor() {
         this.active = false;
-        this.toolbar = document.getElementById('inpainting-toolbar');
+        this.toolbar = document.getElementById('painting-tool-section');
         this.promptPanel = document.getElementById('inpaint-prompt-panel');
-        this.currentTool = 'hand';
+        this.currentTool = 'square';
         this.isDraggingToolbar = false;
         this.isDrawing = false;
         this.startPos = { x: 0, y: 0 };
@@ -76,6 +76,65 @@ class InpaintingManager {
         this.activeBaseCanvas = null;
 
         this.init();
+    }
+
+    loadBaseImage(url) {
+        const container = document.getElementById('center-inpaint-preview');
+        const outer = document.getElementById('gen-result');
+        const imgTag = document.getElementById('generated-img');
+        const sidebarPreview = document.getElementById('i2i-upload-preview');
+        const sidebarContainer = document.getElementById('i2i-upload-container');
+
+        if (!container || !outer || !imgTag) return;
+
+        outer.style.display = 'flex';
+        document.getElementById('single-gen-box').style.display = 'flex';
+        imgTag.src = url;
+
+        if (container.innerHTML === '' || !container.querySelector('.base-layer')) {
+            container.innerHTML = '';
+            const layers = ['base-layer', 'mask-overlay', 'visualization-layer', 'interaction-layer'];
+            layers.forEach(cls => {
+                const c = document.createElement('canvas');
+                c.className = `preview-canvas ${cls}`;
+                c.width = 512; c.height = 512;
+                c.style.position = 'absolute';
+                c.style.top = '0'; c.style.left = '0';
+                c.style.width = '100%'; c.style.height = '100%';
+                if (cls === 'base-layer') c.style.display = 'none'; // Background image is the imgTag
+                container.appendChild(c);
+            });
+            this.attachToCanvas(container);
+        }
+
+        // Sidebar preview setup
+        if (sidebarPreview && sidebarContainer) {
+            sidebarContainer.style.display = 'block';
+            if (!sidebarPreview.querySelector('canvas')) {
+                const c = document.createElement('canvas');
+                c.width = 512; c.height = 512;
+                c.style.maxWidth = '100%'; c.style.maxHeight = '100%';
+                sidebarPreview.appendChild(c);
+            }
+        }
+
+        const baseCanvas = container.querySelector('.base-layer');
+        const ctx = baseCanvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            ctx.clearRect(0, 0, 512, 512);
+            ctx.drawImage(img, 0, 0, 512, 512);
+            
+            // Adjust container size to match image aspect ratio inside the box
+            const rect = imgTag.getBoundingClientRect();
+            container.style.width = `${rect.width}px`;
+            container.style.height = `${rect.height}px`;
+
+            this.showToolbar();
+            this.updateSelectionPreview();
+        };
+        img.src = url;
     }
 
     init() {
@@ -107,12 +166,17 @@ class InpaintingManager {
 
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                if (btn.id === 'tool-clear') return; // Selection only for actual tools
                 document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentTool = btn.id.replace('tool-', '');
                 this.updateInteractionCursor();
             });
         });
+
+        // Add Clear button listener explicitly if needed (HTML has it too)
+        const clearBtn = document.getElementById('tool-clear');
+        if (clearBtn) clearBtn.onclick = () => this.clearAllMasks();
 
         const tbClose = document.getElementById('toolbar-close');
         if (tbClose) tbClose.addEventListener('click', () => this.hideToolbar());
@@ -138,33 +202,8 @@ class InpaintingManager {
                 const container = document.getElementById('i2i-upload-preview');
                 const outer = document.getElementById('i2i-upload-container');
 
-                if (model === 'quality' && container && outer) {
-                    outer.style.display = 'block';
-                    container.innerHTML = '';
-
-                    const base = document.createElement('canvas');
-                    base.className = 'preview-canvas base-layer';
-                    base.width = 512; base.height = 512;
-
-                    const mask = document.createElement('canvas');
-                    mask.className = 'preview-canvas mask-overlay';
-                    mask.width = 512; mask.height = 512;
-
-                    const it = document.createElement('canvas');
-                    it.className = 'preview-canvas interaction-layer';
-                    it.width = 512; it.height = 512;
-
-                    container.appendChild(base); container.appendChild(mask); container.appendChild(it);
-
-                    const ctx = base.getContext('2d');
-                    const img = new Image();
-                    img.onload = () => {
-                        ctx.clearRect(0, 0, 512, 512);
-                        ctx.drawImage(img, 0, 0, 512, 512);
-                        this.showToolbar();
-                    };
-                    img.src = URL.createObjectURL(file);
-                    this.attachToCanvas(container);
+                if (model === 'quality' && outer) {
+                    this.loadBaseImage(URL.createObjectURL(file));
                 } else if (outer) {
                     outer.style.display = 'none';
                 }
@@ -188,18 +227,30 @@ class InpaintingManager {
 
     updateInteractionCursor() {
         document.querySelectorAll('.interaction-layer').forEach(l => {
-            l.style.cursor = this.currentTool === 'hand' ? 'grab' : 'crosshair';
+            if (this.currentTool === 'brush' || this.currentTool === 'free') {
+                l.style.cursor = 'crosshair';
+            } else if (this.currentTool === 'eraser') {
+                l.style.cursor = 'cell';
+            } else if (this.currentTool === 'clear') {
+                l.style.cursor = 'default';
+            } else if (this.currentTool === 'hand') {
+                l.style.cursor = 'grab';
+            } else {
+                l.style.cursor = 'crosshair';
+            }
         });
     }
 
     attachToCanvas(container) {
         const interactionLayer = container.querySelector('.interaction-layer');
         const maskCanvas = container.querySelector('.mask-overlay');
-        if (!interactionLayer || !maskCanvas) return;
+        const visualizationLayer = container.querySelector('.visualization-layer');
+        if (!interactionLayer || !maskCanvas || !visualizationLayer) return;
         
         const baseCanvas = container.querySelector('.base-layer');
         const maskCtx = maskCanvas.getContext('2d');
         const itCtx = interactionLayer.getContext('2d');
+        const vizCtx = visualizationLayer.getContext('2d');
 
         const getCoords = (e) => {
             const rect = interactionLayer.getBoundingClientRect();
@@ -224,10 +275,14 @@ class InpaintingManager {
             this.startPos = coords;
             this.endPos = coords;
             itCtx.clearRect(0, 0, interactionLayer.width, interactionLayer.height);
-            if (this.currentTool === 'free') { itCtx.beginPath(); itCtx.moveTo(coords.x, coords.y); }
+            if (this.currentTool === 'brush' || this.currentTool === 'free' || this.currentTool === 'eraser') { 
+                itCtx.beginPath(); itCtx.moveTo(coords.x, coords.y); 
+            }
             this.activeMaskCtx = maskCtx;
             this.activeInteractionCtx = itCtx;
+            this.activeVizCtx = vizCtx;
             this.activeBaseCanvas = baseCanvas;
+            this.lastPos = coords;
         });
 
         interactionLayer.addEventListener('mousemove', (e) => {
@@ -248,13 +303,56 @@ class InpaintingManager {
 
             if (this.currentTool === 'rect') {
                 itCtx.strokeRect(this.startPos.x, this.startPos.y, coords.x - this.startPos.x, coords.y - this.startPos.y);
+            } else if (this.currentTool === 'square') {
+                const side = Math.max(Math.abs(coords.x - this.startPos.x), Math.abs(coords.y - this.startPos.y));
+                const sx = coords.x >= this.startPos.x ? 1 : -1;
+                const sy = coords.y >= this.startPos.y ? 1 : -1;
+                itCtx.strokeRect(this.startPos.x, this.startPos.y, side * sx, side * sy);
             } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
                 const rx = Math.abs(coords.x - this.startPos.x);
-                const ry = this.currentTool === 'circle' ? rx : Math.abs(coords.y - this.startPos.y);
-                itCtx.beginPath(); itCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); itCtx.stroke();
-            } else if (this.currentTool === 'free') {
-                itCtx.setLineDash([]); itCtx.lineTo(coords.x, coords.y); itCtx.stroke();
+                const ry = (this.currentTool === 'circle') ? rx : Math.abs(coords.y - this.startPos.y);
+                itCtx.beginPath();
+                itCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2);
+                itCtx.stroke();
+            } else if (this.currentTool === 'brush' || this.currentTool === 'free' || this.currentTool === 'eraser') {
+                itCtx.lineTo(coords.x, coords.y);
+                itCtx.stroke();
+                
+                // Real-time update to mask/viz for smoother feel
+                this.activeMaskCtx.save();
+                this.activeVizCtx.save();
+                if (this.currentTool === 'eraser') {
+                    this.activeMaskCtx.globalCompositeOperation = 'destination-out';
+                    this.activeVizCtx.globalCompositeOperation = 'destination-out';
+                } else {
+                    this.activeMaskCtx.globalCompositeOperation = 'source-over';
+                    this.activeMaskCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+                }
+                
+                // Draw solid to mask
+                this.activeMaskCtx.beginPath();
+                this.activeMaskCtx.lineWidth = 30;
+                this.activeMaskCtx.lineCap = 'round';
+                this.activeMaskCtx.lineJoin = 'round';
+                this.activeMaskCtx.moveTo(this.lastPos.x, this.lastPos.y);
+                this.activeMaskCtx.lineTo(coords.x, coords.y);
+                this.activeMaskCtx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+                this.activeMaskCtx.stroke();
+
+                // Draw dashed to visualization
+                this.activeVizCtx.beginPath();
+                this.activeVizCtx.setLineDash([5, 5]);
+                this.activeVizCtx.lineWidth = 1.5;
+                this.activeVizCtx.lineCap = 'round';
+                this.activeVizCtx.moveTo(this.lastPos.x, this.lastPos.y);
+                this.activeVizCtx.lineTo(coords.x, coords.y);
+                this.activeVizCtx.strokeStyle = 'white';
+                this.activeVizCtx.stroke();
+                
+                this.activeMaskCtx.restore();
+                this.activeVizCtx.restore();
             }
+            this.lastPos = coords; // Track last position
         });
 
         const handleMouseUp = () => {
@@ -284,19 +382,101 @@ class InpaintingManager {
     }
 
     applySelectionToMask(endPos) {
-        if (!this.activeMaskCtx) return;
-        const ctx = this.activeMaskCtx;
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        if (this.currentTool === 'rect') {
-            ctx.fillRect(this.startPos.x, this.startPos.y, endPos.x - this.startPos.x, endPos.y - this.startPos.y);
+        if (!this.activeMaskCtx || !this.activeVizCtx) return;
+        const maskCtx = this.activeMaskCtx;
+        const vizCtx = this.activeVizCtx;
+        const itCanvas = this.activeInteractionCtx.canvas;
+        
+        maskCtx.save();
+        vizCtx.save();
+
+        if (this.currentTool === 'eraser') {
+            maskCtx.globalCompositeOperation = 'destination-out';
+            vizCtx.globalCompositeOperation = 'destination-out';
+            maskCtx.lineWidth = 30;
+            vizCtx.lineWidth = 30;
+            maskCtx.lineCap = vizCtx.lineCap = 'round';
+            maskCtx.lineJoin = vizCtx.lineJoin = 'round';
+        } else {
+            maskCtx.globalCompositeOperation = 'source-over';
+            maskCtx.fillStyle = 'rgba(255, 0, 0, 0.4)';
+            vizCtx.globalCompositeOperation = 'source-over';
+        }
+
+        if (this.currentTool === 'rect' || this.currentTool === 'square') {
+            let w = endPos.x - this.startPos.x;
+            let h = endPos.y - this.startPos.y;
+            if (this.currentTool === 'square') {
+                const side = Math.max(Math.abs(w), Math.abs(h));
+                w = (w >= 0 ? 1 : -1) * side;
+                h = (h >= 0 ? 1 : -1) * side;
+            }
+            maskCtx.fillRect(this.startPos.x, this.startPos.y, w, h);
+            if (this.currentTool !== 'eraser') {
+                this.drawDashedOutline(vizCtx, 'rect', this.startPos.x, this.startPos.y, w, h);
+            } else {
+                vizCtx.fillRect(this.startPos.x, this.startPos.y, w, h);
+            }
         } else if (this.currentTool === 'circle' || this.currentTool === 'ellipse') {
             const rx = Math.abs(endPos.x - this.startPos.x);
-            const ry = this.currentTool === 'circle' ? rx : Math.abs(endPos.y - this.startPos.y);
-            ctx.beginPath(); ctx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-        } else if (this.currentTool === 'free') {
-            ctx.drawImage(this.activeInteractionCtx.canvas, 0, 0);
+            const ry = (this.currentTool === 'circle') ? rx : Math.abs(endPos.y - this.startPos.y);
+            maskCtx.beginPath();
+            maskCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2);
+            maskCtx.fill();
+            if (this.currentTool !== 'eraser') {
+                this.drawDashedOutline(vizCtx, 'ellipse', this.startPos.x, this.startPos.y, rx, ry);
+            } else {
+                vizCtx.beginPath();
+                vizCtx.ellipse(this.startPos.x, this.startPos.y, rx, ry, 0, 0, Math.PI * 2);
+                vizCtx.fill();
+            }
+        } else if (this.currentTool === 'brush' || this.currentTool === 'free' || this.currentTool === 'eraser') {
+            // Already handled in real-time during mousemove
         }
-        this.activeInteractionCtx.clearRect(0, 0, this.activeInteractionCtx.canvas.width, this.activeInteractionCtx.canvas.height);
+        
+        maskCtx.restore();
+        vizCtx.restore();
+        this.activeInteractionCtx.clearRect(0, 0, itCanvas.width, itCanvas.height);
+        this.updateSelectionPreview();
+    }
+
+    updateSelectionPreview() {
+        const sidebarPreview = document.getElementById('i2i-upload-preview');
+        if (!sidebarPreview) return;
+        const outCanvas = sidebarPreview.querySelector('canvas');
+        if (!outCanvas || !this.activeMaskCtx || !this.activeBaseCanvas) return;
+
+        const outCtx = outCanvas.getContext('2d');
+        const baseCanvas = this.activeBaseCanvas;
+        const maskCanvas = this.activeMaskCtx.canvas;
+
+        outCtx.clearRect(0, 0, outCanvas.width, outCanvas.height);
+        outCtx.save();
+        
+        // Draw mask as a clipping path (using destination-in)
+        outCtx.drawImage(maskCanvas, 0, 0);
+        outCtx.globalCompositeOperation = 'source-in';
+        outCtx.drawImage(baseCanvas, 0, 0);
+        
+        outCtx.restore();
+    }
+
+    drawDashedOutline(ctx, type, arg1, arg2, arg3, arg4) {
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 1.5;
+        if (type === 'rect') {
+            ctx.strokeRect(arg1, arg2, arg3, arg4);
+        } else if (type === 'ellipse') {
+            ctx.beginPath();
+            ctx.ellipse(arg1, arg2, arg3, arg4, 0, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (type === 'free') {
+            // arg1 is itCanvas
+            ctx.drawImage(arg1, 0, 0); // Need to apply dashed filter to freehand?
+            // This is actually hard to dash-ify a bitmap.
+            // Better to re-draw the path if we stored it?
+        }
     }
 
     clearAllMasks() {
@@ -304,6 +484,15 @@ class InpaintingManager {
             const ctx = c.getContext('2d');
             if (ctx) ctx.clearRect(0, 0, c.width, c.height);
         });
+        document.querySelectorAll('.visualization-layer').forEach(c => {
+            const ctx = c.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+        });
+        document.querySelectorAll('.interaction-layer').forEach(c => {
+            const ctx = c.getContext('2d');
+            if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+        });
+        this.updateSelectionPreview();
     }
 
     getMaskData() {
@@ -782,8 +971,8 @@ function addAssetToSidebar(asset) {
 
             // If it's an image and model is quality, we might want to enable inpainting
             const modelSelect = document.getElementById('model-select');
-            if (modelSelect.value === 'quality') {
-                // Logic to swap canvas content...
+            if (modelSelect && modelSelect.value === 'quality') {
+                inpaintManager.loadBaseImage(asset.url);
             }
         }
     };
@@ -983,18 +1172,8 @@ async function generateImage(forceMultiGen = false) {
                                 updateMultiGenUI();
                             }
 
-                            if (modelKey === 'quality') {
-                                const canvas = document.getElementById(`base-canvas-${idx}`);
-                                if (canvas) {
-                                    const ctx = canvas.getContext('2d');
-                                    const imgLoader = new Image();
-                                    imgLoader.onload = () => {
-                                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                        ctx.drawImage(imgLoader, 0, 0, canvas.width, canvas.height);
-                                        if (event.type === 'image_complete' && idx === 0) inpaintManager.showToolbar();
-                                    };
-                                    imgLoader.src = dataUrl;
-                                }
+                            if (modelKey === 'quality' && idx === 0 && event.type === 'image_complete') {
+                                inpaintManager.loadBaseImage(dataUrl);
                             }
                         }
                     } else if (event.type === 'upscale_progress') {
@@ -1390,8 +1569,14 @@ async function applyFilter() {
 // ── Generation History Modal ────────────────────────────────────────────────
 
 async function sendInpaintRequest() {
-    const prompt = document.getElementById('inpaint-prompt').value;
-    if (!prompt) return alert("Please enter a prompt for inpainting.");
+    const localPrompt = document.getElementById('inpaint-prompt');
+    const mainPrompt = document.getElementById('prompt-input');
+    const prompt = (localPrompt && localPrompt.value) ? localPrompt.value : (mainPrompt ? mainPrompt.value : '');
+    
+    if (!prompt) {
+        showStatus('Please enter a prompt for inpainting', 'error');
+        return;
+    }
     const baseImage = inpaintManager.getBaseImageData();
     const maskImage = inpaintManager.getMaskData();
     if (!baseImage || !maskImage) return alert("Please select a region first.");
