@@ -448,10 +448,22 @@ class InpaintingManager {
     }
 
     updateSelectionPreview() {
+        const sidebarContainer = document.getElementById('i2i-upload-container');
         const sidebarPreview = document.getElementById('i2i-upload-preview');
-        if (!sidebarPreview) return;
-        const outCanvas = sidebarPreview.querySelector('canvas');
-        if (!outCanvas || !this.activeMaskCtx || !this.activeBaseCanvas) return;
+        if (!sidebarPreview || !sidebarContainer) return;
+        
+        let outCanvas = sidebarPreview.querySelector('canvas');
+        if (!outCanvas) {
+            outCanvas = document.createElement('canvas');
+            outCanvas.width = 512;
+            outCanvas.height = 512;
+            outCanvas.style.width = '100%';
+            outCanvas.style.height = '100%';
+            outCanvas.style.objectFit = 'contain';
+            sidebarPreview.appendChild(outCanvas);
+        }
+        
+        if (!this.activeMaskCtx || !this.activeBaseCanvas) return;
 
         const outCtx = outCanvas.getContext('2d');
         const baseCanvas = this.activeBaseCanvas;
@@ -460,10 +472,17 @@ class InpaintingManager {
         outCtx.clearRect(0, 0, outCanvas.width, outCanvas.height);
         outCtx.save();
         
-        // Draw mask as a clipping path (using destination-in)
-        outCtx.drawImage(maskCanvas, 0, 0);
-        outCtx.globalCompositeOperation = 'source-in';
-        outCtx.drawImage(baseCanvas, 0, 0);
+        // Show the container
+        sidebarContainer.style.display = 'flex';
+        
+        // Strategy: Draw original image, then overlay red highlight for mask
+        // This gives better visual context than just the cutout
+        outCtx.drawImage(baseCanvas, 0, 0, outCanvas.width, outCanvas.height);
+        
+        outCtx.globalAlpha = 0.6;
+        outCtx.fillStyle = '#ff0000';
+        // Use destination-in or similar? No, just draw the mask pixels
+        outCtx.drawImage(maskCanvas, 0, 0, outCanvas.width, outCanvas.height);
         
         outCtx.restore();
     }
@@ -1187,7 +1206,7 @@ async function generateImage(forceMultiGen = false) {
                                 updateMultiGenUI();
                             }
 
-                            if (modelKey === 'quality' && idx === 0 && event.type === 'image_complete') {
+                            if (event.type === 'image_complete' && idx === 0) {
                                 inpaintManager.loadBaseImage(dataUrl);
                             }
                         }
@@ -1459,6 +1478,11 @@ async function generateImageFromImage(forceMultiGen = false) {
                             if (multiGen) {
                                 updateMultiGenUI();
                             }
+
+                            // Sync final result to inpaint manager
+                            if (event.type === 'image_complete' && idx === 0) {
+                                inpaintManager.loadBaseImage(dataUrl);
+                            }
                         }
                     } else if (event.type === 'upscale_progress') {
                         const { tile, total_tiles, label } = event.data || {};
@@ -1710,10 +1734,18 @@ async function sendInpaintRequest() {
                         if (statusSteps) statusSteps.innerText = '100%';
                         if (statusBarFill) statusBarFill.style.width = '100%';
                         
-                        const newUrl = `${API_URL}${event.image_url}`;
+                        const newUrl = event.image_url.startsWith('http') ? event.image_url : `${API_URL}${event.image_url}`;
+                        console.log("[INPAINT] Results Success:", newUrl);
                         
                         // Update iterative base
                         inpaintManager.loadBaseImage(newUrl);
+                        
+                        // Update main stage image tag for visibility
+                        const imgTag = document.getElementById('generated-img');
+                        if (imgTag) {
+                            imgTag.src = newUrl;
+                            imgTag.style.display = 'block';
+                        }
                         
                         // Complete history update
                         window.dispatchEvent(new CustomEvent('generation_complete', {
