@@ -309,7 +309,7 @@
                             border-radius: 8px;
                             border: 1.5px solid #6366f1;
                             background: white;
-                            color: #6366f1;
+                            color: #000000;
                             cursor: pointer;
                             transition: all 0.2s ease;
                         }
@@ -347,7 +347,7 @@
                     </div>
                     <div class="tool-icon tool-btn" id="tool-clear" title="Clear All"
                         onclick="inpaintManager.clearAllMasks()">
-                        <span class="material-symbols-outlined">mop</span>
+                        <span class="material-symbols-outlined" style="color: rgba(255, 0, 0, 0.516);">mop</span>
                     </div>
                 </div>
             </div>
@@ -388,9 +388,10 @@
                     </div>
                     <div class="inpaint-slider-mini">
                         <div style="display: flex; justify-content: space-between; font-size: 0.55rem;">
-                            <span>Denoise</span> <span id="inpaint-strength-val" style="font-weight: 800;">0.65</span>
+                            <span>Denoise</span> <span id="inpaint-denoise-val" style="font-weight: 800;">0.25</span>
                         </div>
-                        <input type="range" id="inpaint-strength" min="0.0" max="1" step="0.05" value="0.25"
+                        <input type="range" id="inpaint-denoise" min="0.0" max="1" step="0.05" value="0.25"
+                            oninput="document.getElementById('inpaint-denoise-val').textContent = parseFloat(this.value).toFixed(2)"
                             style="width: 100%; scale: 0.8; margin: -5px 0;">
                     </div>
                     <div class="inpaint-slider-mini">
@@ -400,9 +401,8 @@
                         <input type="range" id="inpaint-blur" min="0" max="10" step="1" value="2"
                             style="width: 100%; scale: 0.8; margin: -5px 0;">
                     </div>
-                    <button class="btn-action" id="btn-inpaint-send" style="padding: 0.25rem; font-size: 0.65rem;"
-                        onclick="sendInpaintRequest()">APPLY</button>
                 </div>
+
             </div>
 
             <div class="control-group sidebar-fill" style="margin-top: 0.25rem;">

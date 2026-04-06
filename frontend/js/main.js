@@ -80,15 +80,16 @@ class InpaintingManager {
 
     loadBaseImage(url) {
         const container = document.getElementById('center-inpaint-preview');
-        const outer = document.getElementById('gen-result');
         const imgTag = document.getElementById('generated-img');
-        const sidebarPreview = document.getElementById('i2i-upload-preview');
-        const sidebarContainer = document.getElementById('i2i-upload-container');
+        
+        if (!container || !imgTag) return;
 
-        if (!container || !outer || !imgTag) return;
-
-        outer.style.display = 'flex';
-        document.getElementById('single-gen-box').style.display = 'flex';
+        // Reset display if needed
+        const outer = document.getElementById('gen-result');
+        if (outer) outer.style.display = 'flex';
+        const sgb = document.getElementById('single-gen-box');
+        if (sgb) sgb.style.display = 'flex';
+        
         imgTag.src = url;
 
         if (container.innerHTML === '' || !container.querySelector('.base-layer')) {
@@ -101,40 +102,46 @@ class InpaintingManager {
                 c.style.position = 'absolute';
                 c.style.top = '0'; c.style.left = '0';
                 c.style.width = '100%'; c.style.height = '100%';
-                if (cls === 'base-layer') c.style.display = 'none'; // Background image is the imgTag
+                if (cls === 'base-layer') c.style.display = 'none';
                 container.appendChild(c);
             });
             this.attachToCanvas(container);
         }
 
-        // Sidebar preview setup
-        if (sidebarPreview && sidebarContainer) {
-            sidebarContainer.style.display = 'block';
-            if (!sidebarPreview.querySelector('canvas')) {
-                const c = document.createElement('canvas');
-                c.width = 512; c.height = 512;
-                c.style.maxWidth = '100%'; c.style.maxHeight = '100%';
-                sidebarPreview.appendChild(c);
-            }
-        }
-
         const baseCanvas = container.querySelector('.base-layer');
         const ctx = baseCanvas.getContext('2d');
+        
+        // Ensure mask and interaction layers are cleared for the new iteration
+        const maskCanvas = container.querySelector('.mask-overlay');
+        const interCanvas = container.querySelector('.interaction-layer');
+        if (maskCanvas) maskCanvas.getContext('2d').clearRect(0, 0, 512, 512);
+        if (interCanvas) interCanvas.getContext('2d').clearRect(0, 0, 512, 512);
+
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
             ctx.clearRect(0, 0, 512, 512);
             ctx.drawImage(img, 0, 0, 512, 512);
             
-            // Adjust container size to match image aspect ratio inside the box
             const rect = imgTag.getBoundingClientRect();
-            container.style.width = `${rect.width}px`;
-            container.style.height = `${rect.height}px`;
+            if (rect.width > 0) {
+                container.style.width = `${rect.width}px`;
+                container.style.height = `${rect.height}px`;
+            }
 
             this.showToolbar();
             this.updateSelectionPreview();
         };
         img.src = url;
+    }
+
+    hasMask() {
+        if (!this.activeMaskCtx) return false;
+        const data = this.activeMaskCtx.getImageData(0, 0, 512, 512).data;
+        for (let i = 3; i < data.length; i += 4) {
+            if (data[i] > 10) return true;
+        }
+        return false;
     }
 
     init() {
@@ -988,21 +995,29 @@ async function handleGenerateClick(forceMultiGen = false) {
         return stopGeneration();
     }
 
+    // If an inpaint region is selected, prioritize inpainting
+    if (inpaintManager.active && inpaintManager.hasMask()) {
+        return sendInpaintRequest();
+    }
+
     const input = document.getElementById('i2i-image-input');
-    const file = input.files[0];
+    const file = input ? input.files[0] : null;
     if (!file) {
         // Fallback to text-to-image
         return generateImage(forceMultiGen);
     }
 
     if (file.type.startsWith('video/')) {
-        document.getElementById('video-filter-group').style.display = 'block';
+        const vfg = document.getElementById('video-filter-group');
+        if (vfg) vfg.style.display = 'block';
         return applyFilter();
     } else {
-        document.getElementById('video-filter-group').style.display = 'none';
+        const vfg = document.getElementById('video-filter-group');
+        if (vfg) vfg.style.display = 'none';
         return generateImageFromImage(forceMultiGen);
     }
 }
+
 
 // Update HTML button to use this if needed, but for now we'll just refine generateImage
 
@@ -1569,66 +1584,155 @@ async function applyFilter() {
 // ── Generation History Modal ────────────────────────────────────────────────
 
 async function sendInpaintRequest() {
-    const localPrompt = document.getElementById('inpaint-prompt');
-    const mainPrompt = document.getElementById('prompt-input');
-    const prompt = (localPrompt && localPrompt.value) ? localPrompt.value : (mainPrompt ? mainPrompt.value : '');
+    const promptInput = document.getElementById('prompt-input');
+    const negativeInput = document.getElementById('negative-prompt');
+    const stepsInput = document.getElementById('t2i-steps');
+    const seedInput = document.getElementById('t2i-seed');
+    const upscaleInput = document.getElementById('t2i-upscale');
+    const enhanceInput = document.getElementById('t2i-enhance');
     
+    // Inpaint specific settings
+    const blurInput = document.getElementById('inpaint-blur');
+    const strengthInput = document.getElementById('inpaint-strength'); // Used for guidance_scale
+    const denoiseInput = document.getElementById('inpaint-denoise');   // Used for strength
+
+    const prompt = (promptInput?.value || '').trim();
     if (!prompt) {
         showStatus('Please enter a prompt for inpainting', 'error');
         return;
     }
+
     const baseImage = inpaintManager.getBaseImageData();
     const maskImage = inpaintManager.getMaskData();
-    if (!baseImage || !maskImage) return alert("Please select a region first.");
+    if (!baseImage || !maskImage) return showStatus("Please select a region first.", 'error');
 
-    const seedInput = document.getElementById('t2i-seed');
-    const blur = parseInt(document.getElementById('inpaint-blur').value);
-    const strength = parseFloat(document.getElementById('inpaint-strength').value);
-    const seed = seedInput?.value ? parseInt(seedInput.value) : null;
+    // UI Feedback: Stop button
+    const btnGen = document.getElementById('btn-generate');
+    if (btnGen) {
+        btnGen.innerHTML = '<span class="material-symbols-outlined" style="font-size: 1.1rem; vertical-align: middle;">stop</span>';
+        btnGen.classList.add('btn-stop-active');
+    }
+
+    // Status & Progress updates
+    const statusContainer = document.getElementById('gen-status-container');
+    const statusLabel = document.getElementById('gen-status-label');
+    const statusSteps = document.getElementById('gen-status-steps');
+    const statusBarFill = document.getElementById('gen-status-bar-fill');
+    
+    if (statusContainer) statusContainer.style.display = 'flex';
+    if (statusLabel) statusLabel.innerText = 'Initializing Inpaint...';
+    if (statusSteps) statusSteps.innerText = '0%';
+    if (statusBarFill) {
+        statusBarFill.style.transition = 'none';
+        statusBarFill.style.width = '0%';
+        setTimeout(() => statusBarFill.style.transition = 'width 0.3s ease', 50);
+    }
 
     const formData = new FormData();
     formData.append('image', await (await fetch(baseImage)).blob(), 'image.png');
     formData.append('mask', await (await fetch(maskImage)).blob(), 'mask.png');
-    formData.append('prompt', prompt);
-    formData.append('steps', 30);
-    formData.append('guidance_scale', 7.5);
-    formData.append('mask_blur', blur);
-    if (seed !== null) formData.append('seed', seed);
+    
+    // Combine with style if selected
+    let finalPrompt = prompt;
+    if (typeof currentSelectedStylePrompt === 'string' && currentSelectedStylePrompt) {
+        finalPrompt = currentSelectedStylePrompt.replace('{prompt}', prompt);
+    }
+    formData.append('prompt', finalPrompt);
 
-    const loader = document.getElementById('gen-loader');
-    const btnInpaint = document.getElementById('btn-inpaint-send');
-    if (loader) loader.style.display = 'block';
-    if (btnInpaint) btnInpaint.disabled = true;
+    if (negativeInput?.value) formData.append('negative_prompt', negativeInput.value);
+    
+    const steps = stepsInput ? parseInt(stepsInput.value) : 30;
+    formData.append('steps', steps);
+    
+    // Map sliders: Color Grading -> Guidance (scale 0-1 to 2-12), Denoise -> Strength
+    const rawGuidance = strengthInput ? parseFloat(strengthInput.value) : 0.75;
+    const guidance = (rawGuidance * 10) + 2; // Default 0.5 becomes 7.0
+    const strength = denoiseInput ? parseFloat(denoiseInput.value) : 0.75;
+    
+    formData.append('guidance_scale', guidance);
+    formData.append('strength', strength);
+    
+    formData.append('mask_blur', blurInput ? parseInt(blurInput.value) : 5);
+    
+    if (seedInput?.value) formData.append('seed', parseInt(seedInput.value));
+    if (upscaleInput?.checked) formData.append('upscale', 'true');
+    if (enhanceInput?.checked) formData.append('enhance_prompt', 'true');
 
     try {
-        const res = await fetch(`${API_URL}/api/generation/inpaint`, { method: 'POST', body: formData });
-        const reader = res.body.getReader();
+        const response = await fetch(`${API_URL}/api/generation/inpaint`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("Inpaint request failed");
+
+        const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
+            
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split('\n');
             buffer = lines.pop();
+
             for (const line of lines) {
                 if (!line.trim()) continue;
-                const event = JSON.parse(line);
-                if (event.type === 'image_complete' || event.type === 'preview_step') {
-                    const b64 = event.image || event.data?.preview;
-                    if (b64) {
-                        const img = new Image();
-                        img.onload = () => inpaintManager.activeBaseCanvas.getContext('2d').drawImage(img, 0, 0, inpaintManager.activeBaseCanvas.width, inpaintManager.activeBaseCanvas.height);
-                        img.src = `data:image/png;base64,${b64}`;
+                try {
+                    const event = JSON.parse(line);
+                    
+                    if (event.type === 'preview_step') {
+                        const { step, total_steps, preview } = event.data || {};
+                        if (statusLabel) statusLabel.innerText = 'Inpainting';
+                        if (statusSteps) statusSteps.innerText = `${step}/${total_steps}`;
+                        
+                        if (statusBarFill) {
+                            const pct = total_steps > 0 ? (step / total_steps) * 100 : 0;
+                            statusBarFill.style.width = `${pct}%`;
+                        }
+                        
+                        if (preview) {
+                            const img = document.getElementById('generated-img');
+                            if (img) img.src = `data:image/jpeg;base64,${preview}`;
+                        }
+                    } else if (event.type === 'upscale_progress') {
+                        const { tile, total_tiles, label } = event.data || {};
+                        if (statusLabel) statusLabel.innerText = label || 'Upscaling';
+                        if (statusSteps) statusSteps.innerText = `Tile ${tile}/${total_tiles}`;
+                        if (statusBarFill) {
+                            const pct = total_tiles > 0 ? (tile / total_tiles) * 100 : 0;
+                            statusBarFill.style.width = `${pct}%`;
+                        }
+                    } else if (event.type === 'image_complete') {
+                        if (statusLabel) statusLabel.innerText = 'Generation Complete!';
+                        if (statusSteps) statusSteps.innerText = '100%';
+                        if (statusBarFill) statusBarFill.style.width = '100%';
+                        
+                        const newUrl = `${API_URL}${event.image_url}`;
+                        
+                        // Update iterative base
+                        inpaintManager.loadBaseImage(newUrl);
+                        
+                        // Complete history update
+                        window.dispatchEvent(new CustomEvent('generation_complete', {
+                            detail: { url: newUrl, type: 'image' }
+                        }));
                     }
+                } catch (err) {
+                    console.error("Parse error in stream:", err);
                 }
             }
         }
-    } catch (e) { alert("Inpainting error: " + e.message); }
-    finally {
-        if (loader) loader.style.display = 'none';
-        if (btnInpaint) btnInpaint.disabled = false;
-        inpaintManager.promptPanel.classList.add('collapsed');
+    } catch (e) {
+        showStatus("Inpainting error: " + e.message, 'error');
+    } finally {
+        if (statusContainer) statusContainer.style.display = 'none';
+        if (btnGen) {
+            btnGen.innerHTML = 'GENERATE';
+            btnGen.classList.remove('btn-stop-active');
+        }
         inpaintManager.clearAllMasks();
     }
 }
