@@ -1,8 +1,8 @@
 {
   "detection": {
     "images": {
-      "total": 199,
-      "real": 104,
+      "total": 201,
+      "real": 106,
       "fake": 95
     },
     "videos": {
