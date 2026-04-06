@@ -1693,7 +1693,8 @@ async function sendInpaintRequest() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
-
+        let isDone = false;
+        
         while (true) {
             const { value, done } = await reader.read();
             if (done) break;
@@ -1708,6 +1709,7 @@ async function sendInpaintRequest() {
                     const event = JSON.parse(line);
                     
                     if (event.type === 'preview_step') {
+                        if (isDone) continue; // Ignore previews after completion
                         const { step, total_steps, preview } = event.data || {};
                         if (statusLabel) statusLabel.innerText = 'Inpainting';
                         if (statusSteps) statusSteps.innerText = `${step}/${total_steps}`;
@@ -1734,28 +1736,35 @@ async function sendInpaintRequest() {
                         if (statusSteps) statusSteps.innerText = '100%';
                         if (statusBarFill) statusBarFill.style.width = '100%';
                         
-                        const newUrl = event.image_url.startsWith('http') ? event.image_url : `${API_URL}${event.image_url}`;
-                        console.log("[INPAINT] Results Success:", newUrl);
+                        // Use base64 for immediate sharp display (avoids caching/delay in static files)
+                        const sharpInpaint = `data:image/png;base64,${event.image}`;
+                        const finalPath = event.image_url.startsWith('http') ? event.image_url : `${API_URL}${event.image_url}`;
                         
-                        // Update iterative base
-                        inpaintManager.loadBaseImage(newUrl);
+                        console.log("[INPAINT] Results Success:", finalPath);
                         
-                        // Update main stage image tag for visibility
+                        // Update iterative base with sharp data
+                        inpaintManager.loadBaseImage(sharpInpaint);
+                        
+                        // Ensure main stage Tag is sharp
                         const imgTag = document.getElementById('generated-img');
                         if (imgTag) {
-                            imgTag.src = newUrl;
+                            imgTag.src = sharpInpaint;
                             imgTag.style.display = 'block';
                         }
                         
-                        // Complete history update
+                        // Complete history update with permanent URL
                         window.dispatchEvent(new CustomEvent('generation_complete', {
-                            detail: { url: newUrl, type: 'image' }
+                            detail: { url: finalPath, type: 'image' }
                         }));
+                        
+                        isDone = true;
                     }
                 } catch (err) {
                     console.error("Parse error in stream:", err);
                 }
+                if (isDone) break;
             }
+            if (isDone) break;
         }
     } catch (e) {
         showStatus("Inpainting error: " + e.message, 'error');

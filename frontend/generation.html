@@ -406,7 +406,7 @@
             </div>
 
             <div class="control-group sidebar-fill" style="margin-top: 0.25rem;">
-                <h4 class="group-title">History & Assets</h4>
+                <h4 class="group-title" style="padding-left: 7px;">Assets</h4>
                 <div class="assets-grid-container">
                     <div id="assets-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;">
                         <!-- Thumbnails will auto-fill here -->
@@ -420,7 +420,41 @@
     <div id="i2i-result" style="display:none;">
         <div id="i2i-images-container"></div>
     </div>
-    <div id="history-modal" class="hidden"></div>
+    <!-- Generation History Modal -->
+    <div id="history-modal" class="hidden">
+        <div class="history-card">
+            <div id="history-close">&times;</div>
+            <div class="history-image-panel">
+                <img id="history-image" src="" alt="History Preview">
+            </div>
+            <div class="history-details-panel">
+                <div class="history-info-item">
+                    <strong>Prompt</strong>
+                    <div id="history-prompt" class="history-prompt"></div>
+                </div>
+                <div class="history-grid-info">
+                    <div class="history-info-item">
+                        <strong>Type</strong>
+                        <div id="history-type"></div>
+                    </div>
+                    <div class="history-info-item">
+                        <strong>Seed</strong>
+                        <div id="history-seed"></div>
+                    </div>
+                </div>
+                <div class="history-grid-info">
+                    <div class="history-info-item">
+                        <strong>Generation Time</strong>
+                        <div id="history-time"></div>
+                    </div>
+                    <div class="history-info-item">
+                        <strong>Timestamp</strong>
+                        <div id="history-timestamp"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="inpainting-toolbar-drag-handle" style="display:none;"></div>
 
     <script src="js/generation_scrolly.js"></script>
