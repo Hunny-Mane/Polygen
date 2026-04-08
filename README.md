@@ -11,16 +11,16 @@
 ## Overview
 **Polygen** is a dual-purpose AI system designed for cutting-edge synthetic media generation and robust deepfake detection. Exploring the boundary between reality and artificial intelligence, this project combines advanced diffusion models with state-of-the-art forensic analysis techniques.
 
-## ✨ Key Features
+##  Key Features
 
-### 🛡️ DetectCore: Advanced Deepfake Forensics
+###  DetectCore: Advanced Deepfake Forensics
 Polygen's detection engine utilizes a hybrid approach, combining deep neural networks with low-level signal processing to identify manipulated media.
 - **Neural Ensembles**: Leverages an ensemble of **EfficientNet-B4** and **Xception** models trained on diverse forgery datasets.
 - **Signal Processing Refinements**: Incorporates Fast Fourier Transform (FFT) analysis and Photo Response Non-Uniformity (PRNU) noise extraction to detect subtle anomalies invisible to the human eye.
 - **Explainable AI (XAI)**: Generates **Grad-CAM** heatmaps, visually highlighting the specific facial regions that influenced the model's prediction.
 - **Media Support**: Comprehensive analysis for both static images (JPEG, PNG) and videos (MP4), processing up to 5-crop face extractions for enhanced reliability.
 
-### 🎨 GenCore: High-Fidelity Media Generation
+###  GenCore: High-Fidelity Media Generation
 The generative suite is built for speed, quality, and control, utilizing the latest in latent diffusion technologies.
 - **Text-to-Image (SDXL Turbo)**: Rapid generation of photorealistic and artistic images from complex prompts using Stability AI's SDXL Turbo.
 - **Image-to-Image (ControlNet)**: Structure-preserving transformations. Upload an image and dictate structural rules via Canny edge detection.
@@ -28,23 +28,19 @@ The generative suite is built for speed, quality, and control, utilizing the lat
 - **Real-ESRGAN Upscaling**: Integrated tiled 4x upscaling to eliminate generation artifacts and enhance output resolution for ultra-high-definition results.
 - **Real-time Latent Preview**: Watch the image materialize during the sampling steps with integrated visual callbacks.
 
-### 🧠 Intelligent Hardware Optimization
+###  Intelligent Hardware Optimization
 Designed to run on consumer hardware without compromising on capabilities:
 - **Low VRAM Mode**: Dynamically optimized logic (sequential CPU offloading, attention slicing, VAE slicing) allowing intensive models like SDXL to run stably on **4GB VRAM** graphics cards.
 - **Aggressive Garbage Collection**: Automatic aggressive memory clearing and CUDA cache flushing between model swapping.
 - **Dynamic Resolution Management**: Intelligently selects generation resolutions (e.g., 512x512 vs 640x640) based on real-time VRAM availability. 
 
-### 💎 Premium Interface
-- **Glassmorphism Design**: A sleek, modern, pseudo-translucent dark mode interface.
-- **Unified Dashboard**: Seamlessly switch between the immersive forensic breakdown lab and the creative generative studio.
-
-## 🏗️ Architecture
+##  Architecture
 
 - **Backend**: FastAPI (Python), serving concurrent ML pipelines asynchronously.
 - **Frontend**: Vanilla HTML5, CSS3, JavaScript.
 - **ML Engine**: PyTorch, Diffusers, OpenCV, timm, BasicSR/RealESRGAN.
 
-## 🚀 Setup Instructions
+##  Setup Instructions
 
 ### Prerequisites
 - Python 3.8+
@@ -82,7 +78,7 @@ Designed to run on consumer hardware without compromising on capabilities:
    http://localhost:8000/static/index.html
    ```
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 poly/
@@ -96,7 +92,7 @@ poly/
 └── requirements.txt    # Python dependencies
 ```
 
-## 🔮 Future Roadmap
+##  Future Roadmap
 - Implementation of Video-to-Video generative filters (e.g., temporally consistent stylization).
 - Real-time webcam manipulation detection.
 - Audio deepfake analysis integration.
