@@ -1,65 +1,102 @@
+# Polygen: AI Synthetic Media & Deepfake Forensic Suite
 
-# AI-Based Synthetic Media Generation & Deepfake Detection System
+<div align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white">
+  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.0+-EE4C2C?logo=pytorch&logoColor=white">
+  <img alt="SDXL Turbo" src="https://img.shields.io/badge/SDXL_Turbo-Generation-8A2BE2">
+  <img alt="EfficientNet" src="https://img.shields.io/badge/EfficientNet-Forensics-FF9900">
+</div>
 
 ## Overview
-This project is a comprehensive Machine Learning system designed for:
-1.  **Deepfake Detection**: Classifying images and videos as "Real" or "Fake" using EfficientNet and providing explainability via Grad-CAM maps.
-2.  **AI Media Generation**: Generating high-quality images from text prompts (Stable Diffusion) and applying AI-based stylistic filters to videos.
+**Polygen** is a dual-purpose AI system designed for cutting-edge synthetic media generation and robust deepfake detection. Exploring the boundary between reality and artificial intelligence, this project combines advanced diffusion models with state-of-the-art forensic analysis techniques.
 
-## Features
-- **Deepfake Detection**:
-    - Support for Images (JPEG, PNG) and Videos (MP4).
-    - Confidence score and Probability.
-    - **Grad-CAM Visualization**: Highlights the regions where the model detects manipulation.
-- **Media Generation**:
-    - **Text-to-Image**: Generate artistic images from text descriptions.
-    - **Video Filters**: Apply "Cartoon" or "Sketch" effects to uploaded videos.
-- **Premium Web Interface**:
-    - Glassmorphism design.
-    - Dark mode aesthetics.
-    - Responsive dashboard.
+## ✨ Key Features
 
-## Architecture
-- **Backend**: FastAPI (Python).
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla).
-- **ML Engine**: PyTorch, Diffusers, OpenCV, timm.
+### 🛡️ DetectCore: Advanced Deepfake Forensics
+Polygen's detection engine utilizes a hybrid approach, combining deep neural networks with low-level signal processing to identify manipulated media.
+- **Neural Ensembles**: Leverages an ensemble of **EfficientNet-B4** and **Xception** models trained on diverse forgery datasets.
+- **Signal Processing Refinements**: Incorporates Fast Fourier Transform (FFT) analysis and Photo Response Non-Uniformity (PRNU) noise extraction to detect subtle anomalies invisible to the human eye.
+- **Explainable AI (XAI)**: Generates **Grad-CAM** heatmaps, visually highlighting the specific facial regions that influenced the model's prediction.
+- **Media Support**: Comprehensive analysis for both static images (JPEG, PNG) and videos (MP4), processing up to 5-crop face extractions for enhanced reliability.
 
-## Setup Instructions
+### 🎨 GenCore: High-Fidelity Media Generation
+The generative suite is built for speed, quality, and control, utilizing the latest in latent diffusion technologies.
+- **Text-to-Image (SDXL Turbo)**: Rapid generation of photorealistic and artistic images from complex prompts using Stability AI's SDXL Turbo.
+- **Image-to-Image (ControlNet)**: Structure-preserving transformations. Upload an image and dictate structural rules via Canny edge detection.
+- **Precision Inpainting**: Smart masking tools allowing users to seamlessly insert, replace, or remove elements within existing images using Stable Diffusion Inpainting.
+- **Real-ESRGAN Upscaling**: Integrated tiled 4x upscaling to eliminate generation artifacts and enhance output resolution for ultra-high-definition results.
+- **Real-time Latent Preview**: Watch the image materialize during the sampling steps with integrated visual callbacks.
+
+### 🧠 Intelligent Hardware Optimization
+Designed to run on consumer hardware without compromising on capabilities:
+- **Low VRAM Mode**: Dynamically optimized logic (sequential CPU offloading, attention slicing, VAE slicing) allowing intensive models like SDXL to run stably on **4GB VRAM** graphics cards.
+- **Aggressive Garbage Collection**: Automatic aggressive memory clearing and CUDA cache flushing between model swapping.
+- **Dynamic Resolution Management**: Intelligently selects generation resolutions (e.g., 512x512 vs 640x640) based on real-time VRAM availability. 
+
+### 💎 Premium Interface
+- **Glassmorphism Design**: A sleek, modern, pseudo-translucent dark mode interface.
+- **Unified Dashboard**: Seamlessly switch between the immersive forensic breakdown lab and the creative generative studio.
+
+## 🏗️ Architecture
+
+- **Backend**: FastAPI (Python), serving concurrent ML pipelines asynchronously.
+- **Frontend**: Vanilla HTML5, CSS3, JavaScript.
+- **ML Engine**: PyTorch, Diffusers, OpenCV, timm, BasicSR/RealESRGAN.
+
+## 🚀 Setup Instructions
 
 ### Prerequisites
 - Python 3.8+
-- NVIDIA GPU (Recommended for fast inference) or CPU (Slower).
+- NVIDIA GPU (Highly Recommended, optimized for >= 4GB VRAM) or CPU fallback.
 
 ### Installation
-1.  Clone the repository or download the project folder.
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/polygen.git
+   cd polygen
+   ```
+2. **Set up a Virtual Environment**:
+   ```bash
+   python -m venv .venv
+   .\.venv\Scripts\Activate  # Windows
+   # source .venv/bin/activate  # Mac/Linux
+   ```
+3. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   *Note: If taking advantage of GPU acceleration, ensure you have the appropriate PyTorch with CUDA support installed.*
 
 ### Running the Application
-1.  Navigate to the `backend` directory (ensure you are in the project root):
-    ```bash
-    python -m backend.main
-    ```
-    *Note: The first run might take time to download the Machine Learning models (EfficientNet, Stable Diffusion).*
-2.  Open your browser and visit:
-    `http://localhost:8000/static/index.html`
+1. **Start the FastAPI Backend**:
+   Navigate to the project root and start the server:
+   ```bash
+   python -m backend.main
+   ```
+   *Note: On the first run, the system will automatically download necessary foundational models (EfficientNet weights, SDXL tokenizers/UNets) caching them in your local directory.*
 
-## Folder Structure
-- `backend/`: FastAPI server and API routers.
-- `frontend/`: Static web files (HTML/CSS/JS).
-- `ml_modules/`:
-    - `detection/`: Deepfake detection logic (EfficientNet, Grad-CAM).
-    - `generation/`: Generation logic (Stable Diffusion, Filters).
-- `scripts/`: Training scripts for deepfake detection.
+2. **Access the Interface**:
+   Open your preferred web browser and navigate to:
+   ```
+   http://localhost:8000/static/index.html
+   ```
 
-## Future Scope
-- Integration with more advanced GANs (StyleGAN).
-- Real-time video detection.
-- Audio deepfake detection.
+## 📂 Project Structure
 
-## Terminal
-- .\.venv\Scripts\Activate
-- python -m backend.main
-- http://localhost:8000/static/index.html
+```text
+poly/
+├── backend/            # FastAPI core, API routers (detection, generation, stats)
+├── frontend/           # Next-gen UI (HTML/CSS/JS assets)
+├── ml_modules/
+│   ├── detection/      # Forensics: detector ensembles, Grad-CAM, Refinements
+│   └── generation/     # Generative: SDXL Turbo, ControlNet, Real-ESRGAN
+├── models/             # Local checkpoint directory (checkpoints/safetensors)
+├── scripts/            # Dataset prep, training, and utilities
+└── requirements.txt    # Python dependencies
+```
+
+## 🔮 Future Roadmap
+- Implementation of Video-to-Video generative filters (e.g., temporally consistent stylization).
+- Real-time webcam manipulation detection.
+- Audio deepfake analysis integration.
