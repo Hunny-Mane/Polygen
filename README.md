@@ -28,11 +28,6 @@ The generative suite is built for speed, quality, and control, utilizing the lat
 - **Real-ESRGAN Upscaling**: Integrated tiled 4x upscaling to eliminate generation artifacts and enhance output resolution for ultra-high-definition results.
 - **Real-time Latent Preview**: Watch the image materialize during the sampling steps with integrated visual callbacks.
 
-###  Intelligent Hardware Optimization
-Designed to run on consumer hardware without compromising on capabilities:
-- **Low VRAM Mode**: Dynamically optimized logic (sequential CPU offloading, attention slicing, VAE slicing) allowing intensive models like SDXL to run stably on **4GB VRAM** graphics cards.
-- **Aggressive Garbage Collection**: Automatic aggressive memory clearing and CUDA cache flushing between model swapping.
-- **Dynamic Resolution Management**: Intelligently selects generation resolutions (e.g., 512x512 vs 640x640) based on real-time VRAM availability. 
 
 ##  Architecture
 
