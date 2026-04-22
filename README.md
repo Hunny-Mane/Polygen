@@ -8,9 +8,6 @@
   <img alt="EfficientNet" src="https://img.shields.io/badge/EfficientNet-Forensics-FF9900">
 </div>
 
-
-
-
 ## Overview
 **Polygen** is a dual-purpose AI system designed for cutting-edge synthetic media generation and robust deepfake detection. Exploring the boundary between reality and artificial intelligence, this project combines advanced diffusion models with state-of-the-art forensic analysis techniques.
 
