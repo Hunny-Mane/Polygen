@@ -1,5 +1,6 @@
 # Polygen: AI Synthetic Media & Deepfake Forensic Suite
 
+
 <div align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.8+-blue?logo=python&logoColor=white">
   <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white">
